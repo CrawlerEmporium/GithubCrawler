@@ -70,7 +70,7 @@ class Info(commands.Cog):
         em.add_field(name='Source', value="[Click Here](https://github.com/CrawlerEmporium/GithubCrawler)")
         em.add_field(name='Issue Tracker', value="[Click Here](https://github.com/CrawlerEmporium/GithubCrawler/issues)")
         em.add_field(name="About",
-                     value='A multipurpose bot made by LordDusk#0001 .\n[Support Server](https://discord.gg/HEY6BWj)')
+                     value='A Github bot made by LordDusk#0001 .\n[Support Server](https://discord.gg/HEY6BWj)')
         em.set_footer(text=f"GithubCrawler {ctx.bot.version} | Powered by discord.py")
         await ctx.send(embed=em)
 
