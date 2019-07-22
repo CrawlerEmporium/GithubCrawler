@@ -564,7 +564,6 @@ def get_next_report_num(identifier):
     db.jset("reportnums", id_nums)
     return f"{num:0>3}"
 
-
 def reports_to_issues(text):
     """
     Parses all XYZ-### identifiers and adds a link to their GitHub Issue numbers.

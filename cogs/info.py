@@ -6,6 +6,7 @@ import time
 import utils.globals as GG
 from discord.ext import commands
 from utils import logger
+from utils.libs.reports import Report
 
 log = logger.logger
 
@@ -82,6 +83,24 @@ class Info(commands.Cog):
                          "This server allows you to ask questions about the bot. Do feature requests, and talk with other bot users!\n\n" \
                          "If you want to somehow support my developer, you can buy me a cup of coffee (or 2) [here](https://ko-fi.com/5ecrawler)"
         await ctx.send(embed=em)
+
+    @commands.command()
+    async def sync (self,ctx):
+        FR = 17
+        for x in range(1,FR):
+            try:
+                if x < 10:
+                    x = f"BUG-00{x}"
+                elif x < 100 and x > 9:
+                    x = f"BUG-0{x}"
+                else:
+                    x = f"BUG-{x}"
+                report = await Report.from_id(x)
+                await report.setup_message(self.bot, 584842413135101990)
+                report.commit()
+            except:
+                pass
+
 
 def setup(bot):
     log.info("Loading Info Cog...")

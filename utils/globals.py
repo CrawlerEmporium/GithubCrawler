@@ -98,6 +98,20 @@ REPO_ID_MAP = {
     "5etools/tracker": "5ET"
 }
 
+REACTIONS = [
+    "\U0001f640",  # scream_cat
+    "\U0001f426",  # bird
+    "\U0001f3f9",  # bow_and_arrow
+    "\U0001f989",  # owl
+    "\U0001f50d",  # mag
+    "\U0001f576",  # sunglasses
+    "\U0001f575",  # spy
+    "\U0001f4e9",  # envelope_with_arrow
+    "\U0001f933",  # selfie
+    "\U0001f916",  # robot
+    "\U0001f409",  # dragon
+]
+
 TRACKER_CHAN_5ET = 593769144969723914
 TRACKER_CHAN = 590812637072195587
 
