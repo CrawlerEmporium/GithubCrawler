@@ -1,1 +1,1 @@
-# DiscordCrawler
+# GithubCrawler
