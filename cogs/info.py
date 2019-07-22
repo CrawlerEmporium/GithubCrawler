@@ -86,7 +86,7 @@ class Info(commands.Cog):
 
     @commands.command()
     async def sync (self,ctx):
-        FR = 17
+        FR = 17+1
         for x in range(1,FR):
             try:
                 if x < 10:
@@ -96,6 +96,7 @@ class Info(commands.Cog):
                 else:
                     x = f"BUG-{x}"
                 report = await Report.from_id(x)
+                print(report)
                 await report.setup_message(self.bot, 584842413135101990)
                 report.commit()
             except:
