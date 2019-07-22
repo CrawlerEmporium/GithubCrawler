@@ -19,6 +19,9 @@ from os.path import isfile, join
 from discord.ext.commands import CommandInvokeError
 from discord.ext import commands
 from utils.functions import gen_error_message, discord_trim
+from utils.libs.github import GitHubClient
+from utils.libs.jsondb import JSONDB
+from utils.libs.reports import ReportException
 
 log = logger.logger
 
@@ -41,6 +44,7 @@ class Crawler(commands.AutoShardedBot):
         self.version = version
         self.owner = None
         self.testing = TESTING
+        self.db = JSONDB()
         self.token = GG.TOKEN
         self.prefixes = GG.PREFIXES
 
@@ -61,13 +65,13 @@ class Crawler(commands.AutoShardedBot):
 
 bot = Crawler(prefix=get_prefix, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"#help | {version}"),
+              activity=discord.Game(f"%help | {version}"),
               help_command=commands.DefaultHelpCommand(command_attrs={"name": "help"}))
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | #help | {version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | %help | {version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -132,6 +136,8 @@ async def on_command_error(ctx, error):
                     log.info(f"Error sending traceback: {e}")
         if isinstance(original, CrawlerException):
             return await ctx.send(str(original))
+        if isinstance(original, ReportException):
+            return await ctx.send(str(original))
         if isinstance(original, Forbidden):
             try:
                 return await ctx.author.send(
@@ -161,7 +167,7 @@ async def on_command_error(ctx, error):
 
     await ctx.send(
         f"Error: {str(error)}\nUh oh, that wasn't supposed to happen! "
-        f"Please join the Support Discord (#support) and tell the developer that: **{error_msg}!**")
+        f"Please join the Support Discord (%support) and tell the developer that: **{error_msg}!**")
     try:
         await owner.send(
             f"**{error_msg}**\n" \
@@ -185,4 +191,6 @@ if __name__ == "__main__":
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
+    orgs = ["CrawlerEmporium", "5etools"]
+    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)  # initialize
     bot.run(bot.token)

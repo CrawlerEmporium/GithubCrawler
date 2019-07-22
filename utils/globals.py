@@ -17,6 +17,10 @@ PREFIX = env('PREFIX')
 TOKEN = env('TOKEN')
 COGS = env('COGS')
 OWNER = int(env('OWNER'))
+GUILD = int(env('MAINGUILD'))
+GIDDY = 471422590829723665
+GITHUB_TOKEN = env('GITHUB_TOKEN')
+GITHUB_REPO = env('GITHUB_REPO')
 
 BOT = 574554734187380756
 PM_TRUE = True
@@ -31,6 +35,71 @@ def loadChannels(PREFIXESDB):
 
 
 PREFIXES = loadChannels(PREFIXESDB)
+
+
+BUG_LISTEN_CHANS = [
+    {
+        "id": 590812355504373793,
+        "identifier": "BUG",
+        "repo": "CrawlerEmporium/5eCrawler"
+    },
+    {
+        "id": 590812381123313664,
+        "identifier": "FR",
+        "repo": "CrawlerEmporium/5eCrawler"
+    },
+    {
+        "id": 601369635178151978,
+        "identifier": "PBUG",
+        "repo": "CrawlerEmporium/PokemonCrawler"
+    },
+    {
+        "id": 601369662030217217,
+        "identifier": "PFR",
+        "repo": "CrawlerEmporium/PokemonCrawler"
+    },
+    {
+        "id": 602780405518827540,
+        "identifier": "DBUG",
+        "repo": "CrawlerEmporium/DiscordCrawler"
+    },
+    {
+        "id": 602780442147684352,
+        "identifier": "DFR",
+        "repo": "CrawlerEmporium/DiscordCrawler"
+    },
+    {
+        "id": 602780421847253012,
+        "identifier": "GBUG",
+        "repo": "CrawlerEmporium/GithubCrawler"
+    },
+    {
+        "id": 602780489287467019,
+        "identifier": "GFR",
+        "repo": "CrawlerEmporium/GithubCrawler"
+    },
+    {
+        "id": 470673367628906496,
+        "identifier": "5ET",
+        "repo": "5etools/tracker"
+    },
+    {
+        "id": 594095427314384897,
+        "identifier": "R20",
+        "repo": "5etools/tracker"
+    }
+]
+
+REPO_ID_MAP = {
+    "CrawlerEmporium/5eCrawler": "BUG",
+    "CrawlerEmporium/PokemonCrawler":"PBUG",
+    "CrawlerEmporium/DiscordCrawler":"DBUG",
+    "CrawlerEmporium/GithubCrawler":"GBUG",
+    "5etools/tracker": "5ET"
+}
+
+TRACKER_CHAN_5ET = 593769144969723914
+TRACKER_CHAN = 590812637072195587
 
 
 def is_owner():

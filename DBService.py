@@ -6,7 +6,7 @@ from utils import logger
 
 log = logger.logger
 
-conn = sqlite3.connect('DiscordCrawler.db')
+conn = sqlite3.connect('GithubCrawler.db')
 c = conn.cursor()
 
 c.execute(
