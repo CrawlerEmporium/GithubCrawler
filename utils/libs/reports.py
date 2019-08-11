@@ -272,12 +272,20 @@ class Report:
                 embed.description = f"*{countNotes} notes*"
 
         split = self.report_id.split("-")
+        url = ""
         if split[0] == "R20":
-            embed.set_author(name=f"{self.report_id}",
-                             icon_url="https://cdn.discordapp.com/emojis/562116049475207178.png")
+            url = "https://cdn.discordapp.com/emojis/562116049475207178.png"
         if split[0] == "5ET":
-            embed.set_author(name=f"{self.report_id}",
-                             icon_url="https://images-ext-2.discordapp.net/external/8iZELuX3DXzfRIvIFX5_qHz5OdtQcOsxyiUSd3myb-g/%3Fsize%3D1024/https/cdn.discordapp.com/icons/363680385336606740/c6bfc30b26afd67e3f89c17975563488.webp")
+            url = "https://images-ext-2.discordapp.net/external/8iZELuX3DXzfRIvIFX5_qHz5OdtQcOsxyiUSd3myb-g/%3Fsize%3D1024/https/cdn.discordapp.com/icons/363680385336606740/c6bfc30b26afd67e3f89c17975563488.webp"
+        if split[0] == "BUG" or split[0] == "FR":
+            url = "https://images-ext-2.discordapp.net/external/cC5tnLUDKgw_urwQxMf1t7XHDGiY_zaiASVYQyIUeak/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/559331529378103317/dd8ba6c080cc25536d71a5cca75e82e4.webp"
+        if split[0] == "PBUG" or split[0] == "PFR":
+            url = "https://images-ext-1.discordapp.net/external/_GqRFUm-k0I0Bn_SVxrjLKDGh3Jn3QdIolw3bWsOjrg/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/574554734187380756/022b3cd708f9841e1847272cd52dbda1.webp"
+        if split[0] == "DBUG" or split[0] == "DFR":
+            url = "https://images-ext-2.discordapp.net/external/rWu6jSMoi6Ngejj9GcgMAC7CWRizUMZPFdvNDZ8D6Os/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/602774912595263490/3322f9c86f553dbb47f057b85a5e3d30.webp"
+        if split[0] == "GBUG" or split[0] == "GFR":
+            url = "https://images-ext-2.discordapp.net/external/WY_VfX_p8eL_a5_Xb1Zf1myV3lUmx2lMx_NLHFdkxKg/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/602779023151595546/f22de7baf09b8ba13135577059544895.webp"
+        embed.set_author(name=f"{self.report_id}", icon_url=url)
 
         return embed
 
