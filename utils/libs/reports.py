@@ -271,6 +271,14 @@ class Report:
             else:
                 embed.description = f"*{countNotes} notes*"
 
+        split = self.report_id.split("-")
+        if split[0] == "R20":
+            embed.set_author(name=f"{self.report_id}",
+                             icon_url="https://cdn.discordapp.com/emojis/562116049475207178.png")
+        if split[0] == "5E":
+            embed.set_author(name=f"{self.report_id}",
+                             icon_url="https://images-ext-2.discordapp.net/external/8iZELuX3DXzfRIvIFX5_qHz5OdtQcOsxyiUSd3myb-g/%3Fsize%3D1024/https/cdn.discordapp.com/icons/363680385336606740/c6bfc30b26afd67e3f89c17975563488.webp")
+
         return embed
 
     def get_github_desc(self, ctx, serverId):
@@ -342,7 +350,7 @@ class Report:
         else:
             username = attachment.author
         msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n" \
-            f"{reports_to_issues(attachment.message)}"
+              f"{reports_to_issues(attachment.message)}"
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
@@ -563,6 +571,7 @@ def get_next_report_num(identifier):
     id_nums[identifier] = num
     db.jset("reportnums", id_nums)
     return f"{num:0>3}"
+
 
 def reports_to_issues(text):
     """
