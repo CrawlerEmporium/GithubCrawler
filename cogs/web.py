@@ -161,7 +161,7 @@ class Web(commands.Cog):
         comment = data['comment']
         action = data['action']
         username = comment['user']['login']
-        if username == "5ecrawlreporter":
+        if username == "crawltracker":
             return  # don't infinitely add comments
 
         # only care about create
