@@ -191,6 +191,6 @@ if __name__ == "__main__":
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
-    orgs = ["CrawlerEmporium", "5etools"]
+    orgs = ["CrawlerEmporium", "5etools", "flapkan"]
     GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)  # initialize
     bot.run(bot.token)

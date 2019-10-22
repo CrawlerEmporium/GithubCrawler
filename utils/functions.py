@@ -21,7 +21,7 @@ def discord_trim(string):
 
 
 def gen_error_message():
-    subject = random.choice(['A kobold', 'The green dragon', 'The Frost Mage', '5eCrawler', 'The wizard',
+    subject = random.choice(['A kobold', 'The green dragon', 'The Frost Mage', 'GithubCrawler', 'The wizard',
                              'An iron golem', 'Giddy', 'Your mom', 'This bot', 'You', 'Me', 'The president',
                              'The Queen', 'Xanathar', 'Volo', 'This world'])
     verb = random.choice(['must be', 'should be', 'has been', 'will be', 'is being', 'was being'])

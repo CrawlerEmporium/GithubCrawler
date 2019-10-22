@@ -15,7 +15,7 @@ from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
     DOWNVOTE_REACTION, INFORMATION_REACTION
 
-ADMINS = [GG.OWNER,GG.GIDDY]
+ADMINS = [GG.OWNER, GG.GIDDY, GG.MPMB]
 
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
 FEATURE_RE = re.compile(r"\**Feature [Rr]equest\**:?\s?(.+?)(\n|$)")
@@ -183,6 +183,8 @@ class Github(commands.Cog):
         new_report.report_id = f"{identifier}-{id_num}"
         if ctx.guild.id == GG.GUILD:
             msg = await self.bot.get_channel(GG.TRACKER_CHAN_5ET).send(embed=new_report.get_embed())
+        elif ctx.guild.id == 533350585706217494:
+            msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB).send(embed=new_report.get_embed())
         else:
             msg = await self.bot.get_channel(GG.TRACKER_CHAN).send(embed=new_report.get_embed())
 
@@ -294,7 +296,7 @@ class Github(commands.Cog):
         if member.bot:
             return
 
-        if member.id == GG.GIDDY or member.id == GG.OWNER:
+        if member.id == GG.GIDDY or member.id == GG.OWNER or member.id == GG.MPMB:
             if emoji.name == UPVOTE_REACTION:
                 await report.force_accept(ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:

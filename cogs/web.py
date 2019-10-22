@@ -70,6 +70,8 @@ class Web(commands.Cog):
 
         if report.repo == GG.GUILD:
             await report.resolve(ContextProxy(self.bot), GG.GUILD, close_github_issue=False, pend=pend)
+        elif report.repo == 533350585706217494:
+            await report.resolve(ContextProxy(self.bot), 533350585706217494, close_github_issue=False, pend=pend)
         else:
             await report.resolve(ContextProxy(self.bot), 584842413135101990, close_github_issue=False, pend=pend)
         report.commit()
@@ -98,6 +100,8 @@ class Web(commands.Cog):
 
         if report.repo == GG.GUILD:
             await report.unresolve(ContextProxy(self.bot), GG.GUILD, open_github_issue=False)
+        elif report.repo == 533350585706217494:
+            await report.unresolve(ContextProxy(self.bot), 533350585706217494, open_github_issue=False)
         else:
             await report.unresolve(ContextProxy(self.bot), 584842413135101990, open_github_issue=False)
         report.commit()
@@ -128,6 +132,8 @@ class Web(commands.Cog):
         if EXEMPT_LABEL in label_names:  # issue changed from bug/fr to enhancement
             if report.repo == GG.GUILD:
                 await report.untrack(ctx, GG.GUILD)
+            elif report.repo == 533350585706217494:
+                await report.untrack(ctx, 533350585706217494)
             else:
                 await report.untrack(ctx, 584842413135101990)
         else:
@@ -141,6 +147,8 @@ class Web(commands.Cog):
             report.commit()
             if report.repo == GG.GUILD:
                 await report.update(ctx, GG.GUILD)
+            elif report.repo == 533350585706217494:
+                await report.update(ctx, 533350585706217494)
             else:
                 await report.update(ctx, 584842413135101990)
 
@@ -165,6 +173,9 @@ class Web(commands.Cog):
 
             if report.repo == GG.GUILD:
                 await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), GG.GUILD,
+                                     add_to_github=False)
+            elif report.repo == 533350585706217494:
+                await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), 533350585706217494,
                                      add_to_github=False)
             else:
                 await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), 584842413135101990,

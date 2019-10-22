@@ -40,6 +40,7 @@ VERI_KEY = {
 
 TRACKER_CHAN_5ET = 593769144969723914
 TRACKER_CHAN = 590812637072195587
+TRACKER_CHAN_MPMB = 631432292245569536
 GITHUB_BASE = "https://github.com"
 UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
@@ -202,6 +203,8 @@ class Report:
     async def setup_message(self, bot, guildID):
         if guildID == GG.GUILD:
             report_message = await bot.get_channel(TRACKER_CHAN_5ET).send(embed=self.get_embed())
+        elif guildID == 533350585706217494:
+            report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
         else:
             report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
         self.message = report_message.id
@@ -285,6 +288,8 @@ class Report:
             url = "https://images-ext-2.discordapp.net/external/rWu6jSMoi6Ngejj9GcgMAC7CWRizUMZPFdvNDZ8D6Os/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/602774912595263490/3322f9c86f553dbb47f057b85a5e3d30.webp"
         if split[0] == "GBUG" or split[0] == "GFR":
             url = "https://images-ext-2.discordapp.net/external/WY_VfX_p8eL_a5_Xb1Zf1myV3lUmx2lMx_NLHFdkxKg/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/602779023151595546/f22de7baf09b8ba13135577059544895.webp"
+        if split[0] == "MBUG" or split[0] == "MFR":
+            url = "https://images-ext-2.discordapp.net/external/GUcJpmeQNjUMdoufIMzDJeweAAwpn7FUsc7HhmhukWw/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/534277197955989524/316c64093a82f2e428743a6e3344d8da.webp"
         embed.set_author(name=f"{self.report_id}", icon_url=url)
 
         return embed
@@ -460,6 +465,8 @@ class Report:
         else:
             if serverId == GG.GUILD:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN_5ET).fetch_message(self.message)
+            elif serverId == 533350585706217494:
+                msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
             else:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN).fetch_message(self.message)
             if msg:

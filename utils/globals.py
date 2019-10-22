@@ -19,6 +19,7 @@ COGS = env('COGS')
 OWNER = int(env('OWNER'))
 GUILD = int(env('MAINGUILD'))
 GIDDY = 471422590829723665
+MPMB = 534277197955989524
 GITHUB_TOKEN = env('GITHUB_TOKEN')
 GITHUB_REPO = env('GITHUB_REPO')
 
@@ -87,6 +88,16 @@ BUG_LISTEN_CHANS = [
         "id": 594095427314384897,
         "identifier": "R20",
         "repo": "5etools/tracker"
+    },
+    {
+        "id": 554644051098337280,
+        "identifier": "MBUG",
+        "repo": "flapkan/mpmb-tracker"
+    },
+    {
+        "id": 636149281597685760,
+        "identifier": "MFR",
+        "repo": "flapkan/mpmb-tracker"
     }
 ]
 
@@ -95,6 +106,7 @@ REPO_ID_MAP = {
     "CrawlerEmporium/PokemonCrawler":"PBUG",
     "CrawlerEmporium/DiscordCrawler":"DBUG",
     "CrawlerEmporium/GithubCrawler":"GBUG",
+    "flapkan/mpmb-tracker": "MBUG",
     "5etools/tracker": "5ET"
 }
 
@@ -113,6 +125,7 @@ REACTIONS = [
 ]
 
 TRACKER_CHAN_5ET = 593769144969723914
+TRACKER_CHAN_MPMB = 631432292245569536
 TRACKER_CHAN = 590812637072195587
 
 
