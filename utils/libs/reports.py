@@ -203,7 +203,7 @@ class Report:
     async def setup_message(self, bot, guildID):
         if guildID == GG.GUILD:
             report_message = await bot.get_channel(TRACKER_CHAN_5ET).send(embed=self.get_embed())
-        elif guildID == 533350585706217494:
+        elif guildID == GG.MPMBS:
             report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
         else:
             report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
@@ -465,7 +465,7 @@ class Report:
         else:
             if serverId == GG.GUILD:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN_5ET).fetch_message(self.message)
-            elif serverId == 533350585706217494:
+            elif serverId == GG.MPMBS:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
             else:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN).fetch_message(self.message)

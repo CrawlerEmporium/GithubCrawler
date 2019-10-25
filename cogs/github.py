@@ -151,124 +151,143 @@ class Github(commands.Cog):
         """Owner only - Resolves a report."""
         if not ctx.message.author.id in ADMINS:
             return
-        report = Report.from_id(_id)
-        await report.resolve(ctx, ctx.guild.id, msg)
-        report.commit()
-        await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")
+        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
+           (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+           (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+            report = Report.from_id(_id)
+            await report.resolve(ctx, ctx.guild.id, msg)
+            report.commit()
+            await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['open'])
     async def unresolve(self, ctx, _id, *, msg=''):
         """Owner only - Unresolves a report."""
         if not ctx.message.author.id in ADMINS:
             return
-        report = Report.from_id(_id)
-        await report.unresolve(ctx, ctx.guild.id, msg)
-        report.commit()
-        await ctx.send(f"Unresolved `{report.report_id}`: {report.title}.")
+        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
+           (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+           (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+            report = Report.from_id(_id)
+            await report.unresolve(ctx, ctx.guild.id, msg)
+            report.commit()
+            await ctx.send(f"Unresolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['reassign'])
     async def reidentify(self, ctx, report_id, identifier):
         """Owner only - Changes the identifier of a report."""
         if not ctx.message.author.id in ADMINS:
             return
+        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
+                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+            identifier = identifier.upper()
+            id_num = get_next_report_num(identifier)
 
-        identifier = identifier.upper()
-        id_num = get_next_report_num(identifier)
+            report = Report.from_id(report_id)
+            new_report = copy.copy(report)
+            await report.resolve(ctx, ctx.guild.id, f"Reassigned as `{identifier}-{id_num}`.", False)
+            report.commit()
 
-        report = Report.from_id(report_id)
-        new_report = copy.copy(report)
-        await report.resolve(ctx, ctx.guild.id, f"Reassigned as `{identifier}-{id_num}`.", False)
-        report.commit()
+            new_report.report_id = f"{identifier}-{id_num}"
+            if ctx.guild.id == GG.GUILD:
+                msg = await self.bot.get_channel(GG.TRACKER_CHAN_5ET).send(embed=new_report.get_embed())
+            elif ctx.guild.id == GG.MPMBS:
+                msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB).send(embed=new_report.get_embed())
+            else:
+                msg = await self.bot.get_channel(GG.TRACKER_CHAN).send(embed=new_report.get_embed())
 
-        new_report.report_id = f"{identifier}-{id_num}"
-        if ctx.guild.id == GG.GUILD:
-            msg = await self.bot.get_channel(GG.TRACKER_CHAN_5ET).send(embed=new_report.get_embed())
-        elif ctx.guild.id == 533350585706217494:
-            msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB).send(embed=new_report.get_embed())
-        else:
-            msg = await self.bot.get_channel(GG.TRACKER_CHAN).send(embed=new_report.get_embed())
-
-        new_report.message = msg.id
-        if new_report.github_issue:
-            await new_report.update_labels()
-            await new_report.edit_title(f"{new_report.report_id} {new_report.title}")
-        new_report.commit()
-        await ctx.send(f"Reassigned {report.report_id} as {new_report.report_id}.")
+            new_report.message = msg.id
+            if new_report.github_issue:
+                await new_report.update_labels()
+                await new_report.edit_title(f"{new_report.report_id} {new_report.title}")
+            new_report.commit()
+            await ctx.send(f"Reassigned {report.report_id} as {new_report.report_id}.")
 
     @commands.command()
     async def rename(self, ctx, report_id, *, name):
         """Owner only - Changes the title of a report."""
         if not ctx.message.author.id in ADMINS:
             return
-
-        report = Report.from_id(report_id)
-        report.title = name
-        if report.github_issue:
-            await report.edit_title(f"{report.report_id} {report.title}")
-        report.commit()
-        await report.update(ctx, ctx.guild.id)
-        await ctx.send(f"Renamed {report.report_id} as {report.title}.")
+        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
+                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+            report = Report.from_id(report_id)
+            report.title = name
+            if report.github_issue:
+                await report.edit_title(f"{report.report_id} {report.title}")
+            report.commit()
+            await report.update(ctx, ctx.guild.id)
+            await ctx.send(f"Renamed {report.report_id} as {report.title}.")
 
     @commands.command(aliases=['pri'])
     async def priority(self, ctx, _id, pri: int, *, msg=''):
         """Owner only - Changes the priority of a report."""
         if not ctx.message.author.id in ADMINS:
             return
-        report = Report.from_id(_id)
+        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
+                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+            report = Report.from_id(_id)
 
-        report.severity = pri
-        if msg:
-            await report.addnote(ctx.message.author.id, f"Priority changed to {pri} - {msg}", ctx, ctx.guild.id)
+            report.severity = pri
+            if msg:
+                await report.addnote(ctx.message.author.id, f"Priority changed to {pri} - {msg}", ctx, ctx.guild.id)
 
-        if report.github_issue:
-            await report.update_labels()
+            if report.github_issue:
+                await report.update_labels()
 
-        report.commit()
-        await report.update(ctx, ctx.guild.id)
-        await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
+            report.commit()
+            await report.update(ctx, ctx.guild.id)
+            await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
 
     @commands.command(aliases=['pend'])
     async def pending(self, ctx, *reports):
         """Owner only - Marks reports as pending for next patch."""
         if not ctx.message.author.id in ADMINS:
             return
-        not_found = 0
-        for _id in reports:
-            try:
-                report = Report.from_id(_id)
-            except ReportException:
-                not_found += 1
-                continue
-            report.pend()
-            report.commit()
-            await report.update(ctx, ctx.guild.id)
-        if not not_found:
-            await ctx.send(f"Marked {len(reports)} reports as patch pending.")
-        else:
-            await ctx.send(f"Marked {len(reports)} reports as patch pending. {not_found} reports were not found.")
+        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
+                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+            not_found = 0
+            for _id in reports:
+                try:
+                    report = Report.from_id(_id)
+                except ReportException:
+                    not_found += 1
+                    continue
+                report.pend()
+                report.commit()
+                await report.update(ctx, ctx.guild.id)
+            if not not_found:
+                await ctx.send(f"Marked {len(reports)} reports as patch pending.")
+            else:
+                await ctx.send(f"Marked {len(reports)} reports as patch pending. {not_found} reports were not found.")
 
     @commands.command()
     async def update(self, ctx, build_id, *, msg=""):
         """Owner only - To be run after an update. Resolves all -P2 reports."""
         if not ctx.message.author.id in ADMINS:
             return
-        changelog = ""
-        for _id in list(set(self.bot.db.jget("pending-reports", []))):
-            report = Report.from_id(_id)
-            await report.resolve(ctx, ctx.guild.id, f"Patched in build {build_id}", ignore_closed=True)
-            report.commit()
-            action = "Fixed"
-            if not report.is_bug:
-                action = "Added"
-            if report.get_issue_link():
-                changelog += f"- {action} [`{report.report_id}`]({report.get_issue_link()}) {report.title}\n"
-            else:
-                changelog += f"- {action} `{report.report_id}` {report.title}\n"
-        changelog += msg
+        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
+                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+            changelog = ""
+            for _id in list(set(self.bot.db.jget("pending-reports", []))):
+                report = Report.from_id(_id)
+                await report.resolve(ctx, ctx.guild.id, f"Patched in build {build_id}", ignore_closed=True)
+                report.commit()
+                action = "Fixed"
+                if not report.is_bug:
+                    action = "Added"
+                if report.get_issue_link():
+                    changelog += f"- {action} [`{report.report_id}`]({report.get_issue_link()}) {report.title}\n"
+                else:
+                    changelog += f"- {action} `{report.report_id}` {report.title}\n"
+            changelog += msg
 
-        self.bot.db.jset("pending-reports", [])
-        await ctx.send(embed=discord.Embed(title=f"**Build {build_id}**", description=changelog, colour=0x87d37c))
-        await ctx.message.delete()
+            self.bot.db.jset("pending-reports", [])
+            await ctx.send(embed=discord.Embed(title=f"**Build {build_id}**", description=changelog, colour=0x87d37c))
+            await ctx.message.delete()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event):
@@ -296,7 +315,9 @@ class Github(commands.Cog):
         if member.bot:
             return
 
-        if member.id == GG.GIDDY or member.id == GG.OWNER or member.id == GG.MPMB:
+        if (server.id == GG.GUILD and member.id == GG.GIDDY) or \
+                (server.id == GG.MPMBS and member.id == GG.MPMB) or \
+                (server.id == GG.CRAWLER and member.id == GG.OWNER):
             if emoji.name == UPVOTE_REACTION:
                 await report.force_accept(ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:

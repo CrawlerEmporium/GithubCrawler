@@ -17,9 +17,13 @@ PREFIX = env('PREFIX')
 TOKEN = env('TOKEN')
 COGS = env('COGS')
 OWNER = int(env('OWNER'))
-GUILD = int(env('MAINGUILD'))
-GIDDY = 471422590829723665
-MPMB = 534277197955989524
+GIDDY = int(env('GIDDY'))
+MPMB = int(env('MPMB'))
+
+GUILD = int(env('GUILD'))
+CRAWLER = int(env('CRAWLER'))
+MPMBS = int(env('MPMBS'))
+
 GITHUB_TOKEN = env('GITHUB_TOKEN')
 GITHUB_REPO = env('GITHUB_REPO')
 
