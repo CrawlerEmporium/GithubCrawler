@@ -431,7 +431,13 @@ class Report:
     async def force_deny(self, ctx, serverId):
         self.severity = -1
         await self.notify_subscribers(ctx, f"Report closed.")
-        await self.addnote(GG.OWNER, f"Resolved - This report was denied.", ctx, serverId)
+        if serverId == GG.GUILD:
+            owner = GG.GIDDY
+        elif serverId == GG.MPMBS:
+            owner = GG.MPMB
+        else:
+            owner = GG.OWNER
+        await self.addnote(owner, f"Resolved - This report was denied.", ctx, serverId)
 
         msg_ = await self.get_message(ctx, serverId)
         if msg_:
