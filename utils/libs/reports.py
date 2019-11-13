@@ -228,14 +228,14 @@ class Report:
         embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
         if not self.is_bug:
             embed.colour = 0x00ff00
-            embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + "` | `\u2b07" + str(self.downvotes), inline=False)
+            embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes))
             vote_msg = "Vote by reacting"
             if not self.github_issue:
                 vote_msg += f" | {GITHUB_THRESHOLD} upvotes required to track"
             embed.set_footer(text=f"!report {self.report_id} for details or react with ℹ | {vote_msg}")
         else:
             embed.colour = 0xff0000
-            embed.add_field(name="Verification", value=str(self.verification), inline=False)
+            embed.add_field(name="Verification", value=str(self.verification))
             embed.set_footer(
                 text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
 
