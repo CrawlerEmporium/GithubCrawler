@@ -297,76 +297,7 @@ class Github(commands.Cog):
         reports = self.bot.db.jget("reports", {})
         # 2 in attachments veri
         if (ctx.guild.id == GG.GUILD):
-            async with ctx.channel.typing():
-                BOOSTERS = ctx.guild.get_role(585540203704483860)
-                T2 = ctx.guild.get_role(606989073453678602)
-                T3 = ctx.guild.get_role(606989264051503124)
-                serverReports = []
-                toolsReports = []
-                for _id, report in reports.items():
-                    if "5etools/tracker" in report.get('github_repo', []):
-                        toolsReports.append(report)
-                start = await ctx.send(f"Checking {len(toolsReports)} suggestions for their upvotes.")
-                curr = 0
-                msg = await ctx.send(
-                    printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
-                                     length=abs(math.floor((len(toolsReports) / 6)))))
-                for report in toolsReports:
-                    if report['severity'] != -1:
-                        attachments = report['attachments']
-                        upvotes = 0
-                        print(f"Cycling through {len(attachments)} attachments for {report['report_id']}")
-                        for attachment in attachments:
-                            if attachment['veri'] == 2:
-                                try:
-                                    if any(d['id'] == attachment['author'] for d in self.userCache):
-                                        cache = next(
-                                            (item for item in self.userCache if item['id'] == attachment['author']),
-                                            None)
-                                        user = cache['user']
-                                    else:
-                                        user = await ctx.guild.fetch_member(attachment['author'])
-                                        cache = {
-                                            "id": attachment['author'],
-                                            "user": user
-                                        }
-                                        self.userCache.append(cache)
-                                    if BOOSTERS in user.roles:
-                                        upvotes += 1
-                                    if T2 in user.roles:
-                                        upvotes += 1
-                                    if T3 in user.roles:
-                                        upvotes += 2
-                                    upvotes += 1
-                                except NotFound:
-                                    upvotes += 1
-                        rep = {
-                            "report_id": report['report_id'],
-                            "title": report['title'],
-                            "upvotes": upvotes,
-                        }
-                        serverReports.append(rep)
-                    curr += 1
-                    if curr % 10 == 0:
-                        progress = printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
-                                                    length=abs(math.floor((len(toolsReports) / 6))))
-                        await msg.edit(content=progress)
-                sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
-                embed = GG.EmbedWithAuthor(ctx)
-                if top <= 0:
-                    top = 10
-                if top >= 25:
-                    top = 25
-                embed.title = f"Top {top} most upvoted suggestions."
-                i = 1
-                for report in sortedList[:top]:
-                    embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
-                                    value=f"{report['report_id']}: {report['title']}", inline=False)
-                    i += 1
-                await msg.edit(embed=embed, content="")
-                await start.delete()
-                return
-
+            return await self.GUILDTFLOP(ctx, reports, top)
         if (ctx.guild.id == GG.MPMBS):
             server = "flapkan/mpmb-tracker"
         if (ctx.guild.id == GG.CRAWLER):
@@ -395,6 +326,123 @@ class Github(commands.Cog):
             i += 1
         await ctx.send(embed=embed)
 
+    async def GUILDTFLOP(self, ctx, reports, top, flop=False):
+        async with ctx.channel.typing():
+            BOOSTERS = ctx.guild.get_role(585540203704483860)
+            T2 = ctx.guild.get_role(606989073453678602)
+            T3 = ctx.guild.get_role(606989264051503124)
+            serverReports = []
+            toolsReports = []
+            for _id, report in reports.items():
+                if "5etools/tracker" in report.get('github_repo', []):
+                    toolsReports.append(report)
+            if flop:
+                start = await ctx.send(f"Checking {len(toolsReports)} suggestions for their downvotes.")
+            else:
+                start = await ctx.send(f"Checking {len(toolsReports)} suggestions for their upvotes.")
+            curr = 0
+            msg = await ctx.send(
+                printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
+                                 length=abs(math.floor((len(toolsReports) / 5)))))
+            for report in toolsReports:
+                if report['severity'] != -1:
+                    attachments = report['attachments']
+                    upvotes = 0
+                    downvotes = 0
+                    print(f"Cycling through {len(attachments)} attachments for {report['report_id']}")
+                    for attachment in attachments:
+                        if flop:
+                            if attachment['veri'] == -2:
+                                try:
+                                    if any(d['id'] == attachment['author'] for d in self.userCache):
+                                        cache = next(
+                                            (item for item in self.userCache if item['id'] == attachment['author']),
+                                            None)
+                                        user = cache['user']
+                                    else:
+                                        user = await ctx.guild.fetch_member(attachment['author'])
+                                        cache = {
+                                            "id": attachment['author'],
+                                            "user": user
+                                        }
+                                        self.userCache.append(cache)
+                                    if BOOSTERS in user.roles:
+                                        downvotes += 1
+                                    if T2 in user.roles:
+                                        downvotes += 1
+                                    if T3 in user.roles:
+                                        downvotes += 2
+                                    downvotes += 1
+                                except NotFound:
+                                    downvotes += 1
+                        else:
+                            if attachment['veri'] == 2:
+                                try:
+                                    if any(d['id'] == attachment['author'] for d in self.userCache):
+                                        cache = next(
+                                            (item for item in self.userCache if item['id'] == attachment['author']),
+                                            None)
+                                        user = cache['user']
+                                    else:
+                                        user = await ctx.guild.fetch_member(attachment['author'])
+                                        cache = {
+                                            "id": attachment['author'],
+                                            "user": user
+                                        }
+                                        self.userCache.append(cache)
+                                    if BOOSTERS in user.roles:
+                                        upvotes += 1
+                                    if T2 in user.roles:
+                                        upvotes += 1
+                                    if T3 in user.roles:
+                                        upvotes += 2
+                                    upvotes += 1
+                                except NotFound:
+                                    upvotes += 1
+                    if flop:
+                        rep = {
+                            "report_id": report['report_id'],
+                            "title": report['title'],
+                            "downvotes": downvotes,
+                        }
+                    else:
+                        rep = {
+                            "report_id": report['report_id'],
+                            "title": report['title'],
+                            "upvotes": upvotes,
+                        }
+                    serverReports.append(rep)
+                curr += 1
+                if curr % 8 == 0:
+                    progress = printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
+                                                length=abs(math.floor((len(toolsReports) / 5))))
+                    await msg.edit(content=progress)
+            if flop:
+                sortedList = sorted(serverReports, key=lambda k: k['downvotes'], reverse=True)
+            else:
+                sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
+            embed = GG.EmbedWithAuthor(ctx)
+            if top <= 0:
+                top = 10
+            if top >= 25:
+                top = 25
+            if flop:
+                embed.title = f"Top {top} most downvoted suggestions."
+            else:
+                embed.title = f"Top {top} most upvoted suggestions."
+            i = 1
+            for report in sortedList[:top]:
+                if flop:
+                    embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
+                                    value=f"{report['report_id']}: {report['title']}", inline=False)
+                else:
+                    embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
+                                    value=f"{report['report_id']}: {report['title']}", inline=False)
+                i += 1
+            await msg.edit(embed=embed, content="")
+            await start.delete()
+            return
+
     @commands.command()
     @commands.guild_only()
     async def flop(self, ctx, top=10):
@@ -403,7 +451,7 @@ class Github(commands.Cog):
         reports = self.bot.db.jget("reports", {})
 
         if (ctx.guild.id == GG.GUILD):
-            server = "5etools/tracker"
+            return await self.GUILDTFLOP(ctx, reports, top, flop=True)
         if (ctx.guild.id == GG.MPMBS):
             server = "flapkan/mpmb-tracker"
         if (ctx.guild.id == GG.CRAWLER):
