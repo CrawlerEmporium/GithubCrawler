@@ -228,7 +228,7 @@ class Report:
         embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
         if not self.is_bug:
             embed.colour = 0x00ff00
-            embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + "` | `\u2b07" + str(self.downvotes))
+            embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes))
             vote_msg = "Vote by reacting"
             if not self.github_issue:
                 vote_msg += f" | {GITHUB_THRESHOLD} upvotes required to track"
@@ -267,7 +267,7 @@ class Report:
                                 user = attachment.author
                         msg = attachment.message[:1020] or "No details."
                         embed.add_field(name=f"{VERI_EMOJI.get(attachment.veri, '')} {user}",
-                                        value=msg)
+                                        value=msg, inline=False)
                         countAttachments += 1
             if countNotes >= 10:
                 embed.description = f"*{countNotes} notes, showing first 10*"
