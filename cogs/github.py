@@ -1,8 +1,10 @@
 import copy
+import math
 import random
 import re
 
 import discord
+from discord import NotFound
 from discord.ext import commands
 
 import utils.globals as GG
@@ -22,6 +24,7 @@ FEATURE_RE = re.compile(r"\**Feature [Rr]equest\**:?\s?(.+?)(\n|$)")
 class Github(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.userCache = []
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -292,9 +295,78 @@ class Github(commands.Cog):
     async def top(self, ctx, top=10):
         """Gets top x or top 10"""
         reports = self.bot.db.jget("reports", {})
-
+        # 2 in attachments veri
         if (ctx.guild.id == GG.GUILD):
-            server = "5etools/tracker"
+            async with ctx.channel.typing():
+                BOOSTERS = ctx.guild.get_role(585540203704483860)
+                T2 = ctx.guild.get_role(606989073453678602)
+                T3 = ctx.guild.get_role(606989264051503124)
+                serverReports = []
+                toolsReports = []
+                for _id, report in reports.items():
+                    if "5etools/tracker" in report.get('github_repo', []):
+                        toolsReports.append(report)
+                start = await ctx.send(f"Checking {len(toolsReports)} suggestions for their upvotes.")
+                curr = 0
+                msg = await ctx.send(
+                    printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
+                                     length=abs(math.floor((len(toolsReports) / 6)))))
+                for report in toolsReports:
+                    if report['severity'] != -1:
+                        attachments = report['attachments']
+                        upvotes = 0
+                        print(f"Cycling through {len(attachments)} attachments for {report['report_id']}")
+                        for attachment in attachments:
+                            if attachment['veri'] == 2:
+                                try:
+                                    if any(d['id'] == attachment['author'] for d in self.userCache):
+                                        cache = next(
+                                            (item for item in self.userCache if item['id'] == attachment['author']),
+                                            None)
+                                        user = cache['user']
+                                    else:
+                                        user = await ctx.guild.fetch_member(attachment['author'])
+                                        cache = {
+                                            "id": attachment['author'],
+                                            "user": user
+                                        }
+                                        self.userCache.append(cache)
+                                    if BOOSTERS in user.roles:
+                                        upvotes += 1
+                                    if T2 in user.roles:
+                                        upvotes += 1
+                                    if T3 in user.roles:
+                                        upvotes += 2
+                                    upvotes += 1
+                                except NotFound:
+                                    upvotes += 1
+                        rep = {
+                            "report_id": report['report_id'],
+                            "title": report['title'],
+                            "upvotes": upvotes,
+                        }
+                        serverReports.append(rep)
+                    curr += 1
+                    if curr % 10 == 0:
+                        progress = printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
+                                                    length=abs(math.floor((len(toolsReports) / 6))))
+                        await msg.edit(content=progress)
+                sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
+                embed = GG.EmbedWithAuthor(ctx)
+                if top <= 0:
+                    top = 10
+                if top >= 25:
+                    top = 25
+                embed.title = f"Top {top} most upvoted suggestions."
+                i = 1
+                for report in sortedList[:top]:
+                    embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
+                                    value=f"{report['report_id']}: {report['title']}", inline=False)
+                    i += 1
+                await msg.edit(embed=embed, content="")
+                await start.delete()
+                return
+
         if (ctx.guild.id == GG.MPMBS):
             server = "flapkan/mpmb-tracker"
         if (ctx.guild.id == GG.CRAWLER):
@@ -318,7 +390,8 @@ class Github(commands.Cog):
         embed.title = f"Top {top} most upvoted suggestions."
         i = 1
         for report in sortedList[:top]:
-            embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes", value=f"{report['report_id']}: {report['title']}", inline=False)
+            embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
+                            value=f"{report['report_id']}: {report['title']}", inline=False)
             i += 1
         await ctx.send(embed=embed)
 
@@ -326,6 +399,7 @@ class Github(commands.Cog):
     @commands.guild_only()
     async def flop(self, ctx, top=10):
         """Gets top x or top 10"""
+        # -2 in attachment
         reports = self.bot.db.jget("reports", {})
 
         if (ctx.guild.id == GG.GUILD):
@@ -357,7 +431,6 @@ class Github(commands.Cog):
                             value=f"{report['report_id']}: {report['title']}", inline=False)
             i += 1
         await ctx.send(embed=embed)
-
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event):
@@ -430,6 +503,25 @@ class Github(commands.Cog):
         #     report.subscribers.append(member.id)
         report.commit()
         await report.update(ContextProxy(self.bot), server.id)
+
+
+def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', printEnd="\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    return f'{prefix} |{bar}| {percent}% {suffix}'
 
 
 def setup(bot):

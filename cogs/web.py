@@ -1,14 +1,13 @@
 import asyncio
-import re
 
 from aiohttp import web
 from discord.ext import commands
 
+import utils.globals as GG
+from utils import logger
 from utils.libs.github import GitHubClient
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import Report, ReportException
-import utils.globals as GG
-from utils import logger
 
 log = logger.logger
 
@@ -41,7 +40,6 @@ class Web(commands.Cog):
             await self.issue_comment_handler(data)
 
         return web.Response()
-
 
     async def issues_handler(self, data):
         repo_name = data['repository']['full_name']
