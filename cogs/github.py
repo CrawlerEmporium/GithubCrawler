@@ -1,19 +1,17 @@
 import copy
 import random
 import re
-import typing
+
 import discord
 from discord.ext import commands
+
 import utils.globals as GG
 from utils import logger
-
-log = logger.logger
-
-from utils.libs.github import GitHubClient
-from utils.libs.jsondb import JSONDB
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
     DOWNVOTE_REACTION, INFORMATION_REACTION
+
+log = logger.logger
 
 ADMINS = [GG.OWNER, GG.GIDDY, GG.MPMB]
 
@@ -152,8 +150,8 @@ class Github(commands.Cog):
         if not ctx.message.author.id in ADMINS:
             return
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-           (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-           (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
             report = Report.from_id(_id)
             await report.resolve(ctx, ctx.guild.id, msg)
             report.commit()
@@ -165,8 +163,8 @@ class Github(commands.Cog):
         if not ctx.message.author.id in ADMINS:
             return
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-           (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-           (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
+                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
             report = Report.from_id(_id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             report.commit()
@@ -288,6 +286,78 @@ class Github(commands.Cog):
             self.bot.db.jset("pending-reports", [])
             await ctx.send(embed=discord.Embed(title=f"**Build {build_id}**", description=changelog, colour=0x87d37c))
             await ctx.message.delete()
+
+    @commands.command()
+    @commands.guild_only()
+    async def top(self, ctx, top=10):
+        """Gets top x or top 10"""
+        reports = self.bot.db.jget("reports", {})
+
+        if (ctx.guild.id == GG.GUILD):
+            server = "5etools/tracker"
+        if (ctx.guild.id == GG.MPMBS):
+            server = "flapkan/mpmb-tracker"
+        if (ctx.guild.id == GG.CRAWLER):
+            server = "CrawlerEmporium/5eCrawler"
+        serverReports = []
+        for _id, report in reports.items():
+            if server in report.get('github_repo', []):
+                if report['severity'] != -1:
+                    rep = {
+                        "report_id": report['report_id'],
+                        "title": report['title'],
+                        "upvotes": report['upvotes']
+                    }
+                    serverReports.append(rep)
+        sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
+        embed = GG.EmbedWithAuthor(ctx)
+        if top <= 0:
+            top = 10
+        if top >= 25:
+            top = 25
+        embed.title = f"Top {top} most upvoted suggestions."
+        i = 1
+        for report in sortedList[:top]:
+            embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes", value=f"{report['report_id']}: {report['title']}", inline=False)
+            i += 1
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.guild_only()
+    async def flop(self, ctx, top=10):
+        """Gets top x or top 10"""
+        reports = self.bot.db.jget("reports", {})
+
+        if (ctx.guild.id == GG.GUILD):
+            server = "5etools/tracker"
+        if (ctx.guild.id == GG.MPMBS):
+            server = "flapkan/mpmb-tracker"
+        if (ctx.guild.id == GG.CRAWLER):
+            server = "CrawlerEmporium/5eCrawler"
+        serverReports = []
+        for _id, report in reports.items():
+            if server in report.get('github_repo', []):
+                if int(report['downvotes']) >= 1 and report['severity'] != -1:
+                    rep = {
+                        "report_id": report['report_id'],
+                        "title": report['title'],
+                        "downvotes": report['downvotes']
+                    }
+                    serverReports.append(rep)
+        sortedList = sorted(serverReports, key=lambda k: k['downvotes'], reverse=True)
+        embed = GG.EmbedWithAuthor(ctx)
+        if top <= 0:
+            top = 10
+        if top >= 25:
+            top = 25
+        embed.title = f"Top {top} most downvoted suggestions."
+        i = 1
+        for report in sortedList[:top]:
+            embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
+                            value=f"{report['report_id']}: {report['title']}", inline=False)
+            i += 1
+        await ctx.send(embed=embed)
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event):
