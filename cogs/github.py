@@ -24,7 +24,7 @@ FEATURE_RE = re.compile(r"\**Feature [Rr]equest\**:?\s?(.+?)(\n|$)")
 class Github(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.userCache = []
+        self.userCache = set()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -328,49 +328,32 @@ class Github(commands.Cog):
 
     async def GUILDTFLOP(self, ctx, reports, top, flop=False):
         async with ctx.channel.typing():
-            BOOSTERS = ctx.guild.get_role(585540203704483860)
-            T2 = ctx.guild.get_role(606989073453678602)
-            T3 = ctx.guild.get_role(606989264051503124)
+            BOOSTERMEMBERS = [x.id for x in ctx.guild.get_role(585540203704483860).members]
+            T2MEMBERS = [x.id for x in ctx.guild.get_role(606989073453678602).members]
+            T3MEMBERS = [x.id for x in ctx.guild.get_role(606989264051503124).members]
             serverReports = []
             toolsReports = []
             for _id, report in reports.items():
                 if "5etools/tracker" in report.get('github_repo', []):
                     toolsReports.append(report)
             if flop:
-                start = await ctx.send(f"Checking {len(toolsReports)} suggestions for their downvotes.")
+                msg = await ctx.send(f"Checking {len(toolsReports)} suggestions for their downvotes...")
             else:
-                start = await ctx.send(f"Checking {len(toolsReports)} suggestions for their upvotes.")
-            curr = 0
-            msg = await ctx.send(
-                printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
-                                 length=abs(math.floor((len(toolsReports) / 5)))))
+                msg = await ctx.send(f"Checking {len(toolsReports)} suggestions for their upvotes...")
             for report in toolsReports:
                 if report['severity'] != -1:
                     attachments = report['attachments']
                     upvotes = 0
                     downvotes = 0
-                    print(f"Cycling through {len(attachments)} attachments for {report['report_id']}")
                     for attachment in attachments:
                         if flop:
                             if attachment['veri'] == -2:
                                 try:
-                                    if any(d['id'] == attachment['author'] for d in self.userCache):
-                                        cache = next(
-                                            (item for item in self.userCache if item['id'] == attachment['author']),
-                                            None)
-                                        user = cache['user']
-                                    else:
-                                        user = await ctx.guild.fetch_member(attachment['author'])
-                                        cache = {
-                                            "id": attachment['author'],
-                                            "user": user
-                                        }
-                                        self.userCache.append(cache)
-                                    if BOOSTERS in user.roles:
+                                    if attachment['author'] in BOOSTERMEMBERS:
                                         downvotes += 1
-                                    if T2 in user.roles:
+                                    if attachment['author'] in T2MEMBERS:
                                         downvotes += 1
-                                    if T3 in user.roles:
+                                    if attachment['author'] in T3MEMBERS:
                                         downvotes += 2
                                     downvotes += 1
                                 except NotFound:
@@ -378,23 +361,11 @@ class Github(commands.Cog):
                         else:
                             if attachment['veri'] == 2:
                                 try:
-                                    if any(d['id'] == attachment['author'] for d in self.userCache):
-                                        cache = next(
-                                            (item for item in self.userCache if item['id'] == attachment['author']),
-                                            None)
-                                        user = cache['user']
-                                    else:
-                                        user = await ctx.guild.fetch_member(attachment['author'])
-                                        cache = {
-                                            "id": attachment['author'],
-                                            "user": user
-                                        }
-                                        self.userCache.append(cache)
-                                    if BOOSTERS in user.roles:
+                                    if attachment['author'] in BOOSTERMEMBERS:
                                         upvotes += 1
-                                    if T2 in user.roles:
+                                    if attachment['author'] in T2MEMBERS:
                                         upvotes += 1
-                                    if T3 in user.roles:
+                                    if attachment['author'] in T3MEMBERS:
                                         upvotes += 2
                                     upvotes += 1
                                 except NotFound:
@@ -412,11 +383,6 @@ class Github(commands.Cog):
                             "upvotes": upvotes,
                         }
                     serverReports.append(rep)
-                curr += 1
-                if curr % 8 == 0:
-                    progress = printProgressBar(curr, len(toolsReports), prefix="Progress:", suffix="Complete",
-                                                length=abs(math.floor((len(toolsReports) / 5))))
-                    await msg.edit(content=progress)
             if flop:
                 sortedList = sorted(serverReports, key=lambda k: k['downvotes'], reverse=True)
             else:
@@ -440,7 +406,6 @@ class Github(commands.Cog):
                                     value=f"{report['report_id']}: {report['title']}", inline=False)
                 i += 1
             await msg.edit(embed=embed, content="")
-            await start.delete()
             return
 
     @commands.command()
