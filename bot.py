@@ -28,7 +28,7 @@ log = logger.logger
 version = "v1.0"
 SHARD_COUNT = 1
 TESTING = False
-defaultPrefix = GG.PREFIX if not TESTING else '#'
+defaultPrefix = GG.PREFIX if not TESTING else '*'
 
 
 def get_prefix(b, message):
@@ -65,13 +65,13 @@ class Crawler(commands.AutoShardedBot):
 
 bot = Crawler(prefix=get_prefix, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"%help | {version}"),
-              help_command=commands.DefaultHelpCommand(command_attrs={"name": "help"}))
+              activity=discord.Game(f"!github | {version}"),
+              help_command=commands.DefaultHelpCommand(command_attrs={"name": "github"}))
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(f"with Github | !help | {version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -101,7 +101,7 @@ async def on_guild_join(guild):
         await asyncio.sleep(members / 200)
         await guild.leave()
     else:
-        await bot.change_presence(activity=discord.Game(f"with Github | !help | {version}"),
+        await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"),
                                   afk=True)
 
 
