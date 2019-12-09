@@ -25,7 +25,7 @@ from utils.libs.reports import ReportException
 
 log = logger.logger
 
-version = "v1.0"
+version = "v1.0.1"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '*'
