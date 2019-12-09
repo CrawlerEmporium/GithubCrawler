@@ -375,12 +375,14 @@ class Github(commands.Cog):
                             "report_id": report['report_id'],
                             "title": report['title'],
                             "downvotes": downvotes,
+                            "message": report['message']
                         }
                     else:
                         rep = {
                             "report_id": report['report_id'],
                             "title": report['title'],
                             "upvotes": upvotes,
+                            "message": report['message']
                         }
                     serverReports.append(rep)
             if flop:
@@ -397,13 +399,19 @@ class Github(commands.Cog):
             else:
                 embed.title = f"Top {top} most upvoted suggestions."
             i = 1
+            channel = await ctx.bot.fetch_channel(593769144969723914)
             for report in sortedList[:top]:
+                try:
+                    message = await channel.fetch_message(report['message'])
+                    msg_url = f"[Link]({message.jump_url})"
+                except:
+                    msg_url = f"No Link"
                 if flop:
                     embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
-                                    value=f"{report['report_id']}: {report['title']}", inline=False)
+                                    value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
                 else:
                     embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
-                                    value=f"{report['report_id']}: {report['title']}", inline=False)
+                                    value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
                 i += 1
             await msg.edit(embed=embed, content="")
             return
