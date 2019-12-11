@@ -23,21 +23,18 @@ class Migration(commands.Cog):
         updated = 0
         inserted = 0
         reports = db.jget("reports", {})
+        collection = MDB['Reports']
         for report in reports.items():
             (report_id, report) = report
-            reportId  = report['report_id']
-            collection = MDB['Reports']
+            reportId = report['report_id']
             found = await collection.find_one({"report_id": reportId})
             if found is not None:
-                print(f"Old: {found}")
-                print(f"New: {report}")
-                print("-------------------------------")
                 await collection.replace_one({"report_id": reportId}, report)
                 updated += 1
             else:
                 await collection.insert_one(report)
                 inserted += 1
-
+        print("Reports:")
         print(f"Inserted: {inserted}")
         print(f"Updated: {updated}")
 

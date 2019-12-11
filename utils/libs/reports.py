@@ -73,19 +73,26 @@ class Attachment:
     def cnr(cls, author, msg=''):
         return cls(author, msg, -1)
 
+
+message_ids = {}
+
+
 def each(result, error):
+    i = 0
     if error:
         raise error
     elif result:
-        print(result['report_id'])
+        message_ids[i] = result['report_id']
+
 
 class Report:
     message_cache = LRUCache(maxsize=100)
-    message_ids = {}
-    i = 0
+
     collection = GG.MDB['Reports']
     cursor = collection.find()
     cursor.each(callback=each)
+
+    messageIds = message_ids
 
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None, github_repo: str = None,
@@ -168,7 +175,7 @@ class Report:
 
     @classmethod
     def from_message_id(cls, message_id):
-        report_id = Report.message_ids.get(message_id)
+        report_id = Report.messageIds.get(message_id)
         if report_id:
             reports = cls.collection.find({})
             try:
@@ -214,7 +221,7 @@ class Report:
         else:
             report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
         self.message = report_message.id
-        Report.message_ids[report_message.id] = self.report_id
+        Report.messageIds[report_message.id] = self.report_id
         if not self.is_bug:
             await report_message.add_reaction(UPVOTE_REACTION)
             await report_message.add_reaction(DOWNVOTE_REACTION)
@@ -452,8 +459,8 @@ class Report:
                 await msg_.delete()
                 if self.message in Report.message_cache:
                     del Report.message_cache[self.message]
-                if self.message in Report.message_ids:
-                    del Report.message_ids[self.message]
+                if self.message in Report.messageIds:
+                    del Report.messageIds[self.message]
             finally:
                 self.message = None
 
@@ -493,8 +500,8 @@ class Report:
                 await msg_.delete()
                 if self.message in Report.message_cache:
                     del Report.message_cache[self.message]
-                if self.message in Report.message_ids:
-                    del Report.message_ids[self.message]
+                if self.message in Report.messageIds:
+                    del Report.messageIds[self.message]
             finally:
                 self.message = None
 

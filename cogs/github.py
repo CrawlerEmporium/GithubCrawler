@@ -1,9 +1,8 @@
 import copy
+import decimal
 import random
 import re
-import decimal
 
-import discord
 from discord import NotFound
 from discord.ext import commands
 
@@ -16,6 +15,7 @@ from utils.libs.reports import get_next_report_num, Report, ReportException, Att
 log = logger.logger
 
 ADMINS = [GG.OWNER, GG.GIDDY, GG.MPMB]
+REPORTS = []
 
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
 FEATURE_RE = re.compile(r"\**Feature [Rr]equest\**:?\s?(.+?)(\n|$)")
@@ -26,6 +26,21 @@ async def round_down(value, decimals):
         d = decimal.Decimal(value)
         ctx.rounding = decimal.ROUND_DOWN
         return round(d, decimals)
+
+
+def loop(result, error):
+    if error:
+        raise error
+    elif result:
+        REPORTS.append(result)
+
+
+def getAllReports():
+    collection = GG.MDB['Reports']
+    cursor = collection.find()
+    REPORTS.clear()
+    cursor.each(callback=loop)
+    return REPORTS
 
 
 class Github(commands.Cog):
@@ -142,16 +157,16 @@ class Github(commands.Cog):
     @commands.command()
     async def unsuball(self, ctx):
         """Unsubscribes from all reports."""
-        reports = self.bot.db.jget("reports", {})
+        reports = getAllReports()
         num_unsubbed = 0
+        collection = GG.MDB['Reports']
 
-        for _id, report in reports.items():
+        for report in reports:
             if ctx.message.author.id in report.get('subscribers', []):
                 report['subscribers'].remove(ctx.message.author.id)
                 num_unsubbed += 1
-                reports[_id] = report
+                await collection.replace_one({"report_id": report['report_id']}, report)
 
-        self.bot.db.jset("reports", reports)
         await ctx.send(f"OK, unsubscribed from {num_unsubbed} reports.")
 
     # OWNER METHODS
@@ -249,69 +264,21 @@ class Github(commands.Cog):
             await report.update(ctx, ctx.guild.id)
             await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
 
-    @commands.command(aliases=['pend'])
-    async def pending(self, ctx, *reports):
-        """Owner only - Marks reports as pending for next patch."""
-        if not ctx.message.author.id in ADMINS:
-            return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
-            not_found = 0
-            for _id in reports:
-                try:
-                    report = await Report.from_id(_id)
-                except ReportException:
-                    not_found += 1
-                    continue
-                await report.pend()
-                await report.commit()
-                await report.update(ctx, ctx.guild.id)
-            if not not_found:
-                await ctx.send(f"Marked {len(reports)} reports as patch pending.")
-            else:
-                await ctx.send(f"Marked {len(reports)} reports as patch pending. {not_found} reports were not found.")
-
-    @commands.command()
-    async def update(self, ctx, build_id, *, msg=""):
-        """Owner only - To be run after an update. Resolves all -P2 reports."""
-        if not ctx.message.author.id in ADMINS:
-            return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
-            changelog = ""
-            for _id in list(set(self.bot.db.jget("pending-reports", []))):
-                report = await Report.from_id(_id)
-                await report.resolve(ctx, ctx.guild.id, f"Patched in build {build_id}", ignore_closed=True)
-                await report.commit()
-                action = "Fixed"
-                if not report.is_bug:
-                    action = "Added"
-                if report.get_issue_link():
-                    changelog += f"- {action} [`{report.report_id}`]({report.get_issue_link()}) {report.title}\n"
-                else:
-                    changelog += f"- {action} `{report.report_id}` {report.title}\n"
-            changelog += msg
-
-            self.bot.db.jset("pending-reports", [])
-            await ctx.send(embed=discord.Embed(title=f"**Build {build_id}**", description=changelog, colour=0x87d37c))
-            await ctx.message.delete()
-
     @commands.command()
     @commands.guild_only()
     async def top(self, ctx, top=10):
         """Gets top x or top 10"""
-        reports = self.bot.db.jget("reports", {})
-        # 2 in attachments veri
+        reports = getAllReports()
+
         if (ctx.guild.id == GG.GUILD):
             return await self.GUILDTFLOP(ctx, reports, top)
         if (ctx.guild.id == GG.MPMBS):
             server = "flapkan/mpmb-tracker"
         if (ctx.guild.id == GG.CRAWLER):
             server = "CrawlerEmporium/5eCrawler"
+
         serverReports = []
-        for _id, report in reports.items():
+        for report in reports:
             if server in report.get('github_repo', []):
                 if report['severity'] != -1:
                     rep = {
@@ -341,7 +308,7 @@ class Github(commands.Cog):
             T3MEMBERS = [x.id for x in ctx.guild.get_role(606989264051503124).members]
             serverReports = []
             toolsReports = []
-            for _id, report in reports.items():
+            for report in reports:
                 if "5etools/tracker" in report.get('github_repo', []):
                     toolsReports.append(report)
             if flop:
@@ -422,7 +389,7 @@ class Github(commands.Cog):
     async def flop(self, ctx, top=10):
         """Gets top x or top 10"""
         # -2 in attachment
-        reports = self.bot.db.jget("reports", {})
+        reports = getAllReports()
 
         if (ctx.guild.id == GG.GUILD):
             return await self.GUILDTFLOP(ctx, reports, top, flop=True)
@@ -430,8 +397,9 @@ class Github(commands.Cog):
             server = "flapkan/mpmb-tracker"
         if (ctx.guild.id == GG.CRAWLER):
             server = "CrawlerEmporium/5eCrawler"
+
         serverReports = []
-        for _id, report in reports.items():
+        for report in reports:
             if server in report.get('github_repo', []):
                 if int(report['downvotes']) >= 1 and report['severity'] != -1:
                     rep = {
