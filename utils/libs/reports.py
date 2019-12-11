@@ -1,15 +1,10 @@
 import re
-from math import ceil
 
 import discord
 from cachetools import LRUCache
 
 import utils.globals as GG
 from utils.libs.github import GitHubClient
-from utils.libs.jsondb import JSONDB
-
-db = JSONDB()  # something something instancing
-
 PRIORITY = {
     -2: "Patch Pending", -1: "Resolved",
     0: "P0: Critical", 1: "P1: Very High", 2: "P2: High", 3: "P3: Medium", 4: "P4: Low", 5: "P5: Trivial",
@@ -78,11 +73,19 @@ class Attachment:
     def cnr(cls, author, msg=''):
         return cls(author, msg, -1)
 
+def each(result, error):
+    if error:
+        raise error
+    elif result:
+        print(result['report_id'])
 
 class Report:
     message_cache = LRUCache(maxsize=100)
-    message_ids = {report.get('message'): id_ for id_, report in db.jget('reports', {}).items() if
-                   report.get('message')}
+    message_ids = {}
+    i = 0
+    collection = GG.MDB['Reports']
+    cursor = collection.find()
+    cursor.each(callback=each)
 
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None, github_repo: str = None,
@@ -108,6 +111,7 @@ class Report:
         self.downvotes = downvotes
 
         self.verification = verification
+        self.collection = GG.MDB['Reports']
 
     @classmethod
     async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None):
@@ -119,18 +123,19 @@ class Report:
         return inst
 
     @classmethod
-    def new_from_issue(cls, repo_name, issue):
+    async def new_from_issue(cls, repo_name, issue):
         attachments = [Attachment("GitHub", issue['body'])]
         title = issue['title']
         id_match = re.match(r'([A-Z]{3,})(-\d+)?\s', issue['title'])
         if id_match:
             identifier = id_match.group(1)
-            report_num = get_next_report_num(identifier)
+            report_num = await get_next_report_num(identifier)
             report_id = f"{identifier}-{report_num}"
             title = title[len(id_match.group(0)):]
         else:
             identifier = identifier_from_repo(repo_name)
-            report_id = f"{identifier}-{get_next_report_num(identifier)}"
+            report_num = await get_next_report_num(identifier)
+            report_id = f"{identifier}-{report_num}"
 
         is_bug = 'featurereq' not in [lab['name'] for lab in issue['labels']]
 
@@ -153,10 +158,11 @@ class Report:
         }
 
     @classmethod
-    def from_id(cls, report_id):
-        reports = db.jget("reports", {})
+    async def from_id(cls, report_id):
+        report = await cls.collection.find_one({"report_id" : report_id})
+        del report['_id']
         try:
-            return cls.from_dict(reports[report_id.upper()])
+            return cls.from_dict(report)
         except KeyError:
             raise ReportException("Report not found.")
 
@@ -164,7 +170,7 @@ class Report:
     def from_message_id(cls, message_id):
         report_id = Report.message_ids.get(message_id)
         if report_id:
-            reports = db.jget("reports", {})
+            reports = cls.collection.find({})
             try:
                 return cls.from_dict(reports[report_id.upper()])
             except KeyError:
@@ -173,7 +179,7 @@ class Report:
 
     @classmethod
     def from_github(cls, repo_name, issue_num):
-        reports = db.jget("reports", {})
+        reports = cls.collection.find({})
         try:
             return cls.from_dict(
                 next(r for r in reports.values() if
@@ -191,7 +197,7 @@ class Report:
             labels = ["bug"]
         else:
             labels = ["featurereq"]
-        desc = self.get_github_desc(ctx, serverId)
+        desc = await self.get_github_desc(ctx, serverId)
 
         issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc,
                                                                labels)
@@ -214,10 +220,8 @@ class Report:
             await report_message.add_reaction(DOWNVOTE_REACTION)
             await report_message.add_reaction("ℹ")
 
-    def commit(self):
-        reports = db.jget("reports", {})
-        reports[self.report_id] = self.to_dict()
-        db.jset("reports", reports)
+    async def commit(self):
+        await self.collection.replace_one({"report_id" : self.report_id}, self.to_dict())
 
     def get_embed(self, detailed=False, ctx=None):
         embed = discord.Embed()
@@ -294,7 +298,7 @@ class Report:
 
         return embed
 
-    def get_github_desc(self, ctx, serverId):
+    async def get_github_desc(self, ctx, serverId):
         msg = self.title
         if self.attachments:
             msg = self.attachments[0].message
@@ -325,7 +329,8 @@ class Report:
                     pass
                 i += attachment.veri // 2
                 msg = ''
-                for line in self.get_attachment_message(ctx, attachment).strip().splitlines():
+                attachMessage = await self.get_attachment_message(ctx, attachment)
+                for line in attachMessage.strip().splitlines():
                     msg += f"> {line}\n"
                 desc += f"\n\n{msg}"
             desc += f"\nVotes: +{self.upvotes} / -{self.downvotes}"
@@ -334,7 +339,8 @@ class Report:
                 if attachment.message:
                     continue
                 msg = ''
-                for line in self.get_attachment_message(ctx, attachment).strip().splitlines():
+                attachMessage = await self.get_attachment_message(ctx, attachment)
+                for line in attachMessage.strip().splitlines():
                     msg += f"> {line}\n"
                 desc += f"\n\n{msg}"
             desc += f"\nVerification: {self.verification}"
@@ -350,20 +356,21 @@ class Report:
         self.attachments.append(attachment)
         if add_to_github and self.github_issue:
             if attachment.message:
-                msg = self.get_attachment_message(ctx, attachment)
+                msg = await self.get_attachment_message(ctx, attachment)
                 await GitHubClient.get_instance().add_issue_comment(self.repo, self.github_issue, msg)
 
             if attachment.veri:
-                await GitHubClient.get_instance().edit_issue_body(self.repo, self.github_issue,
-                                                                  self.get_github_desc(ctx, serverId))
+                gitDesc = await self.get_github_desc(ctx, serverId)
+                await GitHubClient.get_instance().edit_issue_body(self.repo, self.github_issue, gitDesc)
 
-    def get_attachment_message(self, ctx, attachment: Attachment):
+    async def get_attachment_message(self, ctx, attachment: Attachment):
         if isinstance(attachment.author, int):
             username = str(next((m for m in ctx.bot.get_all_members() if m.id == attachment.author), attachment.author))
         else:
             username = attachment.author
+        reportIssue = await reports_to_issues(attachment.message)
         msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n" \
-              f"{reports_to_issues(attachment.message)}"
+            f"{reportIssue}"
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
@@ -526,7 +533,7 @@ class Report:
             await GitHubClient.get_instance().close_issue(self.repo, self.github_issue)
 
         if pend:
-            self.pend()
+            await self.pend()
 
     async def unresolve(self, ctx, serverId, msg='', open_github_issue=True):
         if not self.severity == -1:
@@ -535,7 +542,7 @@ class Report:
         self.severity = 6
         await self.notify_subscribers(ctx, f"Report unresolved.")
         if msg:
-            await self.addnote(ctx.message.author.id, f"Unresolved - {msg}", ctx)
+            await self.addnote(ctx.message.author.id, f"Unresolved - {msg}", ctx, serverId)
 
         await self.setup_message(ctx.bot, serverId)
 
@@ -547,14 +554,12 @@ class Report:
         if self.github_issue:
             await GitHubClient.get_instance().rename_issue(self.repo, self.github_issue, self.title)
 
-        reports = db.jget("reports", {})
-        del reports[self.report_id]
-        db.jset("reports", reports)
+        await self.collection.delete_one({"report_id": self.report_id})
 
-    def pend(self):
-        pending = db.jget("pending-reports", [])
-        pending.append(self.report_id)
-        db.jset("pending-reports", pending)
+
+    async def pend(self):
+        collection = GG.MDB['PendingReports']
+        await collection.insert_one(self.report_id)
 
     def get_labels(self):
         labels = [PRIORITY_LABELS.get(self.severity)]
@@ -586,23 +591,24 @@ class Report:
                 continue
 
 
-def get_next_report_num(identifier):
-    id_nums = db.jget("reportnums", {})
-    num = id_nums.get(identifier, 0) + 1
-    id_nums[identifier] = num
-    db.jset("reportnums", id_nums)
+async def get_next_report_num(identifier):
+    collection = GG.MDB['ReportNums']
+    reportNum = collection.find_one({'key': f'{identifier}'})
+    num = reportNum['amount'] + 1
+    reportNum['amount'] += 1
+    await collection.replace_one({"key": f'{identifier}'}, reportNum)
     return f"{num:0>3}"
 
 
-def reports_to_issues(text):
+async def reports_to_issues(text):
     """
     Parses all XYZ-### identifiers and adds a link to their GitHub Issue numbers.
     """
 
-    def report_sub(match):
+    async def report_sub(match):
         report_id = match.group(1)
         try:
-            report = Report.from_id(report_id)
+            report = await Report.from_id(report_id)
         except ReportException:
             return report_id
 

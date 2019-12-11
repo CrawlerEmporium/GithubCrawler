@@ -72,7 +72,7 @@ class Web(commands.Cog):
             await report.resolve(ContextProxy(self.bot), GG.MPMBS, close_github_issue=False, pend=pend)
         else:
             await report.resolve(ContextProxy(self.bot), GG.CRAWLER, close_github_issue=False, pend=pend)
-        report.commit()
+        await report.commit()
 
     async def report_opened(self, data):
         issue = data['issue']
@@ -86,7 +86,7 @@ class Web(commands.Cog):
             if EXEMPT_LABEL in issue_labels:
                 return None
 
-            report = Report.new_from_issue(repo_name, issue)
+            report = await Report.new_from_issue(repo_name, issue)
             if not issue['title'].startswith(report.report_id):
                 formatted_title = f"{report.report_id} {report.title}"
                 await GitHubClient.get_instance().rename_issue(repo_name, issue['number'], formatted_title)
@@ -102,7 +102,7 @@ class Web(commands.Cog):
             await report.unresolve(ContextProxy(self.bot), GG.MPMBS, open_github_issue=False)
         else:
             await report.unresolve(ContextProxy(self.bot), GG.CRAWLER, open_github_issue=False)
-        report.commit()
+        await report.commit()
 
         return report
 
@@ -142,7 +142,7 @@ class Web(commands.Cog):
                     break
             report.severity = priority
             report.is_bug = FEATURE_LABEL in label_names
-            report.commit()
+            await report.commit()
             if report.repo == GG.GUILD:
                 await report.update(ctx, GG.GUILD)
             elif report.repo == GG.MPMBS:
@@ -178,7 +178,7 @@ class Web(commands.Cog):
             else:
                 await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), GG.CRAWLER,
                                      add_to_github=False)
-            report.commit()
+            await report.commit()
             await report.update(ContextProxy(self.bot))
 
     def run_app(self, app, *, host='0.0.0.0', port=None, ssl_context=None, backlog=128):

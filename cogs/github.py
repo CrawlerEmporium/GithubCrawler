@@ -1,5 +1,4 @@
 import copy
-import math
 import random
 import re
 
@@ -50,7 +49,7 @@ class Github(commands.Cog):
 
         if match and identifier:
             title = match.group(1).strip(" *.\n")
-            report_num = get_next_report_num(identifier)
+            report_num = await get_next_report_num(identifier)
             report_id = f"{identifier}-{report_num}"
 
             report = await Report.new(message.author.id, report_id, title,
@@ -59,7 +58,7 @@ class Github(commands.Cog):
                 await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
             await report.setup_message(self.bot, message.guild.id)
-            report.commit()
+            await report.commit()
             await message.add_reaction(random.choice(GG.REACTIONS))
 
     # USER METHODS
@@ -67,69 +66,70 @@ class Github(commands.Cog):
     @commands.command(name="report")
     async def viewreport(self, ctx, _id):
         """Gets the detailed status of a report."""
-        await ctx.send(embed=Report.from_id(_id).get_embed(True, ctx))
+        report = await Report.from_id(_id)
+        await ctx.send(embed=report.get_embed(True, ctx))
 
     @commands.command(aliases=['cr'])
     async def canrepro(self, ctx, _id, *, msg=''):
         """Adds reproduction to a report."""
-        report = Report.from_id(_id)
+        report = await Report.from_id(_id)
         await report.canrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
-        report.commit()
+        await report.commit()
         await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['up'])
     async def upvote(self, ctx, _id, *, msg=''):
         """Adds an upvote to the selected feature request."""
-        report = Report.from_id(_id)
+        report = await Report.from_id(_id)
         await report.upvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
-        report.commit()
+        await report.commit()
         await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['cnr'])
     async def cannotrepro(self, ctx, _id, *, msg=''):
         """Adds nonreproduction to a report."""
-        report = Report.from_id(_id)
+        report = await Report.from_id(_id)
         await report.cannotrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
-        report.commit()
+        await report.commit()
         await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['down'])
     async def downvote(self, ctx, _id, *, msg=''):
         """Adds a downvote to the selected feature request."""
-        report = Report.from_id(_id)
+        report = await Report.from_id(_id)
         await report.downvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
-        report.commit()
+        await report.commit()
         await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
         await report.update(ctx, ctx.guild.id)
 
     @commands.command()
     async def note(self, ctx, _id, *, msg=''):
         """Adds a note to a report."""
-        report = Report.from_id(_id)
+        report = await Report.from_id(_id)
         await report.addnote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
-        report.commit()
+        await report.commit()
         await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['sub'])
     async def subscribe(self, ctx, report_id):
         """Subscribes to a report."""
-        report = Report.from_id(report_id)
+        report = await Report.from_id(report_id)
         if ctx.message.author.id in report.subscribers:
             report.unsubscribe(ctx)
             await ctx.send(f"OK, unsubscribed from `{report.report_id}` - {report.title}.")
         else:
             report.subscribe(ctx)
             await ctx.send(f"OK, subscribed to `{report.report_id}` - {report.title}.")
-        report.commit()
+        await report.commit()
 
     @commands.command()
     async def unsuball(self, ctx):
@@ -155,9 +155,9 @@ class Github(commands.Cog):
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
                 (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
                 (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
-            report = Report.from_id(_id)
+            report = await Report.from_id(_id)
             await report.resolve(ctx, ctx.guild.id, msg)
-            report.commit()
+            await report.commit()
             await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['open'])
@@ -168,9 +168,9 @@ class Github(commands.Cog):
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
                 (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
                 (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
-            report = Report.from_id(_id)
+            report = await Report.from_id(_id)
             await report.unresolve(ctx, ctx.guild.id, msg)
-            report.commit()
+            await report.commit()
             await ctx.send(f"Unresolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['reassign'])
@@ -182,12 +182,12 @@ class Github(commands.Cog):
                 (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
                 (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
             identifier = identifier.upper()
-            id_num = get_next_report_num(identifier)
+            id_num = await get_next_report_num(identifier)
 
-            report = Report.from_id(report_id)
+            report = await Report.from_id(report_id)
             new_report = copy.copy(report)
             await report.resolve(ctx, ctx.guild.id, f"Reassigned as `{identifier}-{id_num}`.", False)
-            report.commit()
+            await report.commit()
 
             new_report.report_id = f"{identifier}-{id_num}"
             if ctx.guild.id == GG.GUILD:
@@ -201,7 +201,7 @@ class Github(commands.Cog):
             if new_report.github_issue:
                 await new_report.update_labels()
                 await new_report.edit_title(f"{new_report.report_id} {new_report.title}")
-            new_report.commit()
+            await new_report.commit()
             await ctx.send(f"Reassigned {report.report_id} as {new_report.report_id}.")
 
     @commands.command()
@@ -212,11 +212,11 @@ class Github(commands.Cog):
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
                 (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
                 (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
-            report = Report.from_id(report_id)
+            report = await Report.from_id(report_id)
             report.title = name
             if report.github_issue:
                 await report.edit_title(f"{report.report_id} {report.title}")
-            report.commit()
+            await report.commit()
             await report.update(ctx, ctx.guild.id)
             await ctx.send(f"Renamed {report.report_id} as {report.title}.")
 
@@ -228,7 +228,7 @@ class Github(commands.Cog):
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
                 (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
                 (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
-            report = Report.from_id(_id)
+            report = await Report.from_id(_id)
 
             report.severity = pri
             if msg:
@@ -237,7 +237,7 @@ class Github(commands.Cog):
             if report.github_issue:
                 await report.update_labels()
 
-            report.commit()
+            await report.commit()
             await report.update(ctx, ctx.guild.id)
             await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
 
@@ -252,12 +252,12 @@ class Github(commands.Cog):
             not_found = 0
             for _id in reports:
                 try:
-                    report = Report.from_id(_id)
+                    report = await Report.from_id(_id)
                 except ReportException:
                     not_found += 1
                     continue
-                report.pend()
-                report.commit()
+                await report.pend()
+                await report.commit()
                 await report.update(ctx, ctx.guild.id)
             if not not_found:
                 await ctx.send(f"Marked {len(reports)} reports as patch pending.")
@@ -274,9 +274,9 @@ class Github(commands.Cog):
                 (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
             changelog = ""
             for _id in list(set(self.bot.db.jget("pending-reports", []))):
-                report = Report.from_id(_id)
+                report = await Report.from_id(_id)
                 await report.resolve(ctx, ctx.guild.id, f"Patched in build {build_id}", ignore_closed=True)
-                report.commit()
+                await report.commit()
                 action = "Fixed"
                 if not report.is_bug:
                     action = "Added"
@@ -497,7 +497,7 @@ class Github(commands.Cog):
             else:
                 print(f"Force denying {report.title}")
                 await report.force_deny(ContextProxy(self.bot), server.id)
-                report.commit()
+                await report.commit()
                 return
         else:
             try:
@@ -522,7 +522,7 @@ class Github(commands.Cog):
                 await member.send(str(e))
         # if member.id not in report.subscribers:
         #     report.subscribers.append(member.id)
-        report.commit()
+        await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
 
 

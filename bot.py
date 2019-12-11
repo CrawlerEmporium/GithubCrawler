@@ -1,15 +1,9 @@
 import asyncio
-import os
-import logging
-import random
-import string
-import sys
 import traceback
 
 import discord
 from aiohttp import ClientResponseError, ClientOSError
 from discord import Forbidden, HTTPException, InvalidArgument, NotFound
-import DBService
 import utils.globals as GG
 from errors import CrawlerException, InvalidArgument, EvaluationError
 
@@ -20,14 +14,13 @@ from discord.ext.commands import CommandInvokeError
 from discord.ext import commands
 from utils.functions import gen_error_message, discord_trim
 from utils.libs.github import GitHubClient
-from utils.libs.jsondb import JSONDB
 from utils.libs.reports import ReportException
 
 log = logger.logger
 
 version = "v1.0.1"
 SHARD_COUNT = 1
-TESTING = False
+TESTING = True
 defaultPrefix = GG.PREFIX if not TESTING else '*'
 
 
@@ -44,7 +37,6 @@ class Crawler(commands.AutoShardedBot):
         self.version = version
         self.owner = None
         self.testing = TESTING
-        self.db = JSONDB()
         self.token = GG.TOKEN
         self.prefixes = GG.PREFIXES
 

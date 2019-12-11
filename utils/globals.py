@@ -1,5 +1,4 @@
 import random
-import string
 import time
 
 import discord
@@ -9,6 +8,7 @@ from discord import VerificationLevel as VL
 from discord import VoiceRegion as VR
 
 from DBService import DBService
+import motor.motor_asyncio
 
 env = Env()
 env.read_env()
@@ -104,6 +104,23 @@ BUG_LISTEN_CHANS = [
         "repo": "flapkan/mpmb-tracker"
     }
 ]
+
+def getServer(repo):
+    if repo == "flapkan/mpmb-tracker":
+        return "MPMB"
+    if repo == "5etools/tracker":
+        return "5eTools"
+    if repo == "5ecrawler/tracker":
+        return "Crawlers"
+    if "CrawlerEmporium" in repo:
+        return "Crawlers"
+    else:
+        return "Unknown"
+
+def getAllServers():
+    return ['MPMB','5eTools','Crawlers','Unknown']
+
+MDB = motor.motor_asyncio.AsyncIOMotorClient(env('MONGODB'))['issuetracking']
 
 REPO_ID_MAP = {
     "CrawlerEmporium/5eCrawler": "BUG",

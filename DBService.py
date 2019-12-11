@@ -1,6 +1,5 @@
 import sqlite3
 import asyncio
-import time
 
 from utils import logger
 
