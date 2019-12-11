@@ -1,6 +1,7 @@
 import copy
 import random
 import re
+import decimal
 
 import discord
 from discord import NotFound
@@ -18,6 +19,13 @@ ADMINS = [GG.OWNER, GG.GIDDY, GG.MPMB]
 
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
 FEATURE_RE = re.compile(r"\**Feature [Rr]equest\**:?\s?(.+?)(\n|$)")
+
+
+async def round_down(value, decimals):
+    with decimal.localcontext() as ctx:
+        d = decimal.Decimal(value)
+        ctx.rounding = decimal.ROUND_DOWN
+        return round(d, decimals)
 
 
 class Github(commands.Cog):
@@ -346,49 +354,42 @@ class Github(commands.Cog):
                     upvotes = 0
                     downvotes = 0
                     for attachment in attachments:
-                        if flop:
-                            if attachment['veri'] == -2:
-                                try:
-                                    if attachment['author'] in BOOSTERMEMBERS:
-                                        downvotes += 1
-                                    if attachment['author'] in T2MEMBERS:
-                                        downvotes += 1
-                                    if attachment['author'] in T3MEMBERS:
-                                        downvotes += 2
+                        if attachment['veri'] == -2:
+                            try:
+                                if attachment['author'] in BOOSTERMEMBERS:
                                     downvotes += 1
-                                except NotFound:
+                                if attachment['author'] in T2MEMBERS:
                                     downvotes += 1
-                        else:
-                            if attachment['veri'] == 2:
-                                try:
-                                    if attachment['author'] in BOOSTERMEMBERS:
-                                        upvotes += 1
-                                    if attachment['author'] in T2MEMBERS:
-                                        upvotes += 1
-                                    if attachment['author'] in T3MEMBERS:
-                                        upvotes += 2
+                                if attachment['author'] in T3MEMBERS:
+                                    downvotes += 2
+                                downvotes += 1
+                            except NotFound:
+                                downvotes += 1
+                        if attachment['veri'] == 2:
+                            try:
+                                if attachment['author'] in BOOSTERMEMBERS:
                                     upvotes += 1
-                                except NotFound:
+                                if attachment['author'] in T2MEMBERS:
                                     upvotes += 1
-                    if flop:
-                        rep = {
-                            "report_id": report['report_id'],
-                            "title": report['title'],
-                            "downvotes": downvotes,
-                            "message": report['message']
-                        }
-                    else:
-                        rep = {
-                            "report_id": report['report_id'],
-                            "title": report['title'],
-                            "upvotes": upvotes,
-                            "message": report['message']
-                        }
+                                if attachment['author'] in T3MEMBERS:
+                                    upvotes += 2
+                                upvotes += 1
+                            except NotFound:
+                                upvotes += 1
+                    rep = {
+                        "report_id": report['report_id'],
+                        "title": report['title'],
+                        "upvotes": upvotes,
+                        "downvotes": downvotes,
+                        "message": report['message'],
+                        "rating": (0 - downvotes) + upvotes,
+                        "total": downvotes + upvotes
+                    }
                     serverReports.append(rep)
             if flop:
-                sortedList = sorted(serverReports, key=lambda k: k['downvotes'], reverse=True)
+                sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=False)
             else:
-                sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
+                sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=True)
             embed = GG.EmbedWithAuthor(ctx)
             if top <= 0:
                 top = 10
@@ -406,12 +407,12 @@ class Github(commands.Cog):
                     msg_url = f"[Link]({message.jump_url})"
                 except:
                     msg_url = f"No Link"
-                if flop:
-                    embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
-                                    value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
-                else:
-                    embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
-                                    value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
+
+                perc = 100 * float(report['upvotes']) / float(report['total'])
+                percRounded = await round_down(perc, 2)
+
+                embed.add_field(name=f"**#{i} - {report['rating']}** points ({str(percRounded)}% upvotes)",
+                                value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
                 i += 1
             await msg.edit(embed=embed, content="")
             return
