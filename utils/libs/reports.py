@@ -1,10 +1,10 @@
-import re
-
 import discord
+import re
 from cachetools import LRUCache
 
 import utils.globals as GG
 from utils.libs.github import GitHubClient
+
 PRIORITY = {
     -2: "Patch Pending", -1: "Resolved",
     0: "P0: Critical", 1: "P1: Very High", 2: "P2: High", 3: "P3: Medium", 4: "P4: Low", 5: "P5: Trivial",
@@ -95,8 +95,8 @@ class Report:
     messageIds = message_ids
 
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
-                 message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None, github_repo: str = None,
-                 subscribers: list = None, is_bug: bool = True):
+                 message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None,
+                 github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None):
         if subscribers is None:
             subscribers = []
         if github_repo is None:
@@ -119,14 +119,15 @@ class Report:
 
         self.verification = verification
         self.collection = GG.MDB['Reports']
+        self.jumpUrl = jumpUrl
 
     @classmethod
-    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None):
+    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
         inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug,
-                   github_repo=repo)
+                   github_repo=repo, jumpUrl=jumpUrl)
         return inst
 
     @classmethod
@@ -161,12 +162,12 @@ class Report:
             'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
-            'is_bug': self.is_bug
+            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl
         }
 
     @classmethod
     async def from_id(cls, report_id):
-        report = await cls.collection.find_one({"report_id" : report_id})
+        report = await cls.collection.find_one({"report_id": report_id})
         del report['_id']
         try:
             return cls.from_dict(report)
@@ -228,7 +229,7 @@ class Report:
             await report_message.add_reaction("ℹ")
 
     async def commit(self):
-        await self.collection.replace_one({"report_id" : self.report_id}, self.to_dict())
+        await self.collection.replace_one({"report_id": self.report_id}, self.to_dict())
 
     def get_embed(self, detailed=False, ctx=None):
         embed = discord.Embed()
@@ -249,6 +250,9 @@ class Report:
             embed.add_field(name="Verification", value=str(self.verification))
             embed.set_footer(
                 text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
+
+        if self.jumpUrl is not None:
+            embed.add_field(name="Original Request Link", value=str(self.jumpUrl))
 
         embed.title = f"`{self.report_id}` {self.title}"
         if len(embed.title) > 256:
@@ -377,7 +381,7 @@ class Report:
             username = attachment.author
         reportIssue = await reports_to_issues(attachment.message)
         msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n" \
-            f"{reportIssue}"
+              f"{reportIssue}"
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
@@ -562,7 +566,6 @@ class Report:
             await GitHubClient.get_instance().rename_issue(self.repo, self.github_issue, self.title)
 
         await self.collection.delete_one({"report_id": self.report_id})
-
 
     async def pend(self):
         collection = GG.MDB['PendingReports']

@@ -76,7 +76,7 @@ class Github(commands.Cog):
             report_id = f"{identifier}-{report_num}"
 
             report = await Report.new(message.author.id, report_id, title,
-                                      [Attachment(message.author.id, message.content)], is_bug=is_bug, repo=repo)
+                                      [Attachment(message.author.id, message.content)], is_bug=is_bug, repo=repo, jumpUrl=message.jump_url)
             if is_bug:
                 await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
