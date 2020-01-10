@@ -175,19 +175,20 @@ class Report:
             raise ReportException("Report not found.")
 
     @classmethod
-    def from_message_id(cls, message_id):
-        report_id = Report.messageIds.get(message_id)
-        if report_id:
-            reports = cls.collection.find({})
+    async def from_message_id(cls, message_id):
+        report = await cls.collection.find_one({"message": message_id})
+        if report is not None:
+            del report['_id']
             try:
-                return cls.from_dict(reports[report_id.upper()])
+                return cls.from_dict(report)
             except KeyError:
                 raise ReportException("Report not found.")
-        raise ReportException("Report not found.")
+        else:
+            raise ReportException("Report not found.")
 
     @classmethod
     def from_github(cls, repo_name, issue_num):
-        reports = cls.collection.find({})
+        reports = cls.collection.find_one({"github_repo": repo_name, "github_issue": issue_num})
         try:
             return cls.from_dict(
                 next(r for r in reports.values() if
@@ -229,7 +230,7 @@ class Report:
             await report_message.add_reaction("ℹ")
 
     async def commit(self):
-        await self.collection.replace_one({"report_id": self.report_id}, self.to_dict())
+        await self.collection.replace_one({"report_id": self.report_id}, self.to_dict(), upsert=True)
 
     def get_embed(self, detailed=False, ctx=None):
         embed = discord.Embed()
@@ -603,7 +604,7 @@ class Report:
 
 async def get_next_report_num(identifier):
     collection = GG.MDB['ReportNums']
-    reportNum = collection.find_one({'key': f'{identifier}'})
+    reportNum = await collection.find_one({'key': f'{identifier}'})
     num = reportNum['amount'] + 1
     reportNum['amount'] += 1
     await collection.replace_one({"key": f'{identifier}'}, reportNum)

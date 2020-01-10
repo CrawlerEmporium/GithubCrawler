@@ -439,7 +439,7 @@ class Github(commands.Cog):
             return
 
         try:
-            report = Report.from_message_id(msg_id)
+            report = await Report.from_message_id(msg_id)
         except ReportException:
             return
 
