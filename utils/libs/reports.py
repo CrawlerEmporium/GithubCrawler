@@ -607,8 +607,16 @@ async def get_next_report_num(identifier):
     reportNum = await collection.find_one({'key': f'{identifier}'})
     num = reportNum['amount'] + 1
     reportNum['amount'] += 1
+    num = formatNumber(num)
     await collection.replace_one({"key": f'{identifier}'}, reportNum)
-    return f"{num:0>3}"
+    return f"{num}"
+
+
+def formatNumber(num):
+    if num % 1 == 0:
+        return int(num)
+    else:
+        return num
 
 
 async def reports_to_issues(text):
