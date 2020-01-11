@@ -73,7 +73,6 @@ class Github(commands.Cog):
         if match and identifier:
             title = match.group(1).strip(" *.\n")
             report_num = await get_next_report_num(identifier)
-            print(report_num)
             report_id = f"{identifier}-{report_num}"
 
             report = await Report.new(message.author.id, report_id, title,
