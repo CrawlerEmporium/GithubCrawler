@@ -73,7 +73,7 @@ class Github(commands.Cog):
         if match and identifier:
             title = match.group(1).strip(" *.\n")
             report_num = await get_next_report_num(identifier)
-            report_id = f"{identifier}-{report_num}"
+            report_id = f"{identifier}-{report_num:0>3}"
 
             report = await Report.new(message.author.id, report_id, title,
                                       [Attachment(message.author.id, message.content)], is_bug=is_bug, repo=repo, jumpUrl=message.jump_url)
