@@ -238,7 +238,7 @@ class Github(commands.Cog):
             report = await Report.from_id(report_id)
             report.title = name
             if report.github_issue:
-                await report.edit_title(f"{report.title}")
+                await report.edit_title(f"{report.title}", f"{report.report_id} ")
             await report.commit()
             await report.update(ctx, ctx.guild.id)
             await ctx.send(f"Renamed {report.report_id} as {report.title}.")

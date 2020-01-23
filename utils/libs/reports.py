@@ -588,9 +588,10 @@ class Report:
         labels = self.get_labels()
         await GitHubClient.get_instance().label_issue(self.repo, self.github_issue, labels)
 
-    async def edit_title(self, new_title):
+    async def edit_title(self, new_title, idnum=""):
         self.title = new_title
-        await GitHubClient.get_instance().rename_issue(self.repo, self.github_issue, new_title)
+        githubTitle = f"{idnum}{new_title}"
+        await GitHubClient.get_instance().rename_issue(self.repo, self.github_issue, githubTitle)
 
     async def notify_subscribers(self, ctx, msg):
         msg = f"`{self.report_id}` - {self.title}: {msg}"
