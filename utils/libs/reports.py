@@ -167,7 +167,7 @@ class Report:
 
     @classmethod
     async def from_id(cls, report_id):
-        report = await cls.collection.find_one({"report_id": report_id})
+        report = await cls.collection.find_one({"report_id": report_id.upper()})
         del report['_id']
         try:
             return cls.from_dict(report)
