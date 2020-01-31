@@ -47,7 +47,7 @@ GITHUB_THRESHOLD_5ET = 5
 class Attachment:
     def __init__(self, author, message: str = '', veri: int = 0):
         self.author = author
-        self.message = message
+        self.message = message or None
         self.veri = veri
 
     @classmethod
@@ -101,17 +101,21 @@ class Report:
             subscribers = []
         if github_repo is None:
             github_repo = 'CrawlerEmporium/5eCrawler'
+        if message is None:
+            message = 0
+        if github_issue is None:
+            github_issue = 0
         self.reporter = reporter
         self.report_id = report_id
         self.title = title
         self.severity = severity
 
         self.attachments = attachments
-        self.message: int = message
+        self.message = int(message)
         self.subscribers = subscribers
 
         self.repo: str = github_repo
-        self.github_issue = github_issue
+        self.github_issue = int(github_issue)
 
         self.is_bug = is_bug
         self.upvotes = upvotes
@@ -135,6 +139,7 @@ class Report:
         attachments = [Attachment("GitHub", issue['body'])]
         title = issue['title']
         id_match = re.match(r'([A-Z]{3,})(-\d+)?\s', issue['title'])
+        is_bug = 'featurereq' not in [lab['name'] for lab in issue['labels']]
         if id_match:
             identifier = id_match.group(1)
             report_num = await get_next_report_num(identifier)
@@ -144,8 +149,6 @@ class Report:
             identifier = identifier_from_repo(repo_name)
             report_num = await get_next_report_num(identifier)
             report_id = f"{identifier}-{report_num}"
-
-        is_bug = 'featurereq' not in [lab['name'] for lab in issue['labels']]
 
         return cls("GitHub", report_id, title, -1,
                    # pri is created at -1 for unresolve (which changes it to 6)
@@ -448,7 +451,6 @@ class Report:
         await self.setup_github(ctx, serverId)
 
     async def force_deny(self, ctx, serverId):
-        self.severity = -1
         await self.notify_subscribers(ctx, f"Report closed.")
         if serverId == GG.GUILD:
             owner = GG.GIDDY
@@ -493,7 +495,10 @@ class Report:
             elif serverId == GG.MPMBS:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
             else:
-                msg = await ctx.bot.get_channel(TRACKER_CHAN).fetch_message(self.message)
+                try:
+                    msg = await ctx.bot.get_channel(TRACKER_CHAN).fetch_message(self.message)
+                except discord.HTTPException:
+                    msg = None
             if msg:
                 Report.message_cache[self.message] = msg
             return msg
@@ -507,14 +512,16 @@ class Report:
                     del Report.message_cache[self.message]
                 if self.message in Report.messageIds:
                     del Report.messageIds[self.message]
+            except discord.HTTPException:
+                pass
             finally:
                 self.message = None
 
     async def update(self, ctx, serverId):
         msg = await self.get_message(ctx, serverId)
-        if msg is None:
+        if msg is None and self.is_open():
             await self.setup_message(ctx.bot, serverId)
-        else:
+        elif self.is_open():
             await msg.edit(embed=self.get_embed())
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
