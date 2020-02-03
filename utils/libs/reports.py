@@ -223,8 +223,10 @@ class Report:
             report_message = await bot.get_channel(TRACKER_CHAN_5ET).send(embed=self.get_embed())
         elif guildID == GG.MPMBS:
             report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
-        else:
+        elif guildID == GG.CRAWLER:
             report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
+        else:
+            report_message = await bot.get_channel("TODO").send(embed=self.get_embed())
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
         if not self.is_bug:

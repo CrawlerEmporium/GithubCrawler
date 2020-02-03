@@ -15,6 +15,7 @@ from utils.libs.reports import get_next_report_num, Report, ReportException, Att
 log = logger.logger
 
 ADMINS = [GG.OWNER, GG.GIDDY, GG.MPMB]
+GSERVERS = [GG.GUILD, GG.MPMBS, GG.CRAWLER]
 REPORTS = []
 
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
@@ -43,7 +44,7 @@ def getAllReports():
     return REPORTS
 
 
-class Github(commands.Cog):
+class Issue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.userCache = set()
@@ -81,11 +82,12 @@ class Github(commands.Cog):
                                       [Attachment(message.author.id, message.content + attach)], is_bug=is_bug,
                                       repo=repo, jumpUrl=message.jump_url)
             if is_bug:
-                await report.setup_github(await self.bot.get_context(message), message.guild.id)
+                if message.guild.id in GSERVERS:
+                    await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
             await report.setup_message(self.bot, message.guild.id)
             await report.commit()
-            await message.add_reaction(random.choice(GG.REACTIONS))
+            await message.add_reaction("\U00002705")
 
     # USER METHODS
 
@@ -172,10 +174,10 @@ class Github(commands.Cog):
 
         await ctx.send(f"OK, unsubscribed from {num_unsubbed} reports.")
 
-    # OWNER METHODS
+    # Server Admins METHODS
     @commands.command(aliases=['close'])
     async def resolve(self, ctx, _id, *, msg=''):
-        """Owner only - Resolves a report."""
+        """Server Admins only - Resolves a report."""
         if not ctx.message.author.id in ADMINS:
             return
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
@@ -188,7 +190,7 @@ class Github(commands.Cog):
 
     @commands.command(aliases=['open'])
     async def unresolve(self, ctx, _id, *, msg=''):
-        """Owner only - Unresolves a report."""
+        """Server Admins only - Unresolves a report."""
         if not ctx.message.author.id in ADMINS:
             return
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
@@ -201,7 +203,7 @@ class Github(commands.Cog):
 
     @commands.command(aliases=['reassign'])
     async def reidentify(self, ctx, report_id, identifier):
-        """Owner only - Changes the identifier of a report."""
+        """Server Admins only - Changes the identifier of a report."""
         if not ctx.message.author.id in ADMINS:
             return
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
@@ -232,7 +234,7 @@ class Github(commands.Cog):
 
     @commands.command()
     async def rename(self, ctx, report_id, *, name):
-        """Owner only - Changes the title of a report."""
+        """Server Admins only - Changes the title of a report."""
         if not ctx.message.author.id in ADMINS:
             return
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
@@ -248,7 +250,7 @@ class Github(commands.Cog):
 
     @commands.command(aliases=['pri'])
     async def priority(self, ctx, _id, pri: int, *, msg=''):
-        """Owner only - Changes the priority of a report."""
+        """Server Admins only - Changes the priority of a report."""
         if not ctx.message.author.id in ADMINS:
             return
         if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
@@ -499,5 +501,5 @@ class Github(commands.Cog):
 
 
 def setup(bot):
-    log.info("Loading Github Cog...")
-    bot.add_cog(Github(bot))
+    log.info("Loading Issue Cog...")
+    bot.add_cog(Issue(bot))
