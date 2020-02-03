@@ -78,7 +78,8 @@ class Github(commands.Cog):
                                       f"[{item.filename}]({item.url})" for item in message.attachments)
 
             report = await Report.new(message.author.id, report_id, title,
-                                      [Attachment(message.author.id, message.content + attach)], is_bug=is_bug, repo=repo, jumpUrl=message.jump_url)
+                                      [Attachment(message.author.id, message.content + attach)], is_bug=is_bug,
+                                      repo=repo, jumpUrl=message.jump_url)
             if is_bug:
                 await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
@@ -495,25 +496,6 @@ class Github(commands.Cog):
         #     report.subscribers.append(member.id)
         await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
-
-
-def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', printEnd="\r"):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    return f'```{prefix} |{bar}| {percent}% {suffix}```'
 
 
 def setup(bot):

@@ -20,16 +20,8 @@ log = logger.logger
 
 version = "v1.1.0"
 SHARD_COUNT = 1
-TESTING = False
+TESTING = True
 defaultPrefix = GG.PREFIX if not TESTING else '*'
-
-
-def get_prefix(b, message):
-    if not message.guild:
-        return commands.when_mentioned_or(defaultPrefix)(b, message)
-    gp = b.prefixes.get(str(message.guild.id), defaultPrefix)
-    return commands.when_mentioned_or(gp)(b, message)
-
 
 class Crawler(commands.AutoShardedBot):
     def __init__(self, prefix, help_command=None, description=None, **options):
@@ -38,10 +30,6 @@ class Crawler(commands.AutoShardedBot):
         self.owner = None
         self.testing = TESTING
         self.token = GG.TOKEN
-        self.prefixes = GG.PREFIXES
-
-    def get_server_prefix(self, msg):
-        return get_prefix(self, msg)[-1]
 
     async def launch_shards(self):
         if self.shard_count is None:
@@ -55,15 +43,15 @@ class Crawler(commands.AutoShardedBot):
         await super(Crawler, self).launch_shards()
 
 
-bot = Crawler(prefix=get_prefix, case_insensitive=True, status=discord.Status.idle,
+bot = Crawler(prefix=defaultPrefix, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"!github | {version}"),
+              activity=discord.Game(f"{defaultPrefix}github | {version}"),
               help_command=commands.DefaultHelpCommand(command_attrs={"name": "github"}))
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -93,7 +81,7 @@ async def on_guild_join(guild):
         await asyncio.sleep(members / 200)
         await guild.leave()
     else:
-        await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"),
+        await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"),
                                   afk=True)
 
 
@@ -110,7 +98,7 @@ async def on_command_error(ctx, error):
     if isinstance(error,
                   (commands.MissingRequiredArgument, commands.BadArgument, commands.NoPrivateMessage, ValueError)):
         return await ctx.send("Error: " + str(
-            error) + f"\nUse `{ctx.prefix}help " + ctx.command.qualified_name + "` for help.")
+            error) + f"\nUse `{defaultPrefix}help " + ctx.command.qualified_name + "` for help.")
     elif isinstance(error, commands.CheckFailure):
         return await ctx.send("Error: You are not allowed to run this command.")
     elif isinstance(error, commands.CommandOnCooldown):
@@ -159,7 +147,7 @@ async def on_command_error(ctx, error):
 
     await ctx.send(
         f"Error: {str(error)}\nUh oh, that wasn't supposed to happen! "
-        f"Please join the Support Discord (%support) and tell the developer that: **{error_msg}!**")
+        f"Please join the Support Discord and tell the developer that: **{error_msg}!**")
     try:
         await owner.send(
             f"**{error_msg}**\n" \
