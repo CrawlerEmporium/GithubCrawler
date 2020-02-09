@@ -3,8 +3,6 @@ import asyncio
 from github import Github
 from github.Repository import Repository
 
-
-
 class GitHubClient:
     _instance = None
 

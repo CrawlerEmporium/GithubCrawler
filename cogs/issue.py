@@ -1,8 +1,7 @@
 import copy
 import decimal
-import random
-import re
 
+import re
 from discord import NotFound
 from discord.ext import commands
 
