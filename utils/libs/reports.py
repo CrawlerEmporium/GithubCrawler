@@ -383,9 +383,9 @@ class Report:
             username = str(next((m for m in ctx.bot.get_all_members() if m.id == attachment.author), attachment.author))
         else:
             username = attachment.author
-        reportIssue = await reports_to_issues(attachment.message)
-        msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n" \
-              f"{reportIssue}"
+        # reportIssue = await reports_to_issues(attachment.message)
+        # msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n {reportIssue}"
+        msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n"
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
@@ -631,7 +631,6 @@ async def reports_to_issues(text):
     """
     Parses all XYZ-### identifiers and adds a link to their GitHub Issue numbers.
     """
-
     async def report_sub(match):
         report_id = match.group(1)
         try:
@@ -645,7 +644,7 @@ async def reports_to_issues(text):
             return f"{report_id} (#{report.github_issue})"
         return report_id
 
-    return re.sub(r"(\w{3,}-\d{3,})", report_sub, text)
+    return re.sub(r"(\w{3,}-\d{[0-3],})", report_sub, text)
 
 
 def identifier_from_repo(repo_name):
