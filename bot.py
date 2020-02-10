@@ -6,6 +6,7 @@ from aiohttp import ClientResponseError, ClientOSError
 from discord import Forbidden, HTTPException, InvalidArgument, NotFound
 import utils.globals as GG
 from errors import CrawlerException, InvalidArgument, EvaluationError
+from models.github import Github
 
 from utils import logger
 from os import listdir
@@ -58,6 +59,11 @@ async def on_ready():
 @bot.event
 async def on_connect():
     bot.owner = await bot.fetch_user(GG.OWNER)
+    githubList = await GG.MDB.Github.find({}).to_list(length=None)
+    for x in githubList:
+        GG.GITHUB.append(Github.from_data(x))
+    for x in GG.GITHUB:
+        print(x.name)
 
 
 @bot.event
@@ -173,4 +179,5 @@ if __name__ == "__main__":
             log.error(f'Failed to load extension {extension}')
     orgs = ["CrawlerEmporium", "5etools", "flapkan"]
     GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)  # initialize
+
     bot.run(bot.token)

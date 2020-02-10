@@ -12,6 +12,14 @@ env.read_env()
 PREFIX = env('PREFIX')
 TOKEN = env('TOKEN')
 COGS = env('COGS')
+
+GITHUB_TOKEN = env('GITHUB_TOKEN')
+GITHUB_REPO = env('GITHUB_REPO')
+
+BOT = 574554734187380756
+PM_TRUE = True
+
+
 OWNER = int(env('OWNER'))
 GIDDY = int(env('GIDDY'))
 MPMB = int(env('MPMB'))
@@ -19,12 +27,6 @@ MPMB = int(env('MPMB'))
 GUILD = int(env('GUILD'))
 CRAWLER = int(env('CRAWLER'))
 MPMBS = int(env('MPMBS'))
-
-GITHUB_TOKEN = env('GITHUB_TOKEN')
-GITHUB_REPO = env('GITHUB_REPO')
-
-BOT = 574554734187380756
-PM_TRUE = True
 
 BUG_LISTEN_CHANS = [
     {
@@ -89,6 +91,9 @@ BUG_LISTEN_CHANS = [
     }
 ]
 
+MDB = motor.motor_asyncio.AsyncIOMotorClient(env('MONGODB'))['issuetracking']
+
+GITHUB = []
 
 def getServer(repo):
     if repo == "flapkan/mpmb-tracker":
@@ -106,9 +111,6 @@ def getServer(repo):
 def getAllServers():
     return ['MPMB', '5eTools', 'Crawlers', 'Unknown']
 
-
-MDB = motor.motor_asyncio.AsyncIOMotorClient(env('MONGODB'))['issuetracking']
-
 REPO_ID_MAP = {
     "CrawlerEmporium/5eCrawler": "BUG",
     "CrawlerEmporium/PokemonCrawler": "PBUG",
@@ -121,7 +123,6 @@ REPO_ID_MAP = {
 TRACKER_CHAN_5ET = 593769144969723914
 TRACKER_CHAN_MPMB = 631432292245569536
 TRACKER_CHAN = 590812637072195587
-
 
 def is_owner():
     async def predicate(ctx):
