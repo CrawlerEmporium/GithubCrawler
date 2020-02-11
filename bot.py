@@ -24,6 +24,7 @@ SHARD_COUNT = 1
 TESTING = True
 defaultPrefix = GG.PREFIX if not TESTING else '*'
 
+
 class Crawler(commands.AutoShardedBot):
     def __init__(self, prefix, help_command=None, description=None, **options):
         super(Crawler, self).__init__(prefix, help_command, description, **options)
@@ -59,11 +60,15 @@ async def on_ready():
 @bot.event
 async def on_connect():
     bot.owner = await bot.fetch_user(GG.OWNER)
-    githubList = await GG.MDB.Github.find({}).to_list(length=None)
-    for x in githubList:
-        GG.GITHUB.append(Github.from_data(x))
-    for x in GG.GITHUB:
-        print(x.name)
+    orgs = []
+    for server in await GG.MDB.Github.find({}).to_list(length=None):
+        GG.GITHUBSERVERS.append(Github.from_data(server))
+    for server in GG.GITHUBSERVERS:
+        orgs.append(server.org)
+        for channel in server.listen:
+            add = {"id": channel.id, "identifier": channel.identifier, "repo": channel.repo}
+            GG.BUG_LISTEN_CHANS.append(add)
+    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
 
 
 @bot.event
@@ -115,7 +120,7 @@ async def on_command_error(ctx, error):
             e = original.original
             if not isinstance(e, CrawlerException):
                 tb = f"```py\nError when parsing expression {original.expression}:\n" \
-                    f"{''.join(traceback.format_exception(type(e), e, e.__traceback__, limit=0, chain=False))}\n```"
+                     f"{''.join(traceback.format_exception(type(e), e, e.__traceback__, limit=0, chain=False))}\n```"
                 try:
                     await ctx.author.send(tb)
                 except Exception as e:
@@ -177,7 +182,4 @@ if __name__ == "__main__":
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
-    orgs = ["CrawlerEmporium", "5etools", "flapkan"]
-    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)  # initialize
-
     bot.run(bot.token)

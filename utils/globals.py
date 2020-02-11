@@ -28,88 +28,10 @@ GUILD = int(env('GUILD'))
 CRAWLER = int(env('CRAWLER'))
 MPMBS = int(env('MPMBS'))
 
-BUG_LISTEN_CHANS = [
-    {
-        "id": 590812355504373793,
-        "identifier": "BUG",
-        "repo": "CrawlerEmporium/5eCrawler"
-    },
-    {
-        "id": 590812381123313664,
-        "identifier": "FR",
-        "repo": "CrawlerEmporium/5eCrawler"
-    },
-    {
-        "id": 601369635178151978,
-        "identifier": "PBUG",
-        "repo": "CrawlerEmporium/PokemonCrawler"
-    },
-    {
-        "id": 601369662030217217,
-        "identifier": "PFR",
-        "repo": "CrawlerEmporium/PokemonCrawler"
-    },
-    {
-        "id": 602780405518827540,
-        "identifier": "DBUG",
-        "repo": "CrawlerEmporium/DiscordCrawler"
-    },
-    {
-        "id": 602780442147684352,
-        "identifier": "DFR",
-        "repo": "CrawlerEmporium/DiscordCrawler"
-    },
-    {
-        "id": 602780421847253012,
-        "identifier": "GBUG",
-        "repo": "CrawlerEmporium/GithubCrawler"
-    },
-    {
-        "id": 602780489287467019,
-        "identifier": "GFR",
-        "repo": "CrawlerEmporium/GithubCrawler"
-    },
-    {
-        "id": 470673367628906496,
-        "identifier": "5ET",
-        "repo": "5etools/tracker"
-    },
-    {
-        "id": 594095427314384897,
-        "identifier": "R20",
-        "repo": "5etools/tracker"
-    },
-    {
-        "id": 554644051098337280,
-        "identifier": "MBUG",
-        "repo": "flapkan/mpmb-tracker"
-    },
-    {
-        "id": 636149281597685760,
-        "identifier": "MFR",
-        "repo": "flapkan/mpmb-tracker"
-    }
-]
-
 MDB = motor.motor_asyncio.AsyncIOMotorClient(env('MONGODB'))['issuetracking']
 
-GITHUB = []
-
-def getServer(repo):
-    if repo == "flapkan/mpmb-tracker":
-        return "MPMB"
-    if repo == "5etools/tracker":
-        return "5eTools"
-    if repo == "5ecrawler/tracker":
-        return "Crawlers"
-    if "CrawlerEmporium" in repo:
-        return "Crawlers"
-    else:
-        return "Unknown"
-
-
-def getAllServers():
-    return ['MPMB', '5eTools', 'Crawlers', 'Unknown']
+GITHUBSERVERS = []
+BUG_LISTEN_CHANS = []
 
 REPO_ID_MAP = {
     "CrawlerEmporium/5eCrawler": "BUG",
