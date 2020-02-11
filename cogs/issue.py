@@ -1,11 +1,12 @@
 import copy
 import decimal
-
 import re
+
 from discord import NotFound
 from discord.ext import commands
 
 import utils.globals as GG
+from models.github import Github
 from utils import logger
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
@@ -13,8 +14,6 @@ from utils.libs.reports import get_next_report_num, Report, ReportException, Att
 
 log = logger.logger
 
-ADMINS = [GG.OWNER, GG.GIDDY, GG.MPMB]
-GSERVERS = [GG.GUILD, GG.MPMBS, GG.CRAWLER]
 REPORTS = []
 
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
@@ -41,6 +40,15 @@ def getAllReports():
     REPORTS.clear()
     cursor.each(callback=loop)
     return REPORTS
+
+
+def checkUserVsAdmin(server, member):
+    User = {"guild": server, "user": member}
+    for x in GG.GITHUBSERVERS:
+        Server = {"guild": x.server, "user": x.admin}
+        if User == Server:
+            return True
+    return False
 
 
 class Issue(commands.Cog):
@@ -81,7 +89,7 @@ class Issue(commands.Cog):
                                       [Attachment(message.author.id, message.content + attach)], is_bug=is_bug,
                                       repo=repo, jumpUrl=message.jump_url)
             if is_bug:
-                if message.guild.id in GSERVERS:
+                if message.guild.id in GG.SERVERS:
                     await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
             await report.setup_message(self.bot, message.guild.id)
@@ -177,11 +185,9 @@ class Issue(commands.Cog):
     @commands.command(aliases=['close'])
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
-        if not ctx.message.author.id in ADMINS:
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(_id)
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -190,11 +196,9 @@ class Issue(commands.Cog):
     @commands.command(aliases=['open'])
     async def unresolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Unresolves a report."""
-        if not ctx.message.author.id in ADMINS:
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(_id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -203,11 +207,9 @@ class Issue(commands.Cog):
     @commands.command(aliases=['reassign'])
     async def reidentify(self, ctx, report_id, identifier):
         """Server Admins only - Changes the identifier of a report."""
-        if not ctx.message.author.id in ADMINS:
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             identifier = identifier.upper()
             id_num = await get_next_report_num(identifier)
 
@@ -217,12 +219,8 @@ class Issue(commands.Cog):
             await report.commit()
 
             new_report.report_id = f"{identifier}-{id_num}"
-            if ctx.guild.id == GG.GUILD:
-                msg = await self.bot.get_channel(GG.TRACKER_CHAN_5ET).send(embed=new_report.get_embed())
-            elif ctx.guild.id == GG.MPMBS:
-                msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB).send(embed=new_report.get_embed())
-            else:
-                msg = await self.bot.get_channel(GG.TRACKER_CHAN).send(embed=new_report.get_embed())
+            tracker = Github.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).tracker
+            msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
 
             new_report.message = msg.id
             if new_report.github_issue:
@@ -234,11 +232,9 @@ class Issue(commands.Cog):
     @commands.command()
     async def rename(self, ctx, report_id, *, name):
         """Server Admins only - Changes the title of a report."""
-        if not ctx.message.author.id in ADMINS:
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(report_id)
             report.title = name
             if report.github_issue:
@@ -250,11 +246,9 @@ class Issue(commands.Cog):
     @commands.command(aliases=['pri'])
     async def priority(self, ctx, _id, pri: int, *, msg=''):
         """Server Admins only - Changes the priority of a report."""
-        if not ctx.message.author.id in ADMINS:
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(_id)
 
             report.severity = pri
@@ -452,9 +446,7 @@ class Issue(commands.Cog):
         if member.bot:
             return
 
-        if (server.id == GG.GUILD and member.id == GG.GIDDY) or \
-                (server.id == GG.MPMBS and member.id == GG.MPMB) or \
-                (server.id == GG.CRAWLER and member.id == GG.OWNER):
+        if checkUserVsAdmin(server.id, member.id):
             if emoji.name == UPVOTE_REACTION:
                 await report.force_accept(ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:
@@ -493,8 +485,6 @@ class Issue(commands.Cog):
                     await report.downvote(member.id, '', ContextProxy(self.bot), server.id)
             except ReportException as e:
                 await member.send(str(e))
-        # if member.id not in report.subscribers:
-        #     report.subscribers.append(member.id)
         await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
 

@@ -13,25 +13,20 @@ PREFIX = env('PREFIX')
 TOKEN = env('TOKEN')
 COGS = env('COGS')
 
+OWNER = env('OWNER')
+
 GITHUB_TOKEN = env('GITHUB_TOKEN')
 GITHUB_REPO = env('GITHUB_REPO')
 
 BOT = 574554734187380756
 PM_TRUE = True
 
-
-OWNER = int(env('OWNER'))
-GIDDY = int(env('GIDDY'))
-MPMB = int(env('MPMB'))
-
-GUILD = int(env('GUILD'))
-CRAWLER = int(env('CRAWLER'))
-MPMBS = int(env('MPMBS'))
-
 MDB = motor.motor_asyncio.AsyncIOMotorClient(env('MONGODB'))['issuetracking']
 
 GITHUBSERVERS = []
 BUG_LISTEN_CHANS = []
+ADMINS = []
+SERVERS = []
 
 REPO_ID_MAP = {
     "CrawlerEmporium/5eCrawler": "BUG",

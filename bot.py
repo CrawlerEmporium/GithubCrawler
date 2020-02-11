@@ -60,15 +60,7 @@ async def on_ready():
 @bot.event
 async def on_connect():
     bot.owner = await bot.fetch_user(GG.OWNER)
-    orgs = []
-    for server in await GG.MDB.Github.find({}).to_list(length=None):
-        GG.GITHUBSERVERS.append(Github.from_data(server))
-    for server in GG.GITHUBSERVERS:
-        orgs.append(server.org)
-        for channel in server.listen:
-            add = {"id": channel.id, "identifier": channel.identifier, "repo": channel.repo}
-            GG.BUG_LISTEN_CHANS.append(add)
-    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
+
 
 
 @bot.event
@@ -175,8 +167,28 @@ async def on_command_error(ctx, error):
     log.error("Error caused by message: `{}`".format(ctx.message.content))
 
 
+async def loadGithubServers():
+    orgs = []
+    GG.GITHUBSERVERS = []
+    GG.BUG_LISTEN_CHANS = []
+    GG.ADMINS = []
+    GG.SERVERS = []
+    for server in await GG.MDB.Github.find({}).to_list(length=None):
+        newServer = Github.from_data(server)
+        GG.GITHUBSERVERS.append(newServer)
+        GG.ADMINS.append(newServer.admin)
+        GG.SERVERS.append(newServer.server)
+    for server in GG.GITHUBSERVERS:
+        orgs.append(server.org)
+        for channel in server.listen:
+            add = {"id": channel.id, "identifier": channel.identifier, "repo": channel.repo}
+            GG.BUG_LISTEN_CHANS.append(add)
+    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
+
+
 if __name__ == "__main__":
     bot.state = "run"
+    bot.loop.create_task(loadGithubServers())
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
             bot.load_extension(GG.COGS + "." + extension)
