@@ -8,7 +8,8 @@ class Listen:
     def from_data(cls, data):
         return cls(data['id'], data['identifier'], data['repo'])
 
-class Github:
+
+class Server:
     def __init__(self, name: str, server: int, admin: int, tracker: int, org: str, listen: []):
         self.name = name
         self.server = server

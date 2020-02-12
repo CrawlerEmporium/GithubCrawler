@@ -6,7 +6,7 @@ from discord import NotFound
 from discord.ext import commands
 
 import utils.globals as GG
-from models.github import Github
+from models.server import Server
 from utils import logger
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
@@ -44,8 +44,9 @@ def getAllReports():
 
 def checkUserVsAdmin(server, member):
     User = {"guild": server, "user": member}
-    for x in GG.GITHUBSERVERS:
-        Server = {"guild": x.server, "user": x.admin}
+    wanted = next((item for item in GG.GITHUBSERVERS if item["id"] == server), None)
+    if wanted is not None:
+        Server = {"guild": wanted["id"], "user": wanted.get["server"]["admin"]}
         if User == Server:
             return True
     return False
@@ -219,7 +220,7 @@ class Issue(commands.Cog):
             await report.commit()
 
             new_report.report_id = f"{identifier}-{id_num}"
-            tracker = Github.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).tracker
+            tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).tracker
             msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
 
             new_report.message = msg.id

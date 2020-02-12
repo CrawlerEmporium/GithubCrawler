@@ -1,18 +1,18 @@
 import asyncio
 import traceback
+from os import listdir
+from os.path import isfile, join
 
 import discord
 from aiohttp import ClientResponseError, ClientOSError
 from discord import Forbidden, HTTPException, InvalidArgument, NotFound
+from discord.ext import commands
+from discord.ext.commands import CommandInvokeError
+
 import utils.globals as GG
 from errors import CrawlerException, InvalidArgument, EvaluationError
-from models.github import Github
-
+from models.server import Server
 from utils import logger
-from os import listdir
-from os.path import isfile, join
-from discord.ext.commands import CommandInvokeError
-from discord.ext import commands
 from utils.functions import gen_error_message, discord_trim
 from utils.libs.github import GitHubClient
 from utils.libs.reports import ReportException
@@ -60,7 +60,6 @@ async def on_ready():
 @bot.event
 async def on_connect():
     bot.owner = await bot.fetch_user(GG.OWNER)
-
 
 
 @bot.event
@@ -173,17 +172,37 @@ async def loadGithubServers():
     GG.BUG_LISTEN_CHANS = []
     GG.ADMINS = []
     GG.SERVERS = []
+    print(363680385336606740)
     for server in await GG.MDB.Github.find({}).to_list(length=None):
-        newServer = Github.from_data(server)
-        GG.GITHUBSERVERS.append(newServer)
+        newServer = Server.from_data(server)
+        s = {"id": newServer.server, "server": newServer}
+        GG.GITHUBSERVERS.append(s)
         GG.ADMINS.append(newServer.admin)
+        print(int(newServer.server))
         GG.SERVERS.append(newServer.server)
     for server in GG.GITHUBSERVERS:
-        orgs.append(server.org)
-        for channel in server.listen:
+        orgs.append(server.get("server").org)
+        for channel in server.get("server").listen:
             add = {"id": channel.id, "identifier": channel.identifier, "repo": channel.repo}
             GG.BUG_LISTEN_CHANS.append(add)
     GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
+
+    u = {"guild": 363680385336606740, "user": 471422590829723665}
+    for item in GG.GITHUBSERVERS:
+        id = item.get("id")
+        print(id)
+
+    wanted = next((item for item in GG.GITHUBSERVERS if item.get("id") == 363680385336606740), None)
+    if wanted is not None:
+        s = {"guild": wanted["id"], "user": wanted.get["server"]["admin"]}
+        print(u)
+        print(s)
+        if u == s:
+            print("YES")
+        else:
+            print("Not correct")
+    else:
+        print("NO")
 
 
 if __name__ == "__main__":
