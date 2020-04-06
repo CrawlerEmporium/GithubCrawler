@@ -94,6 +94,11 @@ BUG_LISTEN_CHANS = [
         "repo": "5etools/tracker"
     },
     {
+        "id": 647162018956181519,
+        "identifier": "PLUT",
+        "repo": "5etools/tracker"
+    },
+    {
         "id": 554644051098337280,
         "identifier": "MBUG",
         "repo": "flapkan/mpmb-tracker"

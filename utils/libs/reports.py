@@ -299,6 +299,8 @@ class Report:
             url = "https://cdn.discordapp.com/emojis/562116049475207178.png"
         if split[0] == "5ET":
             url = "https://images-ext-2.discordapp.net/external/8iZELuX3DXzfRIvIFX5_qHz5OdtQcOsxyiUSd3myb-g/%3Fsize%3D1024/https/cdn.discordapp.com/icons/363680385336606740/c6bfc30b26afd67e3f89c17975563488.webp"
+        if split[0] == "PLUT":
+            url = "https://cdn.discordapp.com/emojis/607869021731291146.png"
         if split[0] == "BUG" or split[0] == "FR":
             url = "https://images-ext-2.discordapp.net/external/cC5tnLUDKgw_urwQxMf1t7XHDGiY_zaiASVYQyIUeak/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/559331529378103317/dd8ba6c080cc25536d71a5cca75e82e4.webp"
         if split[0] == "PBUG" or split[0] == "PFR":
