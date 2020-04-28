@@ -219,6 +219,8 @@ class Github(commands.Cog):
                 msg = await self.bot.get_channel(GG.TRACKER_CHAN_5ET).send(embed=new_report.get_embed())
             elif ctx.guild.id == GG.MPMBS:
                 msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB).send(embed=new_report.get_embed())
+                if msg is None:
+                    msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB_BUG).send(embed=new_report.get_embed())
             else:
                 msg = await self.bot.get_channel(GG.TRACKER_CHAN).send(embed=new_report.get_embed())
 

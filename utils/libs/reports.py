@@ -36,6 +36,7 @@ VERI_KEY = {
 TRACKER_CHAN_5ET = 593769144969723914
 TRACKER_CHAN = 590812637072195587
 TRACKER_CHAN_MPMB = 631432292245569536
+TRACKER_CHAN_MPMB_BUG = 704677726287691786
 GITHUB_BASE = "https://github.com"
 UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
@@ -222,7 +223,10 @@ class Report:
         if guildID == GG.GUILD:
             report_message = await bot.get_channel(TRACKER_CHAN_5ET).send(embed=self.get_embed())
         elif guildID == GG.MPMBS:
-            report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
+            if self.is_bug:
+                report_message = await bot.get_channel(TRACKER_CHAN_MPMB_BUG).send(embed=self.get_embed())
+            else:
+                report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
         else:
             report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
         self.message = report_message.id
@@ -495,7 +499,10 @@ class Report:
             if serverId == GG.GUILD:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN_5ET).fetch_message(self.message)
             elif serverId == GG.MPMBS:
-                msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
+                if self.is_bug:
+                    msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB_BUG).fetch_message(self.message)
+                else:
+                    msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
             else:
                 try:
                     msg = await ctx.bot.get_channel(TRACKER_CHAN).fetch_message(self.message)
