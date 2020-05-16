@@ -222,6 +222,9 @@ class Issue(commands.Cog):
             new_report.report_id = f"{identifier}-{id_num}"
             tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).tracker
             msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
+            if msg is None:
+                tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).bugtracker
+                msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
 
             new_report.message = msg.id
             if new_report.github_issue:

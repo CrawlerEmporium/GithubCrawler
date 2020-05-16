@@ -36,6 +36,7 @@ VERI_KEY = {
 TRACKER_CHAN_5ET = 593769144969723914
 TRACKER_CHAN = 590812637072195587
 TRACKER_CHAN_MPMB = 631432292245569536
+TRACKER_CHAN_MPMB_BUG = 704677726287691786
 GITHUB_BASE = "https://github.com"
 UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
@@ -222,7 +223,10 @@ class Report:
         if guildID == GG.GUILD:
             report_message = await bot.get_channel(TRACKER_CHAN_5ET).send(embed=self.get_embed())
         elif guildID == GG.MPMBS:
-            report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
+            if self.is_bug:
+                report_message = await bot.get_channel(TRACKER_CHAN_MPMB_BUG).send(embed=self.get_embed())
+            else:
+                report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
         elif guildID == GG.CRAWLER:
             report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
         else:
@@ -301,6 +305,8 @@ class Report:
             url = "https://cdn.discordapp.com/emojis/562116049475207178.png"
         if split[0] == "5ET":
             url = "https://images-ext-2.discordapp.net/external/8iZELuX3DXzfRIvIFX5_qHz5OdtQcOsxyiUSd3myb-g/%3Fsize%3D1024/https/cdn.discordapp.com/icons/363680385336606740/c6bfc30b26afd67e3f89c17975563488.webp"
+        if split[0] == "PLUT":
+            url = "https://cdn.discordapp.com/emojis/607869021731291146.png"
         if split[0] == "BUG" or split[0] == "FR":
             url = "https://images-ext-2.discordapp.net/external/cC5tnLUDKgw_urwQxMf1t7XHDGiY_zaiASVYQyIUeak/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/559331529378103317/dd8ba6c080cc25536d71a5cca75e82e4.webp"
         if split[0] == "PBUG" or split[0] == "PFR":
@@ -385,9 +391,9 @@ class Report:
             username = str(next((m for m in ctx.bot.get_all_members() if m.id == attachment.author), attachment.author))
         else:
             username = attachment.author
-        reportIssue = await reports_to_issues(attachment.message)
-        msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n" \
-              f"{reportIssue}"
+        # reportIssue = await reports_to_issues(attachment.message)
+        # msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n {reportIssue}"
+        msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n"
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
@@ -495,7 +501,10 @@ class Report:
             if serverId == GG.GUILD:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN_5ET).fetch_message(self.message)
             elif serverId == GG.MPMBS:
-                msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
+                if self.is_bug:
+                    msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB_BUG).fetch_message(self.message)
+                else:
+                    msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
             else:
                 try:
                     msg = await ctx.bot.get_channel(TRACKER_CHAN).fetch_message(self.message)
@@ -633,7 +642,6 @@ async def reports_to_issues(text):
     """
     Parses all XYZ-### identifiers and adds a link to their GitHub Issue numbers.
     """
-
     async def report_sub(match):
         report_id = match.group(1)
         try:
@@ -647,7 +655,7 @@ async def reports_to_issues(text):
             return f"{report_id} (#{report.github_issue})"
         return report_id
 
-    return re.sub(r"(\w{3,}-\d{3,})", report_sub, text)
+    return re.sub(r"(\w{3,}-\d{[0-3],})", report_sub, text)
 
 
 def identifier_from_repo(repo_name):
