@@ -389,9 +389,12 @@ class Report:
             username = str(next((m for m in ctx.bot.get_all_members() if m.id == attachment.author), attachment.author))
         else:
             username = attachment.author
-        # reportIssue = await reports_to_issues(attachment.message)
-        # msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n {reportIssue}"
-        msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n"
+
+        if attachment.message is not None:
+            reportIssue = await reports_to_issues(attachment.message)
+            msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n {reportIssue}"
+        else:
+            msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n"
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
@@ -638,22 +641,40 @@ def formatNumber(num):
 
 async def reports_to_issues(text):
     """
-    Parses all XYZ-### identifiers and adds a link to their GitHub Issue numbers.
+    Parses all XXX-### identifiers and adds a link to their GitHub Issue numbers.
     """
-    async def report_sub(match):
-        report_id = match.group(1)
-        try:
-            report = await Report.from_id(report_id)
-        except ReportException:
-            return report_id
 
-        if report.github_issue:
-            if report.repo:
-                return f"{report_id} ({report.repo}#{report.github_issue})"
-            return f"{report_id} (#{report.github_issue})"
-        return report_id
-
-    return re.sub(r"(\w{3,}-\d{[0-3],})", report_sub, text)
+    # async def report_sub(match):
+    #     #     report_id = match.group(1)
+    #     #     try:
+    #     #         report = await Report.from_id(report_id)
+    #     #     except ReportException:
+    #     #         return report_id
+    #     #
+    #     #     if report.github_issue:
+    #     #         if report.repo:
+    #     #             return f"{report_id} ({report.repo}#{report.github_issue})"
+    #     #         return f"{report_id} (#{report.github_issue})"
+    #     #     return report_id
+    #     #
+    #     # result = re.sub(r"(\w{1,}-\d{,3})", await report_sub, text)
+    #     # return result
+    print(f"Text: {text}")
+    if text is not None:
+        regex = re.findall(r"(\w{1,}-\d{,3})", text)
+        for x in regex:
+            report_id = x
+            try:
+                report = await Report.from_id(report_id)
+                con = True
+                if report.repo and con:
+                    text = text.replace(x, f"{report_id} ({report.repo}#{report.github_issue})")
+                    con = False
+                if report.github_issue and con:
+                    text = text.replace(x, f"{report_id} (#{report.github_issue})")
+            except ReportException:
+                pass
+    return text
 
 
 def identifier_from_repo(repo_name):
