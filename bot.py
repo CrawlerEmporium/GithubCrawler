@@ -1,17 +1,18 @@
 import asyncio
 import traceback
+from os import listdir
+from os.path import isfile, join
 
 import discord
 from aiohttp import ClientResponseError, ClientOSError
 from discord import Forbidden, HTTPException, InvalidArgument, NotFound
+from discord.ext import commands
+from discord.ext.commands import CommandInvokeError
+
 import utils.globals as GG
 from errors import CrawlerException, InvalidArgument, EvaluationError
-
+from models.server import Server
 from utils import logger
-from os import listdir
-from os.path import isfile, join
-from discord.ext.commands import CommandInvokeError
-from discord.ext import commands
 from utils.functions import gen_error_message, discord_trim
 from utils.libs.github import GitHubClient
 from utils.libs.reports import ReportException
@@ -20,15 +21,8 @@ log = logger.logger
 
 version = "v1.1.0"
 SHARD_COUNT = 1
-TESTING = False
+TESTING = True
 defaultPrefix = GG.PREFIX if not TESTING else '*'
-
-
-def get_prefix(b, message):
-    if not message.guild:
-        return commands.when_mentioned_or(defaultPrefix)(b, message)
-    gp = b.prefixes.get(str(message.guild.id), defaultPrefix)
-    return commands.when_mentioned_or(gp)(b, message)
 
 
 class Crawler(commands.AutoShardedBot):
@@ -38,10 +32,6 @@ class Crawler(commands.AutoShardedBot):
         self.owner = None
         self.testing = TESTING
         self.token = GG.TOKEN
-        self.prefixes = GG.PREFIXES
-
-    def get_server_prefix(self, msg):
-        return get_prefix(self, msg)[-1]
 
     async def launch_shards(self):
         if self.shard_count is None:
@@ -55,15 +45,15 @@ class Crawler(commands.AutoShardedBot):
         await super(Crawler, self).launch_shards()
 
 
-bot = Crawler(prefix=get_prefix, case_insensitive=True, status=discord.Status.idle,
+bot = Crawler(prefix=defaultPrefix, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"!github | {version}"),
+              activity=discord.Game(f"{defaultPrefix}github | {version}"),
               help_command=commands.DefaultHelpCommand(command_attrs={"name": "github"}))
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -93,7 +83,7 @@ async def on_guild_join(guild):
         await asyncio.sleep(members / 200)
         await guild.leave()
     else:
-        await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"),
+        await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"),
                                   afk=True)
 
 
@@ -110,7 +100,7 @@ async def on_command_error(ctx, error):
     if isinstance(error,
                   (commands.MissingRequiredArgument, commands.BadArgument, commands.NoPrivateMessage, ValueError)):
         return await ctx.send("Error: " + str(
-            error) + f"\nUse `{ctx.prefix}help " + ctx.command.qualified_name + "` for help.")
+            error) + f"\nUse `{defaultPrefix}help " + ctx.command.qualified_name + "` for help.")
     elif isinstance(error, commands.CheckFailure):
         return await ctx.send("Error: You are not allowed to run this command.")
     elif isinstance(error, commands.CommandOnCooldown):
@@ -121,7 +111,7 @@ async def on_command_error(ctx, error):
             e = original.original
             if not isinstance(e, CrawlerException):
                 tb = f"```py\nError when parsing expression {original.expression}:\n" \
-                    f"{''.join(traceback.format_exception(type(e), e, e.__traceback__, limit=0, chain=False))}\n```"
+                     f"{''.join(traceback.format_exception(type(e), e, e.__traceback__, limit=0, chain=False))}\n```"
                 try:
                     await ctx.author.send(tb)
                 except Exception as e:
@@ -159,7 +149,7 @@ async def on_command_error(ctx, error):
 
     await ctx.send(
         f"Error: {str(error)}\nUh oh, that wasn't supposed to happen! "
-        f"Please join the Support Discord (%support) and tell the developer that: **{error_msg}!**")
+        f"Please join the Support Discord and tell the developer that: **{error_msg}!**")
     try:
         await owner.send(
             f"**{error_msg}**\n" \
@@ -176,13 +166,51 @@ async def on_command_error(ctx, error):
     log.error("Error caused by message: `{}`".format(ctx.message.content))
 
 
+async def loadGithubServers():
+    orgs = []
+    GG.GITHUBSERVERS = []
+    GG.BUG_LISTEN_CHANS = []
+    GG.ADMINS = []
+    GG.SERVERS = []
+    print(363680385336606740)
+    for server in await GG.MDB.Github.find({}).to_list(length=None):
+        newServer = Server.from_data(server)
+        s = {"id": newServer.server, "server": newServer}
+        GG.GITHUBSERVERS.append(s)
+        GG.ADMINS.append(newServer.admin)
+        print(int(newServer.server))
+        GG.SERVERS.append(newServer.server)
+    for server in GG.GITHUBSERVERS:
+        orgs.append(server.get("server").org)
+        for channel in server.get("server").listen:
+            add = {"id": channel.id, "identifier": channel.identifier, "repo": channel.repo}
+            GG.BUG_LISTEN_CHANS.append(add)
+    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
+
+    u = {"guild": 363680385336606740, "user": 471422590829723665}
+    for item in GG.GITHUBSERVERS:
+        id = item.get("id")
+        print(id)
+
+    wanted = next((item for item in GG.GITHUBSERVERS if item.get("id") == 363680385336606740), None)
+    if wanted is not None:
+        s = {"guild": wanted["id"], "user": wanted.get["server"]["admin"]}
+        print(u)
+        print(s)
+        if u == s:
+            print("YES")
+        else:
+            print("Not correct")
+    else:
+        print("NO")
+
+
 if __name__ == "__main__":
     bot.state = "run"
+    bot.loop.create_task(loadGithubServers())
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
-    orgs = ["CrawlerEmporium", "5etools", "flapkan"]
-    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)  # initialize
     bot.run(bot.token)

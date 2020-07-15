@@ -1,12 +1,12 @@
 import copy
 import decimal
-import random
 import re
 
 from discord import NotFound
 from discord.ext import commands
 
 import utils.globals as GG
+from models.server import Server
 from utils import logger
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
@@ -14,7 +14,6 @@ from utils.libs.reports import get_next_report_num, Report, ReportException, Att
 
 log = logger.logger
 
-ADMINS = [GG.OWNER, GG.GIDDY, GG.MPMB]
 REPORTS = []
 
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
@@ -43,7 +42,17 @@ def getAllReports():
     return REPORTS
 
 
-class Github(commands.Cog):
+def checkUserVsAdmin(server, member):
+    User = {"guild": server, "user": member}
+    wanted = next((item for item in GG.GITHUBSERVERS if item["id"] == server), None)
+    if wanted is not None:
+        Server = {"guild": wanted["id"], "user": wanted.get["server"]["admin"]}
+        if User == Server:
+            return True
+    return False
+
+
+class Issue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.userCache = set()
@@ -78,13 +87,15 @@ class Github(commands.Cog):
                                       f"[{item.filename}]({item.url})" for item in message.attachments)
 
             report = await Report.new(message.author.id, report_id, title,
-                                      [Attachment(message.author.id, message.content + attach)], is_bug=is_bug, repo=repo, jumpUrl=message.jump_url)
+                                      [Attachment(message.author.id, message.content + attach)], is_bug=is_bug,
+                                      repo=repo, jumpUrl=message.jump_url)
             if is_bug:
-                await report.setup_github(await self.bot.get_context(message), message.guild.id)
+                if message.guild.id in GG.SERVERS:
+                    await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
             await report.setup_message(self.bot, message.guild.id)
             await report.commit()
-            await message.add_reaction(random.choice(GG.REACTIONS))
+            await message.add_reaction("\U00002705")
 
     # USER METHODS
 
@@ -171,15 +182,13 @@ class Github(commands.Cog):
 
         await ctx.send(f"OK, unsubscribed from {num_unsubbed} reports.")
 
-    # OWNER METHODS
+    # Server Admins METHODS
     @commands.command(aliases=['close'])
     async def resolve(self, ctx, _id, *, msg=''):
-        """Owner only - Resolves a report."""
-        if not ctx.message.author.id in ADMINS:
+        """Server Admins only - Resolves a report."""
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(_id)
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -187,12 +196,10 @@ class Github(commands.Cog):
 
     @commands.command(aliases=['open'])
     async def unresolve(self, ctx, _id, *, msg=''):
-        """Owner only - Unresolves a report."""
-        if not ctx.message.author.id in ADMINS:
+        """Server Admins only - Unresolves a report."""
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(_id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -200,12 +207,10 @@ class Github(commands.Cog):
 
     @commands.command(aliases=['reassign'])
     async def reidentify(self, ctx, report_id, identifier):
-        """Owner only - Changes the identifier of a report."""
-        if not ctx.message.author.id in ADMINS:
+        """Server Admins only - Changes the identifier of a report."""
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             identifier = identifier.upper()
             id_num = await get_next_report_num(identifier)
 
@@ -215,14 +220,11 @@ class Github(commands.Cog):
             await report.commit()
 
             new_report.report_id = f"{identifier}-{id_num}"
-            if ctx.guild.id == GG.GUILD:
-                msg = await self.bot.get_channel(GG.TRACKER_CHAN_5ET).send(embed=new_report.get_embed())
-            elif ctx.guild.id == GG.MPMBS:
-                msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB).send(embed=new_report.get_embed())
-                if msg is None:
-                    msg = await self.bot.get_channel(GG.TRACKER_CHAN_MPMB_BUG).send(embed=new_report.get_embed())
-            else:
-                msg = await self.bot.get_channel(GG.TRACKER_CHAN).send(embed=new_report.get_embed())
+            tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).tracker
+            msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
+            if msg is None:
+                tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).bugtracker
+                msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
 
             new_report.message = msg.id
             if new_report.github_issue:
@@ -233,12 +235,10 @@ class Github(commands.Cog):
 
     @commands.command()
     async def rename(self, ctx, report_id, *, name):
-        """Owner only - Changes the title of a report."""
-        if not ctx.message.author.id in ADMINS:
+        """Server Admins only - Changes the title of a report."""
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(report_id)
             report.title = name
             if report.github_issue:
@@ -249,12 +249,10 @@ class Github(commands.Cog):
 
     @commands.command(aliases=['pri'])
     async def priority(self, ctx, _id, pri: int, *, msg=''):
-        """Owner only - Changes the priority of a report."""
-        if not ctx.message.author.id in ADMINS:
+        """Server Admins only - Changes the priority of a report."""
+        if not ctx.message.author.id in GG.ADMINS:
             return
-        if (ctx.guild.id == GG.GUILD and ctx.message.author.id == GG.GIDDY) or \
-                (ctx.guild.id == GG.MPMBS and ctx.message.author.id == GG.MPMB) or \
-                (ctx.guild.id == GG.CRAWLER and ctx.message.author.id == GG.OWNER):
+        if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(_id)
 
             report.severity = pri
@@ -452,9 +450,7 @@ class Github(commands.Cog):
         if member.bot:
             return
 
-        if (server.id == GG.GUILD and member.id == GG.GIDDY) or \
-                (server.id == GG.MPMBS and member.id == GG.MPMB) or \
-                (server.id == GG.CRAWLER and member.id == GG.OWNER):
+        if checkUserVsAdmin(server.id, member.id):
             if emoji.name == UPVOTE_REACTION:
                 await report.force_accept(ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:
@@ -493,31 +489,10 @@ class Github(commands.Cog):
                     await report.downvote(member.id, '', ContextProxy(self.bot), server.id)
             except ReportException as e:
                 await member.send(str(e))
-        # if member.id not in report.subscribers:
-        #     report.subscribers.append(member.id)
         await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
 
 
-def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', printEnd="\r"):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    return f'```{prefix} |{bar}| {percent}% {suffix}```'
-
-
 def setup(bot):
-    log.info("Loading Github Cog...")
-    bot.add_cog(Github(bot))
+    log.info("Loading Issue Cog...")
+    bot.add_cog(Issue(bot))
