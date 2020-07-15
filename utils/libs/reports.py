@@ -37,6 +37,7 @@ TRACKER_CHAN_5ET = 593769144969723914
 TRACKER_CHAN = 590812637072195587
 TRACKER_CHAN_MPMB = 631432292245569536
 TRACKER_CHAN_MPMB_BUG = 704677726287691786
+TRACKER_CHAN_FMP = 733051447582785576
 GITHUB_BASE = "https://github.com"
 UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
@@ -225,15 +226,15 @@ class Report:
     async def setup_message(self, bot, guildID):
         if guildID == GG.GUILD:
             report_message = await bot.get_channel(TRACKER_CHAN_5ET).send(embed=self.get_embed())
+        elif guildID == GG.FMP:
+            report_message = await bot.get_channel(TRACKER_CHAN_FMP).send(embed=self.get_embed())
         elif guildID == GG.MPMBS:
             if self.is_bug:
                 report_message = await bot.get_channel(TRACKER_CHAN_MPMB_BUG).send(embed=self.get_embed())
             else:
                 report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
-        elif guildID == GG.CRAWLER:
-            report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
         else:
-            report_message = await bot.get_channel("TODO").send(embed=self.get_embed())
+            report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
         if not self.is_bug:
@@ -320,7 +321,11 @@ class Report:
             url = "https://images-ext-2.discordapp.net/external/WY_VfX_p8eL_a5_Xb1Zf1myV3lUmx2lMx_NLHFdkxKg/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/602779023151595546/f22de7baf09b8ba13135577059544895.webp"
         if split[0] == "MBUG" or split[0] == "MFR":
             url = "https://images-ext-2.discordapp.net/external/GUcJpmeQNjUMdoufIMzDJeweAAwpn7FUsc7HhmhukWw/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/534277197955989524/316c64093a82f2e428743a6e3344d8da.webp"
-        embed.set_author(name=f"{self.report_id}", icon_url=url)
+
+        if url == "":
+            embed.set_author(name=f"{self.report_id}")
+        else:
+            embed.set_author(name=f"{self.report_id}", icon_url=url)
 
         return embed
 
@@ -506,6 +511,8 @@ class Report:
         else:
             if serverId == GG.GUILD:
                 msg = await ctx.bot.get_channel(TRACKER_CHAN_5ET).fetch_message(self.message)
+            elif serverId == GG.FMP:
+                msg = await ctx.bot.get_channel(TRACKER_CHAN_FMP).fetch_message(self.message)
             elif serverId == GG.MPMBS:
                 if self.is_bug:
                     msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB_BUG).fetch_message(self.message)

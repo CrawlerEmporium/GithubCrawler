@@ -1,11 +1,9 @@
 import asyncio
 
-from utils import logger
-
 from github import Github
 from github.Repository import Repository
 
-log = logger.logger
+
 
 class GitHubClient:
     _instance = None
@@ -25,7 +23,6 @@ class GitHubClient:
 
     @classmethod
     def initialize(cls, access_token, org=None):
-        log.info("Initializing Github connection...")
         if org is None:
             orgList = ["lorddusk"]
         else:
