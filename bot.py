@@ -30,7 +30,6 @@ class Crawler(commands.AutoShardedBot):
         if self.shard_count is None:
             recommended_shards, _ = await self.http.get_bot_gateway()
             if recommended_shards >= 96 and not recommended_shards % 16:
-                # half, round up to nearest 16
                 self.shard_count = recommended_shards // 2 + (16 - (recommended_shards // 2) % 16)
             else:
                 self.shard_count = recommended_shards // 2
@@ -53,6 +52,7 @@ async def on_ready():
 @bot.event
 async def on_connect():
     bot.owner = await bot.fetch_user(GG.OWNER)
+    await loadGithubServers()
 
 
 @bot.event
@@ -82,11 +82,8 @@ async def on_guild_join(guild):
 
 async def loadGithubServers():
     orgs = []
-    GG.GITHUBSERVERS = []
-    GG.BUG_LISTEN_CHANS = []
-    GG.ADMINS = []
-    GG.SERVERS = []
-    for server in await GG.MDB.Github.find({}).to_list(length=None):
+    servers = await GG.MDB.Github.find({}).to_list(length=None)
+    for server in servers:
         newServer = Server.from_data(server)
         GG.GITHUBSERVERS.append(newServer)
         GG.ADMINS.append(newServer.admin)
@@ -94,24 +91,28 @@ async def loadGithubServers():
     for server in GG.GITHUBSERVERS:
         orgs.append(server.org)
         for channel in server.listen:
-            add = {"id": channel.id, "identifier": channel.identifier, "repo": channel.repo}
+            add = {"channel": channel.channel, "tracker": channel.tracker, "identifier": channel.identifier, "repo": channel.repo}
             GG.BUG_LISTEN_CHANS.append(add)
+    print(GG.BUG_LISTEN_CHANS)
     GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
 
 
 if __name__ == "__main__":
     bot.state = "run"
-    bot.loop.create_task(loadGithubServers())
+    log.info("Loading Cogs...")
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
-
+    log.info("-------------------")
+    log.info("Loading Event Cogs...")
     for extension in [f.replace('.py', '') for f in listdir("cogsEvents") if isfile(join("cogsEvents", f))]:
         try:
             bot.load_extension("cogsEvents" + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
+    log.info("-------------------")
+    log.info("Finished Loading All Cogs...")
 
     bot.run(bot.token)

@@ -59,6 +59,12 @@ def is_in_guild(guild_id):
     return commands.check(predicate)
 
 
+async def getServerObject(guildID):
+    for guild in GITHUBSERVERS:
+        if guild.server == guildID:
+            return guild
+    return None
+
 class EmbedWithAuthor(discord.Embed):
     """An embed with author image and nickname set."""
 

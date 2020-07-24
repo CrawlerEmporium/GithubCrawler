@@ -66,12 +66,7 @@ class Web(commands.Cog):
 
         pend = data['sender']['login'] == "lorddusk"
 
-        if report.repo == GG.GUILD:
-            await report.resolve(ContextProxy(self.bot), GG.GUILD, close_github_issue=False, pend=pend)
-        elif report.repo == GG.MPMBS:
-            await report.resolve(ContextProxy(self.bot), GG.MPMBS, close_github_issue=False, pend=pend)
-        else:
-            await report.resolve(ContextProxy(self.bot), GG.CRAWLER, close_github_issue=False, pend=pend)
+        await report.resolve(ContextProxy(self.bot), report.repo, close_github_issue=False, pend=pend)
         await report.commit()
 
     async def report_opened(self, data):
@@ -91,17 +86,12 @@ class Web(commands.Cog):
                 formatted_title = f"{report.report_id} {report.title}"
                 await GitHubClient.get_instance().rename_issue(repo_name, issue['number'], formatted_title)
 
-            # await GitHubClient.get_instance().add_issue_to_project(report.github_issue, report.is_bug)
+            await GitHubClient.get_instance().add_issue_to_project(report.github_issue, report.is_bug)
             await GitHubClient.get_instance().add_issue_comment(repo_name, issue['number'],
                                                                 f"Tracked as `{report.report_id}`.")
             await report.update_labels()
 
-        if report.repo == GG.GUILD:
-            await report.unresolve(ContextProxy(self.bot), GG.GUILD, open_github_issue=False)
-        elif report.repo == GG.MPMBS:
-            await report.unresolve(ContextProxy(self.bot), GG.MPMBS, open_github_issue=False)
-        else:
-            await report.unresolve(ContextProxy(self.bot), GG.CRAWLER, open_github_issue=False)
+        await report.unresolve(ContextProxy(self.bot), report.repo, open_github_issue=False)
         await report.commit()
 
         return report
@@ -128,12 +118,7 @@ class Web(commands.Cog):
         ctx = ContextProxy(self.bot)
 
         if EXEMPT_LABEL in label_names:  # issue changed from bug/fr to enhancement
-            if report.repo == GG.GUILD:
-                await report.untrack(ctx, GG.GUILD)
-            elif report.repo == GG.MPMBS:
-                await report.untrack(ctx, GG.MPMBS)
-            else:
-                await report.untrack(ctx, GG.CRAWLER)
+            await report.untrack(ctx, report.repo)
         else:
             priority = report.severity
             for i, pri in enumerate(PRI_LABEL_NAMES):
@@ -143,12 +128,7 @@ class Web(commands.Cog):
             report.severity = priority
             report.is_bug = FEATURE_LABEL in label_names
             await report.commit()
-            if report.repo == GG.GUILD:
-                await report.update(ctx, GG.GUILD)
-            elif report.repo == GG.MPMBS:
-                await report.update(ctx, GG.MPMBS)
-            else:
-                await report.update(ctx, GG.CRAWLER)
+            await report.update(ctx, report.repo)
 
         # ===== github: issue_comment event =====
 
@@ -169,15 +149,7 @@ class Web(commands.Cog):
             except ReportException:
                 return  # oh well
 
-            if report.repo == GG.GUILD:
-                await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), GG.GUILD,
-                                     add_to_github=False)
-            elif report.repo == GG.MPMBS:
-                await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), GG.MPMBS,
-                                     add_to_github=False)
-            else:
-                await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), GG.CRAWLER,
-                                     add_to_github=False)
+            await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), report.repo, add_to_github=False)
             await report.commit()
             await report.update(ContextProxy(self.bot))
 
@@ -201,5 +173,5 @@ class Web(commands.Cog):
 
 
 def setup(bot):
-    log.info("Loading Web Cog...")
+    log.info("[Cogs] Web...")
     bot.add_cog(Web(bot))

@@ -3,7 +3,9 @@ import asyncio
 from github import Github
 from github.Repository import Repository
 from utils import logger
+
 log = logger.logger
+
 
 class GitHubClient:
     _instance = None
@@ -18,10 +20,10 @@ class GitHubClient:
         for x in orgList:
             org = self.client.get_organization(x)
             for repo in org.get_repos("public"):  # build a method to access our repos
-                print(f"Loaded repo {repo.full_name}")
+                print(f"Loaded public repo {repo.full_name}")
                 self.repos[repo.full_name] = repo
             for repo in org.get_repos("private"):  # build a method to access our repos
-                print(f"Loaded repo {repo.full_name}")
+                print(f"Loaded private repo {repo.full_name}")
                 self.repos[repo.full_name] = repo
 
     @classmethod
