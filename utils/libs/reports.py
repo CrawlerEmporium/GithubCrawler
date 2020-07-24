@@ -479,11 +479,7 @@ class Report:
         elif self.message in self.message_cache:
             return self.message_cache[self.message]
         else:
-            server = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
-            msg = await ctx.bot.get_channel(server.tracker).fetch_message(self.message)
-
-            if serverId == 533350585706217500 and self.is_bug:
-                msg = await ctx.bot.get_channel(server.bugtracker).fetch_message(self.message)
+            msg = await ctx.bot.get_channel(self.trackerId).fetch_message(self.message)
             if msg:
                 Report.message_cache[self.message] = msg
             return msg
