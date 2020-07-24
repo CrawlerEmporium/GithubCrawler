@@ -1,34 +1,21 @@
 import asyncio
-import traceback
 
 import discord
-from aiohttp import ClientResponseError, ClientOSError
-from discord import Forbidden, HTTPException, InvalidArgument, NotFound
 import utils.globals as GG
-from errors import CrawlerException, InvalidArgument, EvaluationError
 
 from utils import logger
 from os import listdir
 from os.path import isfile, join
-from discord.ext.commands import CommandInvokeError
 from discord.ext import commands
-from utils.functions import gen_error_message, discord_trim
 from utils.libs.github import GitHubClient
-from utils.libs.reports import ReportException
+from models.server import Server
 
 log = logger.logger
 
 version = "v1.1.0"
 SHARD_COUNT = 1
-TESTING = False
+TESTING = True
 defaultPrefix = GG.PREFIX if not TESTING else '*'
-
-
-def get_prefix(b, message):
-    if not message.guild:
-        return commands.when_mentioned_or(defaultPrefix)(b, message)
-    gp = b.prefixes.get(str(message.guild.id), defaultPrefix)
-    return commands.when_mentioned_or(gp)(b, message)
 
 
 class Crawler(commands.AutoShardedBot):
@@ -38,10 +25,6 @@ class Crawler(commands.AutoShardedBot):
         self.owner = None
         self.testing = TESTING
         self.token = GG.TOKEN
-        self.prefixes = GG.PREFIXES
-
-    def get_server_prefix(self, msg):
-        return get_prefix(self, msg)[-1]
 
     async def launch_shards(self):
         if self.shard_count is None:
@@ -55,15 +38,15 @@ class Crawler(commands.AutoShardedBot):
         await super(Crawler, self).launch_shards()
 
 
-bot = Crawler(prefix=get_prefix, case_insensitive=True, status=discord.Status.idle,
+bot = Crawler(prefix=defaultPrefix, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"!github | {version}"),
+              activity=discord.Game(f"{defaultPrefix}github | {version}"),
               help_command=commands.DefaultHelpCommand(command_attrs={"name": "github"}))
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -93,96 +76,42 @@ async def on_guild_join(guild):
         await asyncio.sleep(members / 200)
         await guild.leave()
     else:
-        await bot.change_presence(activity=discord.Game(f"with Github | !github | {version}"),
+        await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"),
                                   afk=True)
 
 
-@bot.event
-async def on_command_error(ctx, error):
-    owner = bot.get_user(GG.OWNER)
-    if isinstance(error, commands.CommandNotFound):
-        return
-    log.debug("Error caused by message: `{}`".format(ctx.message.content))
-    log.debug('\n'.join(traceback.format_exception(type(error), error, error.__traceback__)))
-    if isinstance(error, CrawlerException):
-        return await ctx.send(str(error))
-    tb = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
-    if isinstance(error,
-                  (commands.MissingRequiredArgument, commands.BadArgument, commands.NoPrivateMessage, ValueError)):
-        return await ctx.send("Error: " + str(
-            error) + f"\nUse `{ctx.prefix}help " + ctx.command.qualified_name + "` for help.")
-    elif isinstance(error, commands.CheckFailure):
-        return await ctx.send("Error: You are not allowed to run this command.")
-    elif isinstance(error, commands.CommandOnCooldown):
-        return await ctx.send("This command is on cooldown for {:.1f} seconds.".format(error.retry_after))
-    elif isinstance(error, CommandInvokeError):
-        original = error.original
-        if isinstance(original, EvaluationError):  # PM an alias author tiny traceback
-            e = original.original
-            if not isinstance(e, CrawlerException):
-                tb = f"```py\nError when parsing expression {original.expression}:\n" \
-                    f"{''.join(traceback.format_exception(type(e), e, e.__traceback__, limit=0, chain=False))}\n```"
-                try:
-                    await ctx.author.send(tb)
-                except Exception as e:
-                    log.info(f"Error sending traceback: {e}")
-        if isinstance(original, CrawlerException):
-            return await ctx.send(str(original))
-        if isinstance(original, ReportException):
-            return await ctx.send(str(original))
-        if isinstance(original, Forbidden):
-            try:
-                return await ctx.author.send(
-                    f"Error: I am missing permissions to run this command. "
-                    f"Please make sure I have permission to send messages to <#{ctx.channel.id}>."
-                )
-            except:
-                try:
-                    return await ctx.send(f"Error: I cannot send messages to this user.")
-                except:
-                    return
-        if isinstance(original, NotFound):
-            return await ctx.send("Error: I tried to edit or delete a message that no longer exists.")
-        if isinstance(original, ValueError) and str(original) in ("No closing quotation", "No escaped character"):
-            return await ctx.send("Error: No closing quotation.")
-        if isinstance(original, (ClientResponseError, InvalidArgument, asyncio.TimeoutError, ClientOSError)):
-            return await ctx.send("Error in Discord API. Please try again.")
-        if isinstance(original, HTTPException):
-            if original.response.status == 400:
-                return await ctx.send("Error: Message is too long, malformed, or empty.")
-            if original.response.status == 500:
-                return await ctx.send("Error: Internal server error on Discord's end. Please try again.")
-        if isinstance(original, OverflowError):
-            return await ctx.send(f"Error: A number is too large for me to store.")
-
-    error_msg = gen_error_message()
-
-    await ctx.send(
-        f"Error: {str(error)}\nUh oh, that wasn't supposed to happen! "
-        f"Please join the Support Discord (%support) and tell the developer that: **{error_msg}!**")
-    try:
-        await owner.send(
-            f"**{error_msg}**\n" \
-            + "Error in channel {} ({}), server {} ({}): {}\nCaused by message: `{}`".format(
-                ctx.channel, ctx.channel.id, ctx.guild,
-                ctx.guild.id, repr(error),
-                ctx.message.content))
-    except AttributeError:
-        await owner.send(f"**{error_msg}**\n" \
-                         + "Error in PM with {} ({}), shard 0: {}\nCaused by message: `{}`".format(
-            ctx.author.mention, str(ctx.author), repr(error), ctx.message.content))
-    for o in discord_trim(tb):
-        await owner.send(o)
-    log.error("Error caused by message: `{}`".format(ctx.message.content))
+async def loadGithubServers():
+    orgs = []
+    GG.GITHUBSERVERS = []
+    GG.BUG_LISTEN_CHANS = []
+    GG.ADMINS = []
+    GG.SERVERS = []
+    for server in await GG.MDB.Github.find({}).to_list(length=None):
+        newServer = Server.from_data(server)
+        GG.GITHUBSERVERS.append(newServer)
+        GG.ADMINS.append(newServer.admin)
+        GG.SERVERS.append(newServer.server)
+    for server in GG.GITHUBSERVERS:
+        orgs.append(server.org)
+        for channel in server.listen:
+            add = {"id": channel.id, "identifier": channel.identifier, "repo": channel.repo}
+            GG.BUG_LISTEN_CHANS.append(add)
+    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
 
 
 if __name__ == "__main__":
     bot.state = "run"
+    bot.loop.create_task(loadGithubServers())
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
-    orgs = ["CrawlerEmporium", "5etools", "flapkan", "FantasyModuleParser"]
-    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)  # initialize
+
+    for extension in [f.replace('.py', '') for f in listdir("cogsEvents") if isfile(join("cogsEvents", f))]:
+        try:
+            bot.load_extension("cogsEvents" + "." + extension)
+        except Exception as e:
+            log.error(f'Failed to load extension {extension}')
+
     bot.run(bot.token)

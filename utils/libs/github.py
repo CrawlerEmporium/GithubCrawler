@@ -2,8 +2,8 @@ import asyncio
 
 from github import Github
 from github.Repository import Repository
-
-
+from utils import logger
+log = logger.logger
 
 class GitHubClient:
     _instance = None
@@ -20,9 +20,13 @@ class GitHubClient:
             for repo in org.get_repos("public"):  # build a method to access our repos
                 print(f"Loaded repo {repo.full_name}")
                 self.repos[repo.full_name] = repo
+            for repo in org.get_repos("private"):  # build a method to access our repos
+                print(f"Loaded repo {repo.full_name}")
+                self.repos[repo.full_name] = repo
 
     @classmethod
     def initialize(cls, access_token, org=None):
+        log.info("Initializing Github connection...")
         if org is None:
             orgList = ["lorddusk"]
         else:

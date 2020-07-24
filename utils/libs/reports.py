@@ -233,8 +233,10 @@ class Report:
                 report_message = await bot.get_channel(TRACKER_CHAN_MPMB_BUG).send(embed=self.get_embed())
             else:
                 report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
-        else:
+        elif guildID == GG.CRAWLER:
             report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
+        else:
+            report_message = await bot.get_channel("TODO").send(embed=self.get_embed())
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
         if not self.is_bug:
@@ -402,7 +404,7 @@ class Report:
 
         if attachment.message is not None:
             reportIssue = await reports_to_issues(attachment.message)
-            msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n {reportIssue}"
+            msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n{reportIssue}"
         else:
             msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n"
         return msg

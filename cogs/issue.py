@@ -1,5 +1,6 @@
 import copy
 import decimal
+import random
 import re
 
 from discord import NotFound
@@ -222,9 +223,6 @@ class Issue(commands.Cog):
             new_report.report_id = f"{identifier}-{id_num}"
             tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).tracker
             msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
-            if msg is None:
-                tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).bugtracker
-                msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
 
             new_report.message = msg.id
             if new_report.github_issue:
@@ -399,6 +397,8 @@ class Issue(commands.Cog):
             server = "flapkan/mpmb-tracker"
         if (ctx.guild.id == GG.CRAWLER):
             server = "CrawlerEmporium/5eCrawler"
+        if (ctx.guild.id == GG.FMP):
+            server = "FantasyModuleParser/FantasyModuleParser"
 
         serverReports = []
         for report in reports:
@@ -489,6 +489,8 @@ class Issue(commands.Cog):
                     await report.downvote(member.id, '', ContextProxy(self.bot), server.id)
             except ReportException as e:
                 await member.send(str(e))
+        # if member.id not in report.subscribers:
+        #     report.subscribers.append(member.id)
         await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
 
