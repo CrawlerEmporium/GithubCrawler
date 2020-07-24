@@ -11,12 +11,13 @@ class Listen:
 
 
 class Server:
-    def __init__(self, name: str, server: int, admin: int, org: str, listen: []):
+    def __init__(self, name: str, server: int, admin: int, org: str, listen: [], threshold: int):
         self.name = name
         self.server = server
         self.admin = admin
         self.org = org
         self.listen = listen
+        self.threshold = threshold
 
     @classmethod
     def from_data(cls, data):
@@ -24,4 +25,4 @@ class Server:
         listeners = data['listen']
         for x in listeners:
             listen.append(Listen.from_data(x))
-        return cls(data['name'], data['server'], data['admin'], data['org'], listen)
+        return cls(data['name'], data['server'], data['admin'], data['org'], listen, data['threshold'])
