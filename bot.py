@@ -14,7 +14,7 @@ log = logger.logger
 
 version = "v1.1.0"
 SHARD_COUNT = 1
-TESTING = True
+TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '*'
 
 
@@ -93,7 +93,6 @@ async def loadGithubServers():
         for channel in server.listen:
             add = {"channel": channel.channel, "tracker": channel.tracker, "identifier": channel.identifier, "repo": channel.repo}
             GG.BUG_LISTEN_CHANS.append(add)
-    print(GG.BUG_LISTEN_CHANS)
     GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
 
 
