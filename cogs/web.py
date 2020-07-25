@@ -86,7 +86,7 @@ class Web(commands.Cog):
                 formatted_title = f"{report.report_id} {report.title}"
                 await GitHubClient.get_instance().rename_issue(repo_name, issue['number'], formatted_title)
 
-            await GitHubClient.get_instance().add_issue_to_project(report.github_issue, report.is_bug)
+            # await GitHubClient.get_instance().add_issue_to_project(report.github_issue, report.is_bug)
             await GitHubClient.get_instance().add_issue_comment(repo_name, issue['number'],
                                                                 f"Tracked as `{report.report_id}`.")
             await report.update_labels()
