@@ -18,13 +18,12 @@ class GitHubClient:
         self.feature_project = None
 
         for x in orgList:
-            org = self.client.get_organization(x)
-            for repo in org.get_repos("public"):  # build a method to access our repos
-                print(f"Loaded public repo {repo.full_name}")
-                self.repos[repo.full_name] = repo
-            for repo in org.get_repos("private"):  # build a method to access our repos
-                print(f"Loaded private repo {repo.full_name}")
-                self.repos[repo.full_name] = repo
+            if x is not None:
+                org = self.client.get_organization(x)
+                for repo in org.get_repos("public"):  # build a method to access our repos
+                    self.repos[repo.full_name] = repo
+                for repo in org.get_repos("private"):  # build a method to access our repos
+                    self.repos[repo.full_name] = repo
 
     @classmethod
     def initialize(cls, access_token, org=None):
@@ -34,9 +33,11 @@ class GitHubClient:
         else:
             orgList = org
         if cls._instance:
-            raise RuntimeError("Client already initialized")
+            log.info("Using old instance of the Github connection...")
+            return cls._instance
         inst = cls(access_token, orgList)
         cls._instance = inst
+        log.info("Initialized Github connection...")
         return inst
 
     @classmethod

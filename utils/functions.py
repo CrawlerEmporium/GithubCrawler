@@ -1,6 +1,9 @@
 import logging
 import random
 import re
+import utils.globals as GG
+from models.server import Server
+from utils.libs.github import GitHubClient
 
 log = logging.getLogger(__name__)
 
@@ -39,3 +42,25 @@ def a_or_an(string, upper=False):
 
 def camel_to_title(string):
     return re.sub(r'((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))', r' \1', string).title()
+
+
+async def loadGithubServers():
+    log.info("Reloading servers and listeners...")
+    orgs = []
+    GG.GITHUBSERVERS = []
+    GG.ADMINS = []
+    GG.SERVERS = []
+    GG.BUG_LISTEN_CHANS = []
+    servers = await GG.MDB.Github.find({}).to_list(length=None)
+    for server in servers:
+        newServer = Server.from_data(server)
+        GG.GITHUBSERVERS.append(newServer)
+        GG.ADMINS.append(newServer.admin)
+        GG.SERVERS.append(newServer.server)
+    for server in GG.GITHUBSERVERS:
+        orgs.append(server.org)
+        for channel in server.listen:
+            add = {"channel": channel.channel, "tracker": channel.tracker,
+                   "identifier": channel.identifier, "repo": channel.repo}
+            GG.BUG_LISTEN_CHANS.append(add)
+    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)

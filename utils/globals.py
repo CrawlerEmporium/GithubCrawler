@@ -4,6 +4,13 @@ from discord.ext import commands
 from environs import Env
 import motor.motor_asyncio
 
+from models.server import Server
+from utils.libs.github import GitHubClient
+
+from utils import logger
+
+log = logger.logger
+
 env = Env()
 env.read_env()
 
@@ -64,6 +71,7 @@ async def getServerObject(guildID):
         if guild.server == guildID:
             return guild
     return None
+
 
 class EmbedWithAuthor(discord.Embed):
     """An embed with author image and nickname set."""

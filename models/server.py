@@ -9,6 +9,11 @@ class Listen:
     def from_data(cls, data):
         return cls(data['channel'], data['tracker'], data['identifier'], data.get('repo', None))
 
+    def to_dict(self):
+        return {
+            'channel': self.channel, 'tracker': self.tracker, 'identifier': self.identifier, 'repo': self.repo
+        }
+
 
 class Server:
     def __init__(self, name: str, server: int, admin: int, org: str, listen: [], threshold: int):
@@ -26,3 +31,9 @@ class Server:
         for x in listeners:
             listen.append(Listen.from_data(x))
         return cls(data['name'], data['server'], data['admin'], data['org'], listen, data['threshold'])
+
+    def to_dict(self):
+        return {
+            'name': self.name, 'server': self.server, 'admin': self.admin, 'org': self.org, 'listen': self.listen,
+            'threshold': self.threshold
+        }

@@ -7,15 +7,15 @@ from utils import logger
 from os import listdir
 from os.path import isfile, join
 from discord.ext import commands
-from utils.libs.github import GitHubClient
-from models.server import Server
+
+from utils.functions import loadGithubServers
 
 log = logger.logger
 
 version = "v1.1.0"
 SHARD_COUNT = 1
 TESTING = False
-defaultPrefix = GG.PREFIX if not TESTING else '*'
+defaultPrefix = GG.PREFIX if not TESTING else '&'
 
 
 class Crawler(commands.AutoShardedBot):
@@ -45,6 +45,7 @@ bot = Crawler(prefix=defaultPrefix, case_insensitive=True, status=discord.Status
 
 @bot.event
 async def on_ready():
+    await loadGithubServers()
     await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
@@ -52,7 +53,6 @@ async def on_ready():
 @bot.event
 async def on_connect():
     bot.owner = await bot.fetch_user(GG.OWNER)
-    await loadGithubServers()
 
 
 @bot.event
@@ -80,22 +80,6 @@ async def on_guild_join(guild):
                                   afk=True)
 
 
-async def loadGithubServers():
-    orgs = []
-    servers = await GG.MDB.Github.find({}).to_list(length=None)
-    for server in servers:
-        newServer = Server.from_data(server)
-        GG.GITHUBSERVERS.append(newServer)
-        GG.ADMINS.append(newServer.admin)
-        GG.SERVERS.append(newServer.server)
-    for server in GG.GITHUBSERVERS:
-        orgs.append(server.org)
-        for channel in server.listen:
-            add = {"channel": channel.channel, "tracker": channel.tracker, "identifier": channel.identifier, "repo": channel.repo}
-            GG.BUG_LISTEN_CHANS.append(add)
-    GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
-
-
 if __name__ == "__main__":
     bot.state = "run"
     log.info("Loading Cogs...")
@@ -113,5 +97,4 @@ if __name__ == "__main__":
             log.error(f'Failed to load extension {extension}')
     log.info("-------------------")
     log.info("Finished Loading All Cogs...")
-
     bot.run(bot.token)
