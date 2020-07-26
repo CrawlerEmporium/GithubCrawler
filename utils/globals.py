@@ -73,6 +73,19 @@ async def getServerObject(guildID):
     return None
 
 
+def checkPermission(ctx, permission):
+    if ctx.guild is None:
+        return True
+    if permission == "mm":
+        return ctx.guild.me.guild_permissions.manage_messages
+    if permission == "af":
+        return ctx.guild.me.guild_permissions.attach_files
+    if permission == "ar":
+        return ctx.guild.me.guild_permissions.add_reactions
+    else:
+        return False
+
+
 class EmbedWithAuthor(discord.Embed):
     """An embed with author image and nickname set."""
 

@@ -6,7 +6,7 @@ from utils import checks
 
 log = logger.logger
 
-class Owner(commands.Cog):
+class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -37,5 +37,5 @@ class Owner(commands.Cog):
 
 
 def setup(bot):
-    log.info("[Cogs] Owner...")
-    bot.add_cog(Owner(bot))
+    log.info("[Cogs] Settings...")
+    bot.add_cog(Settings(bot))
