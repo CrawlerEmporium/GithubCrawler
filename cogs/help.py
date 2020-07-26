@@ -61,8 +61,7 @@ class Help(commands.Cog):
                 await message.edit(embed=embed)
                 if not isinstance(message.channel, discord.DMChannel):
                     await reaction.remove(user)
-                else:
-                    await self.waitChangeMessage(ctx, message)
+                await self.waitChangeMessage(ctx, message)
 
     async def helpCommand(self, ctx, prefix):
         embed = EmbedWithAuthor(ctx)
