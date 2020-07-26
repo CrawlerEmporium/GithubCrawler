@@ -33,11 +33,6 @@ VERI_KEY = {
     2: "Upvote"
 }
 
-TRACKER_CHAN_5ET = 593769144969723914
-TRACKER_CHAN = 590812637072195587
-TRACKER_CHAN_MPMB = 631432292245569536
-TRACKER_CHAN_MPMB_BUG = 704677726287691786
-TRACKER_CHAN_FMP = 733051447582785576
 GITHUB_BASE = "https://github.com"
 UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
@@ -98,7 +93,7 @@ class Report:
 
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None,
-                 github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None):
+                 github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None, trackerId: int = None):
         if subscribers is None:
             subscribers = []
         if github_repo is None:
@@ -126,14 +121,15 @@ class Report:
         self.verification = verification
         self.collection = GG.MDB['Reports']
         self.jumpUrl = jumpUrl
+        self.trackerId = trackerId
 
     @classmethod
-    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None):
+    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None, trackerId=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
         inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug,
-                   github_repo=repo, jumpUrl=jumpUrl)
+                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId)
         return inst
 
     @classmethod
@@ -167,7 +163,7 @@ class Report:
             'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
-            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl
+            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId' : self.trackerId
         }
 
     @classmethod
@@ -208,33 +204,24 @@ class Report:
         return self.severity >= 0
 
     async def setup_github(self, ctx, serverId=None):
-        if self.github_issue:
-            raise ReportException("Issue is already on GitHub.")
-        if self.is_bug:
-            labels = ["bug"]
-        else:
-            labels = ["featurereq"]
-        desc = await self.get_github_desc(ctx, serverId)
-
-        issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc,
-                                                               labels)
-        print(f"{self.repo},{self.report_id} {self.title}, {desc}, {labels}")
-        self.github_issue = issue.number
-
-        # await GitHubClient.get_instance().add_issue_to_project(issue.number, is_bug=self.is_bug)
-
-    async def setup_message(self, bot, guildID):
-        if guildID == GG.GUILD:
-            report_message = await bot.get_channel(TRACKER_CHAN_5ET).send(embed=self.get_embed())
-        elif guildID == GG.FMP:
-            report_message = await bot.get_channel(TRACKER_CHAN_FMP).send(embed=self.get_embed())
-        elif guildID == GG.MPMBS:
+        if self.repo is not None:
+            if self.github_issue:
+                raise ReportException("Issue is already on GitHub.")
             if self.is_bug:
-                report_message = await bot.get_channel(TRACKER_CHAN_MPMB_BUG).send(embed=self.get_embed())
+                labels = ["bug"]
             else:
-                report_message = await bot.get_channel(TRACKER_CHAN_MPMB).send(embed=self.get_embed())
-        else:
-            report_message = await bot.get_channel(TRACKER_CHAN).send(embed=self.get_embed())
+                labels = ["featurereq"]
+            desc = await self.get_github_desc(ctx, serverId)
+
+            issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc, labels)
+            print(f"{self.repo},{self.report_id}")
+            self.github_issue = issue.number
+
+            # await GitHubClient.get_instance().add_issue_to_project(issue.number, is_bug=self.is_bug)
+
+    async def setup_message(self, bot, guildID, trackerChannel):
+        report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed())
+
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
         if not self.is_bug:
@@ -344,19 +331,10 @@ class Report:
             i = 0
             for attachment in self.attachments[1:]:
                 try:
-                    if ctx.guild.id == GG.GUILD:
-                        if attachment.message and i >= GITHUB_THRESHOLD_5ET:
-                            continue
-                    else:
-                        if attachment.message and i >= GITHUB_THRESHOLD:
-                            continue
+                    guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
+                    if attachment.message and i >= guild.threshold:
+                        continue
                 except:
-                    if serverId == GG.GUILD:
-                        if attachment.message and i >= GITHUB_THRESHOLD_5ET:
-                            continue
-                    else:
-                        if attachment.message and i >= GITHUB_THRESHOLD:
-                            continue
                     pass
                 i += attachment.veri // 2
                 msg = ''
@@ -385,7 +363,7 @@ class Report:
 
     async def add_attachment(self, ctx, serverId, attachment: Attachment, add_to_github=True):
         self.attachments.append(attachment)
-        if add_to_github and self.github_issue:
+        if add_to_github and self.github_issue and self.repo is not None:
             if attachment.message:
                 msg = await self.get_attachment_message(ctx, attachment)
                 await GitHubClient.get_instance().add_issue_comment(self.repo, self.github_issue, msg)
@@ -402,7 +380,7 @@ class Report:
 
         if attachment.message is not None:
             reportIssue = await reports_to_issues(attachment.message)
-            msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n {reportIssue}"
+            msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n{reportIssue}"
         else:
             msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n"
         return msg
@@ -428,12 +406,9 @@ class Report:
         if msg:
             await self.notify_subscribers(ctx, f"New Upvote by <@{author}>: {msg}")
 
-        if serverId == GG.GUILD:
-            if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= GITHUB_THRESHOLD_5ET:
-                await self.setup_github(ctx, serverId)
-        else:
-            if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= GITHUB_THRESHOLD:
-                await self.setup_github(ctx, serverId)
+        guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
+        if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold:
+            await self.setup_github(ctx, serverId)
 
         if self.upvotes - self.downvotes in (15, 10):
             await self.update_labels()
@@ -471,13 +446,8 @@ class Report:
 
     async def force_deny(self, ctx, serverId):
         await self.notify_subscribers(ctx, f"Report closed.")
-        if serverId == GG.GUILD:
-            owner = GG.GIDDY
-        elif serverId == GG.MPMBS:
-            owner = GG.MPMB
-        else:
-            owner = GG.OWNER
-        await self.addnote(owner, f"Resolved - This report was denied.", ctx, serverId)
+        guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
+        await self.addnote(guild.admin, f"Resolved - This report was denied.", ctx, serverId)
 
         msg_ = await self.get_message(ctx, serverId)
         if msg_:
@@ -509,20 +479,7 @@ class Report:
         elif self.message in self.message_cache:
             return self.message_cache[self.message]
         else:
-            if serverId == GG.GUILD:
-                msg = await ctx.bot.get_channel(TRACKER_CHAN_5ET).fetch_message(self.message)
-            elif serverId == GG.FMP:
-                msg = await ctx.bot.get_channel(TRACKER_CHAN_FMP).fetch_message(self.message)
-            elif serverId == GG.MPMBS:
-                if self.is_bug:
-                    msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB_BUG).fetch_message(self.message)
-                else:
-                    msg = await ctx.bot.get_channel(TRACKER_CHAN_MPMB).fetch_message(self.message)
-            else:
-                try:
-                    msg = await ctx.bot.get_channel(TRACKER_CHAN).fetch_message(self.message)
-                except discord.HTTPException:
-                    msg = None
+            msg = await ctx.bot.get_channel(self.trackerId).fetch_message(self.message)
             if msg:
                 Report.message_cache[self.message] = msg
             return msg
@@ -544,7 +501,7 @@ class Report:
     async def update(self, ctx, serverId):
         msg = await self.get_message(ctx, serverId)
         if msg is None and self.is_open():
-            await self.setup_message(ctx.bot, serverId)
+            await self.setup_message(ctx.bot, serverId, self.trackerId)
         elif self.is_open():
             await msg.edit(embed=self.get_embed())
 
@@ -562,7 +519,7 @@ class Report:
 
         await self.delete_message(ctx, serverId)
 
-        if close_github_issue and self.github_issue:
+        if close_github_issue and self.github_issue and self.repo is not None:
             extra_labels = set()
             if msg.startswith('dupe'):
                 extra_labels.add("duplicate")
@@ -587,9 +544,9 @@ class Report:
         if msg:
             await self.addnote(ctx.message.author.id, f"Unresolved - {msg}", ctx, serverId)
 
-        await self.setup_message(ctx.bot, serverId)
+        await self.setup_message(ctx.bot, serverId, self.trackerId)
 
-        if open_github_issue and self.github_issue:
+        if open_github_issue and self.github_issue and self.repo is not None:
             await GitHubClient.get_instance().open_issue(self.repo, self.github_issue)
 
     async def untrack(self, ctx, serverId):
@@ -671,7 +628,6 @@ async def reports_to_issues(text):
     #     #
     #     # result = re.sub(r"(\w{1,}-\d{,3})", await report_sub, text)
     #     # return result
-    print(f"Text: {text}")
     if text is not None:
         regex = re.findall(r"(\w{1,}-\d{,3})", text)
         for x in regex:

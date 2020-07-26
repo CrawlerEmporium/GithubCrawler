@@ -1,7 +1,9 @@
 import copy
 import decimal
+import random
 import re
 
+import bson
 from discord import NotFound
 from discord.ext import commands
 
@@ -44,9 +46,9 @@ def getAllReports():
 
 def checkUserVsAdmin(server, member):
     User = {"guild": server, "user": member}
-    wanted = next((item for item in GG.GITHUBSERVERS if item["id"] == server), None)
+    wanted = next((item for item in GG.GITHUBSERVERS if item.server == server), None)
     if wanted is not None:
-        Server = {"guild": wanted["id"], "user": wanted.get["server"]["admin"]}
+        Server = {"guild": wanted.server, "user": wanted.admin}
         if User == Server:
             return True
     return False
@@ -61,23 +63,29 @@ class Issue(commands.Cog):
     async def on_message(self, message):
         identifier = None
         repo = None
+        channel = None
         is_bug = None
+        type = None
 
         feature_match = FEATURE_RE.match(message.content)
         bug_match = BUG_RE.match(message.content)
         match = None
 
-        if feature_match:
-            match = feature_match
-            is_bug = False
-        elif bug_match:
-            match = bug_match
-            is_bug = True
-
         for chan in GG.BUG_LISTEN_CHANS:
-            if message.channel.id == chan['id']:
+            if message.channel.id == chan['channel']:
                 identifier = chan['identifier']
                 repo = chan['repo']
+                channel = chan['tracker']
+                type = chan['type']
+
+        if feature_match:
+            if type == 'feature':
+                match = feature_match
+                is_bug = False
+        elif bug_match:
+            if type == 'bug':
+                match = bug_match
+                is_bug = True
 
         if match and identifier:
             title = match.group(1).strip(" *.\n")
@@ -88,17 +96,17 @@ class Issue(commands.Cog):
 
             report = await Report.new(message.author.id, report_id, title,
                                       [Attachment(message.author.id, message.content + attach)], is_bug=is_bug,
-                                      repo=repo, jumpUrl=message.jump_url)
+                                      repo=repo, jumpUrl=message.jump_url, trackerId=channel)
             if is_bug:
                 if message.guild.id in GG.SERVERS:
-                    await report.setup_github(await self.bot.get_context(message), message.guild.id)
+                    if repo is not None:
+                        await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
-            await report.setup_message(self.bot, message.guild.id)
+            await report.setup_message(self.bot, message.guild.id, report.trackerId)
             await report.commit()
             await message.add_reaction("\U00002705")
 
     # USER METHODS
-
     @commands.command(name="report")
     async def viewreport(self, ctx, _id):
         """Gets the detailed status of a report."""
@@ -220,11 +228,7 @@ class Issue(commands.Cog):
             await report.commit()
 
             new_report.report_id = f"{identifier}-{id_num}"
-            tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).tracker
-            msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
-            if msg is None:
-                tracker = Server.from_data(await GG.MDB.Github.find({"server": ctx.guild.id})).bugtracker
-                msg = await self.bot.get_channel(tracker).send(embed=new_report.get_embed())
+            msg = await self.bot.get_channel(report.trackerId).send(embed=new_report.get_embed())
 
             new_report.message = msg.id
             if new_report.github_issue:
@@ -241,7 +245,7 @@ class Issue(commands.Cog):
         if checkUserVsAdmin(ctx.guild.id, ctx.message.author.id):
             report = await Report.from_id(report_id)
             report.title = name
-            if report.github_issue:
+            if report.github_issue and report.repo is not None:
                 await report.edit_title(f"{report.title}", f"{report.report_id} ")
             await report.commit()
             await report.update(ctx, ctx.guild.id)
@@ -259,7 +263,7 @@ class Issue(commands.Cog):
             if msg:
                 await report.addnote(ctx.message.author.id, f"Priority changed to {pri} - {msg}", ctx, ctx.guild.id)
 
-            if report.github_issue:
+            if report.github_issue and report.repo is not None:
                 await report.update_labels()
 
             await report.commit()
@@ -270,14 +274,13 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def top(self, ctx, top=10):
         """Gets top x or top 10"""
-        reports = getAllReports()
+        reports = await GG.MDB.Reports.find({}).to_list(length=None)
 
-        if (ctx.guild.id == GG.GUILD):
+        if ctx.guild.id == 363680385336606700:
             return await self.GUILDTFLOP(ctx, reports, top)
-        if (ctx.guild.id == GG.MPMBS):
-            server = "flapkan/mpmb-tracker"
-        if (ctx.guild.id == GG.CRAWLER):
-            server = "CrawlerEmporium/5eCrawler"
+
+        guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
+        server = guild.listen[0].repo
 
         serverReports = []
         for report in reports:
@@ -391,14 +394,13 @@ class Issue(commands.Cog):
     async def flop(self, ctx, top=10):
         """Gets top x or top 10"""
         # -2 in attachment
-        reports = getAllReports()
+        reports = await GG.MDB.Reports.find({}).to_list(length=None)
 
-        if (ctx.guild.id == GG.GUILD):
+        if ctx.guild.id == 363680385336606700:
             return await self.GUILDTFLOP(ctx, reports, top, flop=True)
-        if (ctx.guild.id == GG.MPMBS):
-            server = "flapkan/mpmb-tracker"
-        if (ctx.guild.id == GG.CRAWLER):
-            server = "CrawlerEmporium/5eCrawler"
+
+        guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
+        server = guild.listen[0].repo
 
         serverReports = []
         for report in reports:
@@ -489,10 +491,11 @@ class Issue(commands.Cog):
                     await report.downvote(member.id, '', ContextProxy(self.bot), server.id)
             except ReportException as e:
                 await member.send(str(e))
+
         await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
 
 
 def setup(bot):
-    log.info("Loading Issue Cog...")
+    log.info("[Cogs] Issue...")
     bot.add_cog(Issue(bot))
