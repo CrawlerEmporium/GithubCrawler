@@ -281,30 +281,32 @@ class Issue(commands.Cog):
 
         guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
         server = guild.listen[0].repo
-
-        serverReports = []
-        for report in reports:
-            if server in report.get('github_repo', []):
-                if report['severity'] != -1:
-                    rep = {
-                        "report_id": report['report_id'],
-                        "title": report['title'],
-                        "upvotes": report['upvotes']
-                    }
-                    serverReports.append(rep)
-        sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
-        embed = GG.EmbedWithAuthor(ctx)
-        if top <= 0:
-            top = 10
-        if top >= 25:
-            top = 25
-        embed.title = f"Top {top} most upvoted suggestions."
-        i = 1
-        for report in sortedList[:top]:
-            embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
-                            value=f"{report['report_id']}: {report['title']}", inline=False)
-            i += 1
-        await ctx.send(embed=embed)
+        if server is not None:
+            serverReports = []
+            for report in reports:
+                if server in report.get('github_repo', []):
+                    if report['severity'] != -1:
+                        rep = {
+                            "report_id": report['report_id'],
+                            "title": report['title'],
+                            "upvotes": report['upvotes']
+                        }
+                        serverReports.append(rep)
+            sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
+            embed = GG.EmbedWithAuthor(ctx)
+            if top <= 0:
+                top = 10
+            if top >= 25:
+                top = 25
+            embed.title = f"Top {top} most upvoted suggestions."
+            i = 1
+            for report in sortedList[:top]:
+                embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
+                                value=f"{report['report_id']}: {report['title']}", inline=False)
+                i += 1
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("This command is not completely implemented for servers that don't have Github integration.")
 
     async def GUILDTFLOP(self, ctx, reports, top, flop=False):
         async with ctx.channel.typing():
@@ -402,29 +404,32 @@ class Issue(commands.Cog):
         guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
         server = guild.listen[0].repo
 
-        serverReports = []
-        for report in reports:
-            if server in report.get('github_repo', []):
-                if int(report['downvotes']) >= 1 and report['severity'] != -1:
-                    rep = {
-                        "report_id": report['report_id'],
-                        "title": report['title'],
-                        "downvotes": report['downvotes']
-                    }
-                    serverReports.append(rep)
-        sortedList = sorted(serverReports, key=lambda k: k['downvotes'], reverse=True)
-        embed = GG.EmbedWithAuthor(ctx)
-        if top <= 0:
-            top = 10
-        if top >= 25:
-            top = 25
-        embed.title = f"Top {top} most downvoted suggestions."
-        i = 1
-        for report in sortedList[:top]:
-            embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
-                            value=f"{report['report_id']}: {report['title']}", inline=False)
-            i += 1
-        await ctx.send(embed=embed)
+        if server is not None:
+            serverReports = []
+            for report in reports:
+                if server in report.get('github_repo', []):
+                    if int(report['downvotes']) >= 1 and report['severity'] != -1:
+                        rep = {
+                            "report_id": report['report_id'],
+                            "title": report['title'],
+                            "downvotes": report['downvotes']
+                        }
+                        serverReports.append(rep)
+            sortedList = sorted(serverReports, key=lambda k: k['downvotes'], reverse=True)
+            embed = GG.EmbedWithAuthor(ctx)
+            if top <= 0:
+                top = 10
+            if top >= 25:
+                top = 25
+            embed.title = f"Top {top} most downvoted suggestions."
+            i = 1
+            for report in sortedList[:top]:
+                embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
+                                value=f"{report['report_id']}: {report['title']}", inline=False)
+                i += 1
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("This command is not completely implemented for servers that don't have Github integration.")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event):
