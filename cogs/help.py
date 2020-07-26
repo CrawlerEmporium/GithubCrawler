@@ -77,16 +77,16 @@ class Help(commands.Cog):
     async def issueCommand(self, ctx, prefix):
         embed = EmbedWithAuthor(ctx)
         embed.title = "Commands to communicate with the bot."
-        embed.add_field(name="cannotrepro", value=f"``{prefix}cannotrepro <reportId> [message]``\nAdds nonreproduction to a report.", inline=False)
-        embed.add_field(name="canrepro", value=f"``{prefix}canrepro <reportId> [message]``\nAdds reproduction to a report.", inline=False)
+        embed.add_field(name="cannotrepro", value=f"``{prefix}cannotrepro <reportId> [message]``\nAdds a note of 'I can't reproduce this bug' to the bug.", inline=False)
+        embed.add_field(name="canrepro", value=f"``{prefix}canrepro <reportId> [message]``\nAdds a note of 'I can reproduce this bug' to the bug.", inline=False)
         embed.add_field(name="downvote", value=f"``{prefix}downvote< reportId> [message]``\nAdds a downvote to the selected feature request.", inline=False)
         embed.add_field(name="upvote", value=f"``{prefix}upvote <reportId> [message]``\nAdds an upvote to the selected feature request.", inline=False)
         embed.add_field(name="note", value=f"``{prefix}note <reportId> [message]``\nAdds a note to a report.", inline=False)
         embed.add_field(name="report", value=f"``{prefix}report <reportId>``\nGets the detailed status of a report.", inline=False)
         embed.add_field(name="subscribe", value=f"``{prefix}subscribe <reportId>``\nSubscribes to a report.", inline=False)
         embed.add_field(name="unsuball", value=f"``{prefix}unsuball``\nUnsubscribes from all reports.", inline=False)
-        embed.add_field(name="top", value=f"``{prefix}top [amount=10]``\nGets top x or top 10 most upvoted features", inline=False)
-        embed.add_field(name="flop", value=f"``{prefix}flop [amount=10]``\nGets top x or top 10 most downvoted features", inline=False)
+        embed.add_field(name="top", value=f"``{prefix}top [amount=10]``\nGets top x or top 10 most upvoted features.", inline=False)
+        embed.add_field(name="flop", value=f"``{prefix}flop [amount=10]``\nGets top x or top 10 most downvoted features.", inline=False)
         self.setFooter(embed)
         return embed
 
@@ -107,8 +107,10 @@ class Help(commands.Cog):
         embed.add_field(name="issue", value=f"``{prefix}issue``\nShows message with all possible issue commands.", inline=False)
         embed.add_field(name="register", value=f"``{prefix}issue register``\nRegisters server to the bot, from this point on you can use the {prefix}issue channel command.", inline=False)
         embed.add_field(name="channel", value=f"``{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]``\n"
-                                              f"Adds a new listener/tracker for the bot.\nUsage:\ntype = 'bug' or 'feature'\n"
-                                              f"identifier = what you want your prefix to be\ntracker = OPTIONAL ChannelID of the channel you want as your posting channel, will create a new channel if not supplied.\n"
+                                              f"Adds a new listener/tracker for the bot.\nUsage:\n"
+                                              f"type = 'bug' or 'feature'.\n"
+                                              f"identifier = what you want your prefix to be.\n"
+                                              f"tracker = OPTIONAL ChannelID of the channel you want as your posting channel, will create a new channel if not supplied.\n"
                                               f"channel = OPTIONAL ChannelID of the channel you want as your listening channel, will create a new channel if not supplied.", inline=False)
         embed.add_field(name="trackers", value=f"``{prefix}issue trackers``\nShows all current trackers of this server.", inline=False)
         self.setFooter(embed)

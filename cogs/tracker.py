@@ -79,18 +79,22 @@ class Tracker(commands.Cog):
             tracker = self.bot.get_channel(tracker)
 
         # ADD LISTENER TO THE SERVER
-        listener = Listen(channel.id, tracker.id, identifier, type, None)
-        data = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-        server = Server.from_data(data)
-        listener = listener.to_dict()
-        server = server.to_dict()
-        oldListen = []
-        for x in server['listen']:
-            oldListen.append(x.to_dict())
-        server['listen'] = oldListen
-        server['listen'].append(listener)
-        await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
-        await loadGithubServers()
+        if channel is not None and tracker is not None:
+            listener = Listen(channel.id, tracker.id, identifier, type, None)
+            data = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+            server = Server.from_data(data)
+            listener = listener.to_dict()
+            server = server.to_dict()
+            oldListen = []
+            for x in server['listen']:
+                oldListen.append(x.to_dict())
+            server['listen'] = oldListen
+            server['listen'].append(listener)
+            await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
+            await loadGithubServers()
+        else:
+            await ctx.send("The given channel or tracker ID's are invalid.")
+            return
 
         # SEND MESSAGE TO NEW CHANNELS
         msgChannel = self.bot.get_channel(channel.id)
