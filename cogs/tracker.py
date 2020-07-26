@@ -17,11 +17,12 @@ class Tracker(commands.Cog):
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
     async def issue(self, ctx):
+        prefix = await self.bot.get_server_prefix(ctx.message)
         await ctx.send("**Valid options currently are:**\n"
-                       f"```issue\n"
-                       f"issue trackers\n"
-                       f"issue register\n"
-                       f"issue channel <type> <identifier> [tracker=0] [channel=0]```")
+                       f"```{prefix}issue\n"
+                       f"{prefix}issue trackers\n"
+                       f"{prefix}issue register\n"
+                       f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]```")
 
     @issue.command(name='register')
     @commands.guild_only()

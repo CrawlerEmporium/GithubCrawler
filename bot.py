@@ -12,10 +12,26 @@ from utils.functions import loadGithubServers
 
 log = logger.logger
 
-version = "v1.1.0"
+version = "v2.0.0"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '&'
+
+
+async def get_prefix(bot, message):
+    if not message.guild:
+        return commands.when_mentioned_or(defaultPrefix)(bot, message)
+    guild_id = str(message.guild.id)
+    if guild_id in bot.prefixes:
+        gp = bot.prefixes.get(guild_id, defaultPrefix)
+    else:  # load from db and cache
+        gp_obj = await GG.MDB.prefixes.find_one({"guild_id": guild_id})
+        if gp_obj is None:
+            gp = defaultPrefix
+        else:
+            gp = gp_obj.get("prefix", defaultPrefix)
+        bot.prefixes[guild_id] = gp
+    return commands.when_mentioned_or(gp)(bot, message)
 
 
 class Crawler(commands.AutoShardedBot):
@@ -24,7 +40,11 @@ class Crawler(commands.AutoShardedBot):
         self.version = version
         self.owner = None
         self.testing = TESTING
+        self.prefixes = dict()
         self.token = GG.TOKEN
+
+    async def get_server_prefix(self, msg):
+        return (await get_prefix(self, msg))[-1]
 
     async def launch_shards(self):
         if self.shard_count is None:
@@ -37,22 +57,23 @@ class Crawler(commands.AutoShardedBot):
         await super(Crawler, self).launch_shards()
 
 
-bot = Crawler(prefix=defaultPrefix, case_insensitive=True, status=discord.Status.idle,
+bot = Crawler(prefix=get_prefix, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"{defaultPrefix}github | {version}"),
-              help_command=commands.DefaultHelpCommand(command_attrs={"name": "github"}))
+              activity=discord.Game(f"!help | Initializing..."),
+              help_command=commands.DefaultHelpCommand(command_attrs={"name": "oldhelp"}))
 
 
 @bot.event
 async def on_ready():
     await loadGithubServers()
-    await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | !help | v{version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
 @bot.event
 async def on_connect():
     bot.owner = await bot.fetch_user(GG.OWNER)
+    print(f"OWNER: {bot.owner.name}")
 
 
 @bot.event
