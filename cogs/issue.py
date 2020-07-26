@@ -65,23 +65,27 @@ class Issue(commands.Cog):
         repo = None
         channel = None
         is_bug = None
+        type = None
 
         feature_match = FEATURE_RE.match(message.content)
         bug_match = BUG_RE.match(message.content)
         match = None
-
-        if feature_match:
-            match = feature_match
-            is_bug = False
-        elif bug_match:
-            match = bug_match
-            is_bug = True
 
         for chan in GG.BUG_LISTEN_CHANS:
             if message.channel.id == chan['channel']:
                 identifier = chan['identifier']
                 repo = chan['repo']
                 channel = chan['tracker']
+                type = chan['type']
+
+        if feature_match:
+            if type == 'feature':
+                match = feature_match
+                is_bug = False
+        elif bug_match:
+            if type == 'bug':
+                match = bug_match
+                is_bug = True
 
         if match and identifier:
             title = match.group(1).strip(" *.\n")

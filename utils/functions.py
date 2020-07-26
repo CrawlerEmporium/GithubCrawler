@@ -61,6 +61,6 @@ async def loadGithubServers():
         orgs.append(server.org)
         for channel in server.listen:
             add = {"channel": channel.channel, "tracker": channel.tracker,
-                   "identifier": channel.identifier, "repo": channel.repo}
+                   "identifier": channel.identifier, "type": channel.type, "repo": channel.repo}
             GG.BUG_LISTEN_CHANS.append(add)
     GitHubClient.initialize(GG.GITHUB_TOKEN, orgs)
