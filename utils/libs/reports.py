@@ -216,10 +216,10 @@ class Report:
                 labels = ["featurereq"]
             desc = await self.get_github_desc(ctx, serverId)
 
-            print(self.repo)
-            issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc, labels)
-            log.info(f"Adding to Github: {self.repo}, {self.report_id}")
-            self.github_issue = issue.number
+            if self.repo is not 'NoRepo':
+                issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc, labels)
+                log.info(f"Adding to Github: {self.repo}, {self.report_id}")
+                self.github_issue = issue.number
 
             # await GitHubClient.get_instance().add_issue_to_project(issue.number, is_bug=self.is_bug)
 
