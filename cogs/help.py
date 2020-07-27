@@ -113,6 +113,7 @@ class Help(commands.Cog):
                                               f"tracker = OPTIONAL ChannelID of the channel you want as your posting channel, will create a new channel if not supplied.\n"
                                               f"channel = OPTIONAL ChannelID of the channel you want as your listening channel, will create a new channel if not supplied.", inline=False)
         embed.add_field(name="trackers", value=f"``{prefix}issue trackers``\nShows all current trackers of this server.", inline=False)
+        embed.add_field(name="remove", value=f"``{prefix}issue remove <identifier>``\nDisconnects the identifier from the bot, allowing you to delete its listening and tracking channels. **Read the warning that pops up after removing**.", inline=False)
         self.setFooter(embed)
         return embed
 

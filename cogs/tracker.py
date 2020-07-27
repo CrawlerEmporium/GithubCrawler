@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 import utils.globals as GG
+from cogs.issue import checkUserVsAdmin
 from models.server import Server, Listen
 from utils import logger
 from utils.functions import loadGithubServers
@@ -22,7 +23,8 @@ class Tracker(commands.Cog):
                        f"```{prefix}issue\n"
                        f"{prefix}issue trackers\n"
                        f"{prefix}issue register\n"
-                       f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]```")
+                       f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]```\n"
+                       f"{prefix}issue remove <identifier>```")
 
     @issue.command(name='register')
     @commands.guild_only()
@@ -128,6 +130,41 @@ class Tracker(commands.Cog):
                         f"Posting to: {self.bot.get_channel(listen.tracker).mention}\n" \
                         f"Using Identifier: ``{listen.identifier}``\n\n"
         await ctx.send(channels)
+
+    @issue.command(name='remove')
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def remove(self, ctx, identifier):
+        server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+
+        check = await GG.MDB.ReportNums.find_one({"key": identifier.upper()})
+
+        if check is not None:
+            oldListen = []
+            for x in server['listen']:
+                if x['identifier'] != identifier.upper():
+                    oldListen.append(x.to_dict())
+                else:
+                    ch = self.bot.get_channel(x['channel'])
+                    tr = self.bot.get_channel(x['tracker'])
+            server['listen'] = oldListen
+            await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
+            await GG.MDB.ReportNums.delete_one({"key": identifier.upper()})
+            if ch is not None and tr is not None:
+                await ctx.send(
+                    f"``{identifier}`` removed from the database.\n\nYou can now safely remove these channels:\nListener: {ch.mention}, Tracker: {tr.mention}.\n"
+                    f"**WARNING**: Deleting these channels could cause the bot to malfunction if you still have other Identifiers linked to these channels. \n"
+                    f"Be **VERY** careful before deleting these channels and triple-check before doing so...")
+            elif ch is not None:
+                await ctx.send(
+                    f"``{identifier}`` removed from the database.\nIt's connected listing channel was not found.")
+            elif tr is not None:
+                await ctx.send(
+                    f"``{identifier}`` removed from the database.\nIt's connected tracking channel was not found.")
+            else:
+                await ctx.send(f"``{identifier}`` removed from the database.\nIt's connected channels were not found.")
+        else:
+            await ctx.send(f"``{identifier}`` not found...")
 
 
 def setup(bot):
