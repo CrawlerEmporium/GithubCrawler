@@ -99,8 +99,6 @@ class Report:
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None, trackerId: int = None):
         if subscribers is None:
             subscribers = []
-        if github_repo is None:
-            github_repo = 'CrawlerEmporium/5eCrawler'
         if message is None:
             message = 0
         if github_issue is None:
@@ -216,6 +214,7 @@ class Report:
                 labels = ["featurereq"]
             desc = await self.get_github_desc(ctx, serverId)
 
+            print(self.repo)
             issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc, labels)
             log.info(f"Adding to Github: {self.repo}, {self.report_id}")
             self.github_issue = issue.number
