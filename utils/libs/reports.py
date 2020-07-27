@@ -99,6 +99,8 @@ class Report:
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None, trackerId: int = None):
         if subscribers is None:
             subscribers = []
+        if github_repo is None:
+            github_repo = 'NoRepo'
         if message is None:
             message = 0
         if github_issue is None:

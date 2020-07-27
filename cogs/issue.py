@@ -296,7 +296,8 @@ class Issue(commands.Cog):
         if server is not None:
             serverReports = []
             for report in reports:
-                if server in report.get('github_repo', []):
+                repo = report.get('github_repo', None)
+                if server == repo:
                     if report['severity'] != -1:
                         rep = {
                             "report_id": report['report_id'],
@@ -419,7 +420,8 @@ class Issue(commands.Cog):
         if server is not None:
             serverReports = []
             for report in reports:
-                if server in report.get('github_repo', []):
+                repo = report.get('github_repo', None)
+                if server == repo:
                     if int(report['downvotes']) >= 1 and report['severity'] != -1:
                         rep = {
                             "report_id": report['report_id'],
