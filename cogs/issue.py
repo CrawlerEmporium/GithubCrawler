@@ -108,12 +108,14 @@ class Issue(commands.Cog):
 
     # USER METHODS
     @commands.command(name="report")
+    @commands.guild_only()
     async def viewreport(self, ctx, _id):
         """Gets the detailed status of a report."""
         report = await Report.from_id(_id)
         await ctx.send(embed=report.get_embed(True, ctx))
 
     @commands.command(aliases=['cr'])
+    @commands.guild_only()
     async def canrepro(self, ctx, _id, *, msg=''):
         """Adds reproduction to a report."""
         report = await Report.from_id(_id)
@@ -124,6 +126,7 @@ class Issue(commands.Cog):
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['up'])
+    @commands.guild_only()
     async def upvote(self, ctx, _id, *, msg=''):
         """Adds an upvote to the selected feature request."""
         report = await Report.from_id(_id)
@@ -134,6 +137,7 @@ class Issue(commands.Cog):
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['cnr'])
+    @commands.guild_only()
     async def cannotrepro(self, ctx, _id, *, msg=''):
         """Adds nonreproduction to a report."""
         report = await Report.from_id(_id)
@@ -144,6 +148,7 @@ class Issue(commands.Cog):
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['down'])
+    @commands.guild_only()
     async def downvote(self, ctx, _id, *, msg=''):
         """Adds a downvote to the selected feature request."""
         report = await Report.from_id(_id)
@@ -154,6 +159,7 @@ class Issue(commands.Cog):
         await report.update(ctx, ctx.guild.id)
 
     @commands.command()
+    @commands.guild_only()
     async def note(self, ctx, _id, *, msg=''):
         """Adds a note to a report."""
         report = await Report.from_id(_id)
@@ -164,6 +170,7 @@ class Issue(commands.Cog):
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['sub'])
+    @commands.guild_only()
     async def subscribe(self, ctx, report_id):
         """Subscribes to a report."""
         report = await Report.from_id(report_id)
@@ -192,6 +199,7 @@ class Issue(commands.Cog):
 
     # Server Admins METHODS
     @commands.command(aliases=['close'])
+    @commands.guild_only()
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
         if not ctx.message.author.id in GG.ADMINS:
@@ -203,6 +211,7 @@ class Issue(commands.Cog):
             await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['open'])
+    @commands.guild_only()
     async def unresolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Unresolves a report."""
         if not ctx.message.author.id in GG.ADMINS:
@@ -214,6 +223,7 @@ class Issue(commands.Cog):
             await ctx.send(f"Unresolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['reassign'])
+    @commands.guild_only()
     async def reidentify(self, ctx, report_id, identifier):
         """Server Admins only - Changes the identifier of a report."""
         if not ctx.message.author.id in GG.ADMINS:
@@ -238,6 +248,7 @@ class Issue(commands.Cog):
             await ctx.send(f"Reassigned {report.report_id} as {new_report.report_id}.")
 
     @commands.command()
+    @commands.guild_only()
     async def rename(self, ctx, report_id, *, name):
         """Server Admins only - Changes the title of a report."""
         if not ctx.message.author.id in GG.ADMINS:
@@ -252,6 +263,7 @@ class Issue(commands.Cog):
             await ctx.send(f"Renamed {report.report_id} as {report.title}.")
 
     @commands.command(aliases=['pri'])
+    @commands.guild_only()
     async def priority(self, ctx, _id, pri: int, *, msg=''):
         """Server Admins only - Changes the priority of a report."""
         if not ctx.message.author.id in GG.ADMINS:

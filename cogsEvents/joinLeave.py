@@ -10,7 +10,6 @@ log = logger.logger
 
 TRACKER = 737222642666307684
 
-
 class JoinLeave(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
