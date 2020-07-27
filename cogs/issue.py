@@ -290,7 +290,7 @@ class Issue(commands.Cog):
         reports = await GG.MDB.Reports.find({}).to_list(length=None)
         serverReports = []
 
-        if ctx.guild.id == 363680385336606700:
+        if ctx.guild.id == 363680385336606740:
             return await self.GUILDTFLOP(ctx, reports, top)
 
         try:
@@ -432,7 +432,7 @@ class Issue(commands.Cog):
         reports = await GG.MDB.Reports.find({}).to_list(length=None)
         serverReports = []
 
-        if ctx.guild.id == 363680385336606700:
+        if ctx.guild.id == 363680385336606740:
             return await self.GUILDTFLOP(ctx, reports, top, flop=True)
 
         try:
