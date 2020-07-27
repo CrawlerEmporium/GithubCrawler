@@ -349,7 +349,8 @@ class Issue(commands.Cog):
             serverReports = []
             toolsReports = []
             for report in reports:
-                if "5etools/tracker" in report.get('github_repo', []):
+                repo = report.get('github_repo', None)
+                if repo == "5etools/tracker":
                     toolsReports.append(report)
             if flop:
                 msg = await ctx.send(f"Checking {len(toolsReports)} suggestions for their downvotes...")
