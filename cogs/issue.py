@@ -471,7 +471,7 @@ class Issue(commands.Cog):
                 except:
                     pass
             else:
-                print(f"Force denying {report.title}")
+                log.info(f"Force denying {report.title}")
                 await report.force_deny(ContextProxy(self.bot), server.id)
                 await report.commit()
                 return

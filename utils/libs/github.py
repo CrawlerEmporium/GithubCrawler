@@ -46,8 +46,8 @@ class GitHubClient:
             raise RuntimeError("Client not initialized")
         return cls._instance
 
-    def get_repo(self, repo, default='CrawlerEmporium/5eCrawler'):
-        return self.repos.get(repo, self.repos.get(default))
+    def get_repo(self, repo):
+        return self.repos.get(repo, None)
 
     async def create_issue(self, repo, title, description, labels=None):
         if labels is None:

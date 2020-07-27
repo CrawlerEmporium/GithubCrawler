@@ -4,6 +4,9 @@ from cachetools import LRUCache
 
 import utils.globals as GG
 from utils.libs.github import GitHubClient
+from utils import logger
+
+log = logger.logger
 
 PRIORITY = {
     -2: "Patch Pending", -1: "Resolved",
@@ -214,7 +217,7 @@ class Report:
             desc = await self.get_github_desc(ctx, serverId)
 
             issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc, labels)
-            print(f"{self.repo},{self.report_id}")
+            log.info(f"Adding to Github: {self.repo}, {self.report_id}")
             self.github_issue = issue.number
 
             # await GitHubClient.get_instance().add_issue_to_project(issue.number, is_bug=self.is_bug)
@@ -407,10 +410,10 @@ class Report:
             await self.notify_subscribers(ctx, f"New Upvote by <@{author}>: {msg}")
 
         guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
-        if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold:
+        if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and self.repo is not None:
             await self.setup_github(ctx, serverId)
 
-        if self.upvotes - self.downvotes in (15, 10):
+        if self.upvotes - self.downvotes in (15, 10) and self.repo is not None:
             await self.update_labels()
 
     async def cannotrepro(self, author, msg, ctx, serverId):
