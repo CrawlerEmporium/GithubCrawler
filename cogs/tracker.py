@@ -23,7 +23,7 @@ class Tracker(commands.Cog):
                        f"```{prefix}issue\n"
                        f"{prefix}issue trackers\n"
                        f"{prefix}issue register\n"
-                       f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]```\n"
+                       f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]\n"
                        f"{prefix}issue remove <identifier>```")
 
     @issue.command(name='register')
@@ -143,7 +143,7 @@ class Tracker(commands.Cog):
             oldListen = []
             for x in server['listen']:
                 if x['identifier'] != identifier.upper():
-                    oldListen.append(x.to_dict())
+                    oldListen.append(x)
                 else:
                     ch = self.bot.get_channel(x['channel'])
                     tr = self.bot.get_channel(x['tracker'])
