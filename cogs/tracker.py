@@ -1,7 +1,9 @@
+import typing
+
+import discord
 from discord.ext import commands
 
 import utils.globals as GG
-from cogs.issue import checkUserVsAdmin
 from models.server import Server, Listen
 from utils import logger
 from utils.functions import loadGithubServers
@@ -21,15 +23,16 @@ class Tracker(commands.Cog):
         prefix = await self.bot.get_server_prefix(ctx.message)
         await ctx.send("**Valid options currently are:**\n"
                        f"```{prefix}issue\n"
-                       f"{prefix}issue trackers\n"
                        f"{prefix}issue register\n"
                        f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]\n"
-                       f"{prefix}issue remove <identifier>```")
+                       f"{prefix}issue trackers\n"
+                       f"{prefix}issue remove <identifier>\n"
+                       f"{prefix}issue manager```")
 
     @issue.command(name='register')
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
-    async def register(self, ctx):
+    async def issueRegister(self, ctx):
         guild = ctx.guild
         server = guild.id
         admin = guild.owner.id
@@ -46,7 +49,7 @@ class Tracker(commands.Cog):
     @issue.command(name='channel')
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
-    async def channel(self, ctx, type: str, identifier: str, tracker: int = 0, channel: int = 0):
+    async def issueChannel(self, ctx, type: str, identifier: str, tracker: int = 0, channel: int = 0):
         """
         Adds a new listener/tracker for the bot.
         Usage:
@@ -121,7 +124,7 @@ class Tracker(commands.Cog):
 
     @issue.command(name='trackers')
     @commands.guild_only()
-    async def trackers(self, ctx):
+    async def issueTrackers(self, ctx):
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         server = Server.from_data(server)
         channels = "You have the following channels setup:\n\n"
@@ -134,7 +137,7 @@ class Tracker(commands.Cog):
     @issue.command(name='remove')
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
-    async def remove(self, ctx, identifier):
+    async def issueRemove(self, ctx, identifier):
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
 
         check = await GG.MDB.ReportNums.find_one({"key": identifier.upper()})
@@ -165,6 +168,63 @@ class Tracker(commands.Cog):
                 await ctx.send(f"``{identifier}`` removed from the database.\nIt's connected channels were not found.")
         else:
             await ctx.send(f"``{identifier}`` not found...")
+
+    @issue.group(invoke_without_command=True)
+    @commands.guild_only()
+    async def manager(self, ctx):
+        prefix = await self.bot.get_server_prefix(ctx.message)
+        await ctx.send("**Valid options currently are:**\n"
+                       f"```{prefix}issue manager\n"
+                       f"{prefix}issue manager add [member]\n"
+                       f"{prefix}issue manager remove [member]\n"
+                       f"{prefix}issue manager list```")
+
+    @manager.command(name='add')
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def managerAdd(self, ctx, member: typing.Optional[discord.Member]):
+        if member is None:
+            await ctx.send("Invalid member, please check the name/id and try again.")
+            return
+
+        manager = await GG.MDB.Managers.find_one({"user": member.id})
+        if manager is not None:
+            await ctx.send("Manager already found in the database.")
+            return
+
+        await GG.MDB.Managers.insert_one({"user": member.id, "server": ctx.guild.id})
+        await ctx.send(f"{member.mention} was added as an issue manager.")
+
+    @manager.command(name='remove')
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def managerRemove(self, ctx, member: typing.Optional[discord.Member]):
+        if member is None:
+            await ctx.send("Invalid member, please check the name/id and try again.")
+
+        manager = await GG.MDB.Managers.find_one({"user": member.id})
+        if manager is None:
+            await ctx.send("Manager not found in the database, please check the name/id and try again.")
+
+        await GG.MDB.Managers.delete_one({"user": member.id, "server": ctx.guild.id})
+        await ctx.send(f"{member.mention} was removed as an issue manager.")
+
+    @manager.command(name='list')
+    @commands.guild_only()
+    async def managerList(self, ctx):
+        server = await GG.MDB.Managers.find({"server": ctx.guild.id}).to_list(length=None)
+        if server is None or len(server) <= 0:
+            await ctx.send("This server has no managers (Except the Server Owner).")
+        else:
+            channels = "This server has the following managers:\n\n"
+            for x in server:
+                user = await ctx.guild.fetch_member(x['user'])
+                if user is None:
+                    channels += f"{x['user']}\n"
+                else:
+                    channels += f"{user.mention}\n"
+            await ctx.send(channels)
+
 
 
 def setup(bot):

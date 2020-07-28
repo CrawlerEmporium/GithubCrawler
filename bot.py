@@ -12,10 +12,10 @@ from utils.functions import loadGithubServers
 
 log = logger.logger
 
-version = "2.0.0"
+version = "2.0.1"
 SHARD_COUNT = 1
 TESTING = False
-defaultPrefix = GG.PREFIX if not TESTING else '&'
+defaultPrefix = GG.PREFIX if not TESTING else '('
 
 
 async def get_prefix(bot, message):
