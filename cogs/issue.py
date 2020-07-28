@@ -210,7 +210,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
-        if checks.manager(ctx):
+        if await checks.manager(ctx):
             report = await Report.from_id(_id)
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -220,7 +220,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def unresolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Unresolves a report."""
-        if checks.manager(ctx):
+        if await checks.manager(ctx):
             report = await Report.from_id(_id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -230,7 +230,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def reidentify(self, ctx, report_id, identifier):
         """Server Admins only - Changes the identifier of a report."""
-        if checks.manager(ctx):
+        if await checks.manager(ctx):
             identifier = identifier.upper()
             id_num = await get_next_report_num(identifier)
 
@@ -253,7 +253,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def rename(self, ctx, report_id, *, name):
         """Server Admins only - Changes the title of a report."""
-        if checks.manager(ctx):
+        if await checks.manager(ctx):
             report = await Report.from_id(report_id)
             report.title = name
             if report.github_issue and report.repo is not None:
@@ -266,7 +266,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def priority(self, ctx, _id, pri: int, *, msg=''):
         """Server Admins only - Changes the priority of a report."""
-        if checks.manager(ctx):
+        if await checks.manager(ctx):
             report = await Report.from_id(_id)
 
             report.severity = pri

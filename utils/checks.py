@@ -48,7 +48,7 @@ def admin_or_permissions(**perms):
     return commands.check(predicate)
 
 
-def manager(ctx):
+async def manager(ctx):
     async def predicate(ctx):
         guild = ctx.guild.id
         user = ctx.message.author.id
@@ -63,4 +63,4 @@ def manager(ctx):
             isManager = True
         return isManager
 
-    return commands.check(predicate(ctx))
+    return commands.check(await predicate(ctx))

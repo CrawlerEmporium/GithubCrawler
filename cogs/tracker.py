@@ -139,7 +139,6 @@ class Tracker(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def issueRemove(self, ctx, identifier):
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-
         check = await GG.MDB.ReportNums.find_one({"key": identifier.upper()})
 
         if check is not None:
