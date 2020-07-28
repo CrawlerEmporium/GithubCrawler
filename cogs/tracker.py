@@ -6,11 +6,21 @@ from discord.ext import commands
 import utils.globals as GG
 from models.server import Server, Listen
 from utils import logger
-from utils.functions import loadGithubServers
+from utils.functions import loadGithubServers, get_selection
+from utils.libs.reports import Report
 
 log = logger.logger
 
 TYPES = ['bug', 'feature']
+
+
+async def findInReports(db, identifier, searchTerm):
+    results = []
+    list = await db.find({"$text": {"$search": f"\"{searchTerm}\"", "$caseSensitive": False}}).to_list(length=None)
+    for x in list:
+        if identifier.upper() in x['report_id']:
+            results.append(x)
+    return results
 
 
 class Tracker(commands.Cog):
@@ -65,12 +75,12 @@ class Tracker(commands.Cog):
 
         # CHECK IDENTIFIER
         identifier = identifier.upper()
-        exist = await GG.MDB.ReportNums.find_one({"key": identifier})
+        exist = await GG.MDB.ReportNums.find_one({"key": identifier, "server": ctx.guild.id})
         if exist is not None:
             await ctx.send(
-                "This identifier is already in use (either by you, or by a different server), please select another one.")
+                "This identifier is already in use, please select another one.")
             return
-        await GG.MDB.ReportNums.insert_one({"key": identifier, "amount": 0})
+        await GG.MDB.ReportNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
 
         # CREATE CHANNELS
         if channel == 0:
@@ -139,7 +149,7 @@ class Tracker(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def issueRemove(self, ctx, identifier):
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-        check = await GG.MDB.ReportNums.find_one({"key": identifier.upper()})
+        check = await GG.MDB.ReportNums.find_one({"key": identifier.upper(), "server": ctx.guild.id})
 
         if check is not None:
             oldListen = []
@@ -151,7 +161,7 @@ class Tracker(commands.Cog):
                     tr = self.bot.get_channel(x['tracker'])
             server['listen'] = oldListen
             await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
-            await GG.MDB.ReportNums.delete_one({"key": identifier.upper()})
+            await GG.MDB.ReportNums.delete_one({"key": identifier.upper(), "server": ctx.guild.id})
             if ch is not None and tr is not None:
                 await ctx.send(
                     f"``{identifier}`` removed from the database.\n\nYou can now safely remove these channels:\nListener: {ch.mention}, Tracker: {tr.mention}.\n"
@@ -167,6 +177,31 @@ class Tracker(commands.Cog):
                 await ctx.send(f"``{identifier}`` removed from the database.\nIt's connected channels were not found.")
         else:
             await ctx.send(f"``{identifier}`` not found...")
+
+    @issue.command(name='search')
+    @commands.guild_only()
+    async def issueSearch(self, ctx, identifier, *, keywords):
+        allReports = await findInReports(GG.MDB.Reports, identifier, keywords)
+        server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+        trackers = []
+        for x in server['listen']:
+            trackers.append(x['tracker'])
+        results = []
+        for report in allReports:
+            if report['trackerId'] in trackers:
+                results.append(report)
+        if len(results) > 0:
+            results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
+            selection = await get_selection(ctx, results, force_select=True)
+
+            report = await Report.from_id(selection['report_id'])
+            if report is not None:
+                await ctx.send(embed=report.get_embed(True, ctx))
+            else:
+                await ctx.send("Selected report not found.")
+
+        else:
+            await ctx.send("No results found, please try with a different keyword.")
 
     @issue.group(invoke_without_command=True)
     @commands.guild_only()
@@ -223,7 +258,6 @@ class Tracker(commands.Cog):
                 else:
                     channels += f"{user.mention}\n"
             await ctx.send(channels)
-
 
 
 def setup(bot):

@@ -85,7 +85,7 @@ class Issue(commands.Cog):
 
         if match and identifier:
             title = match.group(1).strip(" *.\n")
-            report_num = await get_next_report_num(identifier)
+            report_num = await get_next_report_num(identifier, message.guild.id)
             report_id = f"{identifier}-{report_num}"
             attach = "\n" + '\n'.join(f"\n{'!' if item.url.lower().endswith(('.png', '.jpg', '.gif')) else ''}"
                                       f"[{item.filename}]({item.url})" for item in message.attachments)
@@ -232,7 +232,7 @@ class Issue(commands.Cog):
         """Server Admins only - Changes the identifier of a report."""
         if await checks.manager(ctx):
             identifier = identifier.upper()
-            id_num = await get_next_report_num(identifier)
+            id_num = await get_next_report_num(identifier, ctx.guild.id)
 
             report = await Report.from_id(report_id)
             new_report = copy.copy(report)

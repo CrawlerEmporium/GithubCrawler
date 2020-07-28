@@ -598,13 +598,13 @@ class Report:
                 continue
 
 
-async def get_next_report_num(identifier):
+async def get_next_report_num(identifier, server):
     collection = GG.MDB['ReportNums']
-    reportNum = await collection.find_one({'key': f'{identifier}'})
+    reportNum = await collection.find_one({'key': f'{identifier}', 'server': f'{server}'})
     num = reportNum['amount'] + 1
     reportNum['amount'] += 1
     num = formatNumber(num)
-    await collection.replace_one({"key": f'{identifier}'}, reportNum)
+    await collection.replace_one({"key": f'{identifier}', 'server': f'{server}'}, reportNum)
     return f"{num}"
 
 
