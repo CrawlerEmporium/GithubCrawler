@@ -96,7 +96,8 @@ class Report:
 
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None,
-                 github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None, trackerId: int = None):
+                 github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
+                 trackerId: int = None):
         if subscribers is None:
             subscribers = []
         if github_repo is None:
@@ -127,7 +128,8 @@ class Report:
         self.trackerId = trackerId
 
     @classmethod
-    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None, trackerId=None):
+    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None,
+                  trackerId=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
@@ -166,7 +168,7 @@ class Report:
             'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
-            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId' : self.trackerId
+            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId
         }
 
     @classmethod
@@ -207,7 +209,7 @@ class Report:
         return self.severity >= 0
 
     async def setup_github(self, ctx, serverId=None):
-        if self.repo is not None:
+        if (self.repo is not None or self.repo != 'NoRepo'):
             if self.github_issue:
                 raise ReportException("Issue is already on GitHub.")
             if self.is_bug:
@@ -217,7 +219,8 @@ class Report:
             desc = await self.get_github_desc(ctx, serverId)
 
             if self.repo is not 'NoRepo':
-                issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}", desc, labels)
+                issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}",
+                                                                       desc, labels)
                 log.info(f"Adding to Github: {self.repo}, {self.report_id}")
                 self.github_issue = issue.number
 
@@ -367,7 +370,7 @@ class Report:
 
     async def add_attachment(self, ctx, serverId, attachment: Attachment, add_to_github=True):
         self.attachments.append(attachment)
-        if add_to_github and self.github_issue and self.repo is not None:
+        if add_to_github and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
             if attachment.message:
                 msg = await self.get_attachment_message(ctx, attachment)
                 await GitHubClient.get_instance().add_issue_comment(self.repo, self.github_issue, msg)
@@ -411,10 +414,10 @@ class Report:
             await self.notify_subscribers(ctx, f"New Upvote by <@{author}>: {msg}")
 
         guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
-        if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and self.repo is not None:
+        if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and (self.repo is not None or self.repo != 'NoRepo'):
             await self.setup_github(ctx, serverId)
 
-        if self.upvotes - self.downvotes in (15, 10) and self.repo is not None:
+        if self.upvotes - self.downvotes in (15, 10) and (self.repo is not None or self.repo != 'NoRepo'):
             await self.update_labels()
 
     async def cannotrepro(self, author, msg, ctx, serverId):
@@ -523,7 +526,7 @@ class Report:
 
         await self.delete_message(ctx, serverId)
 
-        if close_github_issue and self.github_issue and self.repo is not None:
+        if close_github_issue and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
             extra_labels = set()
             if msg.startswith('dupe'):
                 extra_labels.add("duplicate")
@@ -550,7 +553,7 @@ class Report:
 
         await self.setup_message(ctx.bot, serverId, self.trackerId)
 
-        if open_github_issue and self.github_issue and self.repo is not None:
+        if open_github_issue and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
             await GitHubClient.get_instance().open_issue(self.repo, self.github_issue)
 
     async def untrack(self, ctx, serverId):
