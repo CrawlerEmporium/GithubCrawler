@@ -193,13 +193,14 @@ class Tracker(commands.Cog):
         if len(results) > 0:
             results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
             selection = await get_selection(ctx, results, force_select=True)
-
-            report = await Report.from_id(selection['report_id'])
-            if report is not None:
-                await ctx.send(embed=report.get_embed(True, ctx))
+            if selection is not None:
+                report = await Report.from_id(selection['report_id'])
+                if report is not None:
+                    await ctx.send(embed=report.get_embed(True, ctx))
+                else:
+                    await ctx.send("Selected report not found.")
             else:
-                await ctx.send("Selected report not found.")
-
+                return
         else:
             await ctx.send("No results found, please try with a different keyword.")
 
