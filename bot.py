@@ -12,7 +12,7 @@ from utils.functions import loadGithubServers
 
 log = logger.logger
 
-version = "2.0.1"
+version = "2.0.2"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '('

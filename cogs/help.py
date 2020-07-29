@@ -92,7 +92,7 @@ class Help(commands.Cog):
 
     async def issueStaffCommand(self, ctx, prefix):
         embed = EmbedWithAuthor(ctx)
-        embed.title = "Commands to communicate with the bot as Server Owner."
+        embed.title = "Commands to communicate with the bot as Server Owner or as Manager."
         embed.add_field(name="priority", value=f"``{prefix}priority <reportId> <priority>``\nChanges the priority of a report.", inline=False)
         embed.add_field(name="reidentify", value=f"``{prefix}reidentify <reportId> <identifier>``\nChanges the identifier of a report.", inline=False)
         embed.add_field(name="rename", value=f"``{prefix}rename <reportId> <new title>``\nChanges the title of a report.", inline=False)
@@ -113,7 +113,11 @@ class Help(commands.Cog):
                                               f"tracker = OPTIONAL ChannelID of the channel you want as your posting channel, will create a new channel if not supplied.\n"
                                               f"channel = OPTIONAL ChannelID of the channel you want as your listening channel, will create a new channel if not supplied.", inline=False)
         embed.add_field(name="trackers", value=f"``{prefix}issue trackers``\nShows all current trackers of this server.", inline=False)
+        embed.add_field(name="intro", value=f"``{prefix}issue intro <type>``\nMakes the bot post the intro message in a channel of your choice, options are bug and feature.", inline=False)
+        embed.add_field(name="search", value=f"``{prefix}issue search <identifier> <keyword(s)>``\nSearches through the database for reports that match your keywords and your given identifier. Only shows reports from this server..", inline=False)
         embed.add_field(name="remove", value=f"``{prefix}issue remove <identifier>``\nDisconnects the identifier from the bot, allowing you to delete its listening and tracking channels. **Read the warning that pops up after removing**.", inline=False)
+        embed.add_field(name="manager", value=f"``{prefix}issue manager``\nShows  message with all possible manager commands.",
+                        inline=False)
         self.setFooter(embed)
         return embed
 

@@ -36,6 +36,8 @@ class Tracker(commands.Cog):
                        f"{prefix}issue register\n"
                        f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]\n"
                        f"{prefix}issue trackers\n"
+                       f"{prefix}issue intro <type>\n"
+                       f"{prefix}issue search <identifier> <keyword(s)>\n"
                        f"{prefix}issue remove <identifier>\n"
                        f"{prefix}issue manager```")
 
@@ -113,8 +115,37 @@ class Tracker(commands.Cog):
 
         # SEND MESSAGE TO NEW CHANNELS
         msgChannel = self.bot.get_channel(channel.id)
+        try:
+            if type == 'bug':
+                await msgChannel.send(
+                    "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
+                    "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Severity**: Trivial (typos, "
+                    "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
+                    "impact) / High (a broken feature, major functional impact) / Critical (bot crash, extremely major "
+                    "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
+                    "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
+                    "trees.```")
+            if type == 'feature':
+                await msgChannel.send(
+                    "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
+                    "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
+                    "short and to the point.\n```**Feature Request:** Your request\n\n**Extra Information**\n**Who would "
+                    "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
+                    "others```")
+        except discord.Forbidden:
+            await ctx.send(f"Error: I am missing permissions to send the intro message..\n"
+                           f"Please make sure I have permission to send messages in <#{msgChannel.id}>.\n\n"
+                           f"After granting me permissions, you can run the ``!issue intro bug/feature`` command in that channel, to make me post the intro message.")
+
+        await ctx.send(
+            f"Created (or added) {channel.mention} as Listening Channel\nCreated (or added) {tracker.mention} as Tracking Channel.\nIt is using {identifier} as Identifier.")
+
+    @issue.command(name='intro')
+    @commands.guild_only()
+    async def issueIntro(self, ctx, type):
+        type = type.lower()
         if type == 'bug':
-            await msgChannel.send(
+            await ctx.send(
                 "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
                 "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Severity**: Trivial (typos, "
                 "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
@@ -122,15 +153,15 @@ class Tracker(commands.Cog):
                 "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
                 "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
                 "trees.```")
-        if type == 'feature':
-            await msgChannel.send(
+        elif type == 'feature':
+            await ctx.send(
                 "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
                 "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
                 "short and to the point.\n```**Feature Request:** Your request\n\n**Extra Information**\n**Who would "
                 "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
                 "others```")
-        await ctx.send(
-            f"Created (or added) {channel.mention} as Listening Channel\nCreated (or added) {tracker.mention} as Tracking Channel.\nIt is using {identifier} as Identifier.")
+        else:
+            await ctx.send("Proper command usage is ``issue intro bug`` or issue intro feature``.")
 
     @issue.command(name='trackers')
     @commands.guild_only()
