@@ -1,8 +1,11 @@
 import discord
 import re
 from cachetools import LRUCache
+from disputils import BotEmbedPaginator
 
 import utils.globals as GG
+from bot import get_prefix
+from utils.functions import paginate
 from utils.libs.github import GitHubClient
 from utils import logger
 
@@ -83,6 +86,14 @@ def each(result, error):
         raise error
     elif result:
         message_ids[i] = result['report_id']
+
+
+def getListenerURL(identifier, trackerId):
+    try:
+        server = next((item for item in GG.BUG_LISTEN_CHANS if item['tracker'] == trackerId and item['identifier'] == identifier), None)
+    except:
+        return ""
+    return server['url']
 
 
 class Report:
@@ -179,9 +190,9 @@ class Report:
             try:
                 return cls.from_dict(report)
             except KeyError:
-                raise ReportException("Report not found.")
+                raise ReportException(f"{report_id} Report not found.")
         else:
-            raise ReportException("Report not found.")
+            raise ReportException(f"{report_id} Report not found.")
 
     @classmethod
     async def from_message_id(cls, message_id):
@@ -246,18 +257,18 @@ class Report:
         else:
             embed.add_field(name="Added By", value=self.reporter)
         embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
-        if not self.is_bug:
+        if self.is_bug:
+            embed.colour = 0xff0000
+            embed.add_field(name="Verification", value=str(self.verification))
+            embed.set_footer(
+                text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
+        else:
             embed.colour = 0x00ff00
             embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes))
             vote_msg = "Vote by reacting"
             if not self.github_issue:
                 vote_msg += f" | {GITHUB_THRESHOLD} upvotes required to track"
             embed.set_footer(text=f"!report {self.report_id} for details or react with ℹ | {vote_msg}")
-        else:
-            embed.colour = 0xff0000
-            embed.add_field(name="Verification", value=str(self.verification))
-            embed.set_footer(
-                text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
 
         if self.jumpUrl is not None:
             embed.add_field(name="Original Request Link", value=str(self.jumpUrl))
@@ -298,23 +309,9 @@ class Report:
                 embed.description = f"*{countNotes} notes*"
 
         split = self.report_id.split("-")
-        url = ""
+        url = getListenerURL(split[0], self.trackerId)
         if split[0] == "R20":
             url = "https://cdn.discordapp.com/emojis/562116049475207178.png"
-        if split[0] == "5ET":
-            url = "https://images-ext-2.discordapp.net/external/8iZELuX3DXzfRIvIFX5_qHz5OdtQcOsxyiUSd3myb-g/%3Fsize%3D1024/https/cdn.discordapp.com/icons/363680385336606740/c6bfc30b26afd67e3f89c17975563488.webp"
-        if split[0] == "PLUT":
-            url = "https://cdn.discordapp.com/emojis/607869021731291146.png"
-        if split[0] == "BUG" or split[0] == "FR":
-            url = "https://images-ext-2.discordapp.net/external/cC5tnLUDKgw_urwQxMf1t7XHDGiY_zaiASVYQyIUeak/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/559331529378103317/dd8ba6c080cc25536d71a5cca75e82e4.webp"
-        if split[0] == "PBUG" or split[0] == "PFR":
-            url = "https://images-ext-1.discordapp.net/external/_GqRFUm-k0I0Bn_SVxrjLKDGh3Jn3QdIolw3bWsOjrg/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/574554734187380756/022b3cd708f9841e1847272cd52dbda1.webp"
-        if split[0] == "DBUG" or split[0] == "DFR":
-            url = "https://images-ext-2.discordapp.net/external/rWu6jSMoi6Ngejj9GcgMAC7CWRizUMZPFdvNDZ8D6Os/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/602774912595263490/3322f9c86f553dbb47f057b85a5e3d30.webp"
-        if split[0] == "GBUG" or split[0] == "GFR":
-            url = "https://images-ext-2.discordapp.net/external/WY_VfX_p8eL_a5_Xb1Zf1myV3lUmx2lMx_NLHFdkxKg/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/602779023151595546/f22de7baf09b8ba13135577059544895.webp"
-        if split[0] == "MBUG" or split[0] == "MFR":
-            url = "https://images-ext-2.discordapp.net/external/GUcJpmeQNjUMdoufIMzDJeweAAwpn7FUsc7HhmhukWw/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/534277197955989524/316c64093a82f2e428743a6e3344d8da.webp"
 
         if url == "":
             embed.set_author(name=f"{self.report_id}")
@@ -322,6 +319,68 @@ class Report:
             embed.set_author(name=f"{self.report_id}", icon_url=url)
 
         return embed
+
+    async def get_reportNotes(self, ctx=None):
+        attachments = self.attachments
+        viewAttachments = []
+        for attachment in attachments:
+            if attachment.veri == 0 or attachment.veri == 1 or attachment.veri == -1:
+                viewAttachments.append(attachment)
+
+        pages = paginate(viewAttachments, 10)
+        embeds = []
+        for x in range(len(pages)):
+            _choices = pages[x]
+
+            embed = discord.Embed()
+            if isinstance(self.reporter, int):
+                embed.add_field(name="Added By", value=f"<@{self.reporter}>")
+            else:
+                embed.add_field(name="Added By", value=self.reporter)
+            embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
+            if self.is_bug:
+                embed.colour = 0xff0000
+                embed.add_field(name="Verification", value=str(self.verification))
+            else:
+                embed.colour = 0x00ff00
+                embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes))
+
+            if self.jumpUrl is not None:
+                embed.add_field(name="Original Request Link", value=str(self.jumpUrl))
+
+            embed.title = f"`{self.report_id}` {self.title}"
+            if len(embed.title) > 256:
+                embed.title = f"{embed.title[:250]}..."
+            if self.github_issue:
+                embed.url = f"{GITHUB_BASE}/{self.repo}/issues/{self.github_issue}"
+
+            for attachment in _choices:
+                if attachment is not None:
+                    if not ctx:
+                        user = attachment.author
+                    else:
+                        if isinstance(attachment.author, int):
+                            user = ctx.guild.get_member(attachment.author)
+                        else:
+                            user = attachment.author
+                    msg = attachment.message[:1020] or "No details."
+                    embed.add_field(name=f"{VERI_EMOJI.get(attachment.veri, '')} {user}",
+                                    value=msg, inline=False)
+
+            split = self.report_id.split("-")
+            url = getListenerURL(split[0], self.trackerId)
+            if split[0] == "R20":
+                url = "https://cdn.discordapp.com/emojis/562116049475207178.png"
+
+            if url == "":
+                embed.set_author(name=f"{self.report_id}")
+            else:
+                embed.set_author(name=f"{self.report_id}", icon_url=url)
+
+            embeds.append(embed)
+
+        paginator = BotEmbedPaginator(ctx, embeds)
+        await paginator.run()
 
     async def get_github_desc(self, ctx, serverId):
         msg = self.title

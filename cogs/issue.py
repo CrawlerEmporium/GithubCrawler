@@ -120,7 +120,7 @@ class Issue(commands.Cog):
     async def viewreport(self, ctx, _id):
         """Gets the detailed status of a report."""
         report = await Report.from_id(_id)
-        await ctx.send(embed=report.get_embed(True, ctx))
+        await report.get_reportNotes(ctx)
 
     @commands.command(aliases=['cr'])
     @commands.guild_only()
@@ -279,6 +279,26 @@ class Issue(commands.Cog):
             await report.commit()
             await report.update(ctx, ctx.guild.id)
             await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
+
+    @commands.command()
+    @commands.guild_only()
+    async def merge(self, ctx, duplicate, mergeTo):
+        """Server Admins only - Merges duplicate into mergeTo."""
+        if await checks.manager(ctx):
+            dupe = await Report.from_id(duplicate)
+            merge = await Report.from_id(mergeTo)
+
+            if dupe is not None and merge is not None:
+                for x in dupe.attachments:
+                    await merge.add_attachment(ctx, ctx.guild.id, x, False)
+
+                await dupe.resolve(ctx, ctx.guild.id, f"Merged into {merge.report_id}")
+                await dupe.commit()
+
+                await merge.addnote(602779023151595546, f"Merged `{dupe.report_id}` into `{merge.report_id}`", ctx, ctx.guild.id, True)
+                await merge.commit()
+                await merge.update(ctx, ctx.guild.id)
+                await ctx.send(f"Merged `{dupe.report_id}` into `{merge.report_id}`")
 
     async def handle_reaction(self, msg_id, member, emoji, server):
         if emoji.name not in (UPVOTE_REACTION, DOWNVOTE_REACTION, INFORMATION_REACTION):
