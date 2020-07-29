@@ -313,7 +313,7 @@ class Report:
         if split[0] == "R20":
             url = "https://cdn.discordapp.com/emojis/562116049475207178.png"
 
-        if url == "":
+        if url == "" or url is None:
             embed.set_author(name=f"{self.report_id}")
         else:
             embed.set_author(name=f"{self.report_id}", icon_url=url)
@@ -372,7 +372,7 @@ class Report:
             if split[0] == "R20":
                 url = "https://cdn.discordapp.com/emojis/562116049475207178.png"
 
-            if url == "":
+            if url == "" or url is None:
                 embed.set_author(name=f"{self.report_id}")
             else:
                 embed.set_author(name=f"{self.report_id}", icon_url=url)
