@@ -38,6 +38,7 @@ class Tracker(commands.Cog):
                        f"{prefix}issue trackers\n"
                        f"{prefix}issue intro <type>\n"
                        f"{prefix}issue search <identifier> <keyword(s)>\n"
+                       f"{prefix}issue searchAll <identifier> <keyword(s)>\n"
                        f"{prefix}issue remove <identifier>\n"
                        f"{prefix}issue manager```")
 
@@ -220,6 +221,32 @@ class Tracker(commands.Cog):
         results = []
         for report in allReports:
             if report['trackerId'] in trackers and report['severity'] != -1:
+                results.append(report)
+        if len(results) > 0:
+            results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
+            selection = await get_selection(ctx, results, force_select=True)
+            if selection is not None:
+                report = await Report.from_id(selection['report_id'])
+                if report is not None:
+                    await ctx.send(embed=report.get_embed(True, ctx))
+                else:
+                    await ctx.send("Selected report not found.")
+            else:
+                return
+        else:
+            await ctx.send("No results found, please try with a different keyword.")
+
+    @issue.command(name='searchAll')
+    @commands.guild_only()
+    async def issueSearchAll(self, ctx, identifier, *, keywords):
+        allReports = await findInReports(GG.MDB.Reports, identifier, keywords)
+        server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+        trackers = []
+        for x in server['listen']:
+            trackers.append(x['tracker'])
+        results = []
+        for report in allReports:
+            if report['trackerId'] in trackers:
                 results.append(report)
         if len(results) > 0:
             results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
