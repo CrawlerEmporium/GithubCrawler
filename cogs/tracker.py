@@ -219,7 +219,7 @@ class Tracker(commands.Cog):
             trackers.append(x['tracker'])
         results = []
         for report in allReports:
-            if report['trackerId'] in trackers:
+            if report['trackerId'] in trackers and report['severity'] != -1:
                 results.append(report)
         if len(results) > 0:
             results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
