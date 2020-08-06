@@ -80,10 +80,12 @@ class Tracker(commands.Cog):
         identifier = identifier.upper()
         exist = await GG.MDB.ReportNums.find_one({"key": identifier, "server": ctx.guild.id})
         if exist is not None:
-            await ctx.send(
-                "This identifier is already in use, please select another one.")
-            return
+            if exist['server'] != ctx.guild.id:
+                await ctx.send(
+                    "This identifier is already in use, please select another one.")
+                return
         await GG.MDB.ReportNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
+
 
         # CREATE CHANNELS
         if channel == 0:
@@ -98,7 +100,7 @@ class Tracker(commands.Cog):
 
         # ADD LISTENER TO THE SERVER
         if channel is not None and tracker is not None:
-            listener = Listen(channel.id, tracker.id, identifier, type, None)
+            listener = Listen(channel.id, tracker.id, identifier, type, None, "")
             data = await GG.MDB.Github.find_one({"server": ctx.guild.id})
             server = Server.from_data(data)
             listener = listener.to_dict()
