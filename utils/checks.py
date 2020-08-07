@@ -46,31 +46,3 @@ def admin_or_permissions(**perms):
             f"You require a role named Bot Admin or these permissions to run this command: {', '.join(perms)}")
 
     return commands.check(predicate)
-
-
-async def manager(ctx):
-    async def predicate(ctx):
-        guild = ctx.guild.id
-        user = ctx.message.author.id
-
-        isManager = await GG.MDB.Managers.find_one({"user": user, "server": guild})
-        if isManager is None:
-            isManager = False
-            server = await GG.MDB.Github.find_one({"server": guild})
-            if user == server['admin']:
-                isManager = True
-        else:
-            isManager = True
-        return isManager
-
-    return commands.check(await predicate(ctx))
-
-
-async def assigned(ctx, report):
-    async def predicate(ctx, report):
-        if ctx.message.author.id == report.assignee:
-            return True
-        else:
-            return False
-
-    return commands.check(await predicate(ctx, report))
