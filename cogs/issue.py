@@ -59,12 +59,12 @@ async def isManager(ctx):
         manager = True
     return manager
 
+
 def isAssignee(ctx, report):
     if ctx.message.author.id == report.assignee:
         return True
     else:
         return False
-
 
 
 class Issue(commands.Cog):
@@ -328,7 +328,8 @@ class Issue(commands.Cog):
                 await dupe.resolve(ctx, ctx.guild.id, f"Merged into {merge.report_id}")
                 await dupe.commit()
 
-                await merge.addnote(602779023151595546, f"Merged `{dupe.report_id}` into `{merge.report_id}`", ctx, ctx.guild.id, True)
+                await merge.addnote(602779023151595546, f"Merged `{dupe.report_id}` into `{merge.report_id}`", ctx,
+                                    ctx.guild.id, True)
                 await merge.commit()
                 await merge.update(ctx, ctx.guild.id)
                 await ctx.send(f"Merged `{dupe.report_id}` into `{merge.report_id}`")

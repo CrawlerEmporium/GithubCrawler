@@ -24,12 +24,16 @@ class TopFlop(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def top(self, ctx, top=10):
+    async def top(self, ctx, identifier: str = None, top=10):
         """Gets top x or top 10"""
         reports = await GG.MDB.Reports.find({}).to_list(length=None)
+        results = []
+        for x in reports:
+            if identifier.upper() in x['report_id']:
+                results.append(x)
         serverReports = []
 
-        if ctx.guild.id == 363680385336606740:
+        if ctx.guild.id == 363680385336606740 and identifier is None:
             return await self.GUILDTFLOP(ctx, reports, top)
 
         try:
@@ -39,39 +43,12 @@ class TopFlop(commands.Cog):
             await ctx.send("Your server isn't registered or doesn't have any channels set up yet.")
             return
 
-        if server is not None:
-            for report in reports:
-                repo = report.get('github_repo', None)
-                if server == repo:
-                    if report['severity'] != -1:
-                        rep = {
-                            "report_id": report['report_id'],
-                            "title": report['title'],
-                            "upvotes": report['upvotes']
-                        }
-                        serverReports.append(rep)
+        if identifier is None:
+            embed, sortedList, top = await self.count(ctx, guild, reports, server, serverReports, top, "upvote")
         else:
-            trackerChannels = []
-            for x in guild.listen:
-                trackerChannels.append(x.tracker)
-            for report in reports:
-                tracker = report.get('trackerId', None)
-                if tracker in trackerChannels:
-                    if report['severity'] != -1:
-                        rep = {
-                            "report_id": report['report_id'],
-                            "title": report['title'],
-                            "upvotes": report['upvotes']
-                        }
-                        serverReports.append(rep)
 
-        sortedList = sorted(serverReports, key=lambda k: k['upvotes'], reverse=True)
-        embed = GG.EmbedWithAuthor(ctx)
-        if top <= 0:
-            top = 10
-        if top >= 25:
-            top = 25
-        embed.title = f"Top {top} most upvoted suggestions."
+            embed, sortedList, top = await self.count(ctx, guild, results, server, serverReports, top, "upvote")
+
         i = 1
         for report in sortedList[:top]:
             embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
@@ -81,13 +58,18 @@ class TopFlop(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def flop(self, ctx, top=10):
+    async def flop(self, ctx, identifier: str = None, top=10):
         """Gets top x or top 10"""
         # -2 in attachment
         reports = await GG.MDB.Reports.find({}).to_list(length=None)
+        results = []
+        for x in reports:
+            if identifier.upper() in x['report_id']:
+                results.append(x)
+        reports = results
         serverReports = []
 
-        if ctx.guild.id == 363680385336606740:
+        if ctx.guild.id == 363680385336606740 and identifier is None:
             return await self.GUILDTFLOP(ctx, reports, top, flop=True)
 
         try:
@@ -97,15 +79,28 @@ class TopFlop(commands.Cog):
             await ctx.send("Your server isn't registered or doesn't have any channels set up yet.")
             return
 
+        if identifier is None:
+            embed, sortedList, top = await self.count(ctx, guild, reports, server, serverReports, top, "downvote")
+        else:
+            embed, sortedList, top = await self.count(ctx, guild, results, server, serverReports, top, "downvote")
+
+        i = 1
+        for report in sortedList[:top]:
+            embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
+                            value=f"{report['report_id']}: {report['title']}", inline=False)
+            i += 1
+        await ctx.send(embed=embed)
+
+    async def count(self, ctx, guild, reports, server, serverReports, top, type):
         if server is not None:
             for report in reports:
                 repo = report.get('github_repo', None)
-                if server == repo:
-                    if int(report['downvotes']) >= 1 and report['severity'] != -1:
+                if server == repo or server == "5etools/tracker":
+                    if report['severity'] != -1:
                         rep = {
                             "report_id": report['report_id'],
                             "title": report['title'],
-                            "downvotes": report['downvotes']
+                            f"{type}s": report[f'{type}s']
                         }
                         serverReports.append(rep)
         else:
@@ -115,27 +110,22 @@ class TopFlop(commands.Cog):
             for report in reports:
                 tracker = report.get('trackerId', None)
                 if tracker in trackerChannels:
-                    if int(report['downvotes']) >= 1 and report['severity'] != -1:
+                    if report['severity'] != -1:
                         rep = {
                             "report_id": report['report_id'],
                             "title": report['title'],
-                            "downvotes": report['downvotes']
+                            f"{type}s": report[f'{type}s']
                         }
                         serverReports.append(rep)
 
-        sortedList = sorted(serverReports, key=lambda k: k['downvotes'], reverse=True)
+        sortedList = sorted(serverReports, key=lambda k: k[f'{type}s'], reverse=True)
         embed = GG.EmbedWithAuthor(ctx)
         if top <= 0:
             top = 10
         if top >= 25:
             top = 25
-        embed.title = f"Top {top} most downvoted suggestions."
-        i = 1
-        for report in sortedList[:top]:
-            embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
-                            value=f"{report['report_id']}: {report['title']}", inline=False)
-            i += 1
-        await ctx.send(embed=embed)
+        embed.title = f"Top {top} most {type}d suggestions."
+        return embed, sortedList, top
 
     async def GUILDTFLOP(self, ctx, reports, top, flop=False):
         async with ctx.channel.typing():
