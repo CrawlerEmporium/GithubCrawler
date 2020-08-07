@@ -483,7 +483,7 @@ class Report:
         if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and (self.repo is not None or self.repo != 'NoRepo'):
             await self.setup_github(ctx, serverId)
 
-        if self.upvotes - self.downvotes in (15, 10) and (self.repo is not None or self.repo != 'NoRepo'):
+        if self.upvotes - self.downvotes in (15, 10) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
 
     async def cannotrepro(self, author, msg, ctx, serverId):
@@ -506,7 +506,7 @@ class Report:
         await self.add_attachment(ctx, serverId, attachment)
         if msg:
             await self.notify_subscribers(ctx, f"New downvote by <@{author}>: {msg}")
-        if self.upvotes - self.downvotes in (14, 9):
+        if self.upvotes - self.downvotes in (14, 9) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
 
     async def addnote(self, author, msg, ctx, serverId, add_to_github=True):
