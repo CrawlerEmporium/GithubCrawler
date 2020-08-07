@@ -260,7 +260,7 @@ class Report:
         if self.assignee is None:
             embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
         else:
-            embed.add_field(name="Assigned to", value=self.assignee)
+            embed.add_field(name="Assigned to", value=f"<@{self.assignee}>")
         if self.is_bug:
             embed.colour = 0xff0000
             embed.add_field(name="Verification", value=str(self.verification))
@@ -344,7 +344,7 @@ class Report:
             if self.assignee is None:
                 embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
             else:
-                embed.add_field(name="Assigned to", value=self.assignee)
+                embed.add_field(name="Assigned to", value=f"<@{self.assignee}>")
             if self.is_bug:
                 embed.colour = 0xff0000
                 embed.add_field(name="Verification", value=str(self.verification))
