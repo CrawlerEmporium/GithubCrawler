@@ -280,6 +280,7 @@ class Issue(commands.Cog):
             await report.update(ctx, ctx.guild.id)
             await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
 
+    @commands.command()
     @commands.guild_only()
     async def assign(self, ctx, _id, member: typing.Optional[discord.Member] = None):
         """Server Admins only - Changes the priority of a report."""
