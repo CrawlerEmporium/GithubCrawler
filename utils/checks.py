@@ -64,3 +64,10 @@ async def manager(ctx):
         return isManager
 
     return commands.check(await predicate(ctx))
+
+
+async def assigned(ctx, report):
+    async def predicate(ctx, report):
+        return ctx.message.author.id == report.assignee
+
+    return commands.check(await predicate(ctx, report))

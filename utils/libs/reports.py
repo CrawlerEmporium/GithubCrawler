@@ -108,7 +108,7 @@ class Report:
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None,
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
-                 trackerId: int = None):
+                 trackerId: int = None, assignee = None):
         if subscribers is None:
             subscribers = []
         if github_repo is None:
@@ -137,15 +137,16 @@ class Report:
         self.collection = GG.MDB['Reports']
         self.jumpUrl = jumpUrl
         self.trackerId = trackerId
+        self.assignee = assignee
 
     @classmethod
     async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None,
-                  trackerId=None):
+                  trackerId=None, assignee=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
         inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug,
-                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId)
+                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee)
         return inst
 
     @classmethod
@@ -179,7 +180,7 @@ class Report:
             'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
-            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId
+            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee
         }
 
     @classmethod
@@ -256,7 +257,10 @@ class Report:
             embed.add_field(name="Added By", value=f"<@{self.reporter}>")
         else:
             embed.add_field(name="Added By", value=self.reporter)
-        embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
+        if self.assignee is None:
+            embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
+        else:
+            embed.add_field(name="Assigned to", value=self.assignee)
         if self.is_bug:
             embed.colour = 0xff0000
             embed.add_field(name="Verification", value=str(self.verification))
@@ -337,7 +341,10 @@ class Report:
                 embed.add_field(name="Added By", value=f"<@{self.reporter}>")
             else:
                 embed.add_field(name="Added By", value=self.reporter)
-            embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
+            if self.assignee is None:
+                embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
+            else:
+                embed.add_field(name="Assigned to", value=self.assignee)
             if self.is_bug:
                 embed.colour = 0xff0000
                 embed.add_field(name="Verification", value=str(self.verification))

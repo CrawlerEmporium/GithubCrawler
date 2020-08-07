@@ -1,9 +1,9 @@
 import copy
-import decimal
-import random
+import typing
 import re
 
 import bson
+import discord
 from discord import NotFound
 from discord.ext import commands
 from discord.ext.commands import CommandInvokeError
@@ -210,8 +210,8 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
-        if await checks.manager(ctx):
-            report = await Report.from_id(_id)
+        report = await Report.from_id(_id)
+        if await checks.manager(ctx) or await checks.assigned(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")
@@ -279,6 +279,19 @@ class Issue(commands.Cog):
             await report.commit()
             await report.update(ctx, ctx.guild.id)
             await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
+
+    @commands.guild_only()
+    async def assign(self, ctx, _id, member: typing.Optional[discord.Member] = None):
+        """Server Admins only - Changes the priority of a report."""
+        if await checks.manager(ctx):
+            report = await Report.from_id(_id)
+
+            report.assignee = member
+
+            await report.addnote(member.id, f"Assigned {report.report_id} to {member.mention}", ctx, ctx.guild.id)
+            await report.commit()
+            await report.update(ctx, ctx.guild.id)
+            await ctx.send(f"Assigned {report.report_id} to {member.mention}")
 
     @commands.command()
     @commands.guild_only()
