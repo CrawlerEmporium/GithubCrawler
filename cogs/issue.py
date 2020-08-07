@@ -287,7 +287,7 @@ class Issue(commands.Cog):
         if await checks.manager(ctx):
             report = await Report.from_id(_id)
 
-            report.assignee = member
+            report.assignee = member.id
 
             await report.addnote(member.id, f"Assigned {report.report_id} to {member.mention}", ctx, ctx.guild.id)
             await report.commit()
