@@ -26,12 +26,7 @@ class TopFlop(commands.Cog):
     @commands.guild_only()
     async def top(self, ctx, identifier: str = None, top=10):
         """Gets top x or top 10"""
-        reports = await GG.MDB.Reports.find({}).to_list(length=None)
-        results = []
-        for x in reports:
-            if identifier.upper() in x['report_id']:
-                results.append(x)
-        serverReports = []
+        reports, results = await self.getResults(identifier)
 
         if ctx.guild.id == 363680385336606740 and identifier is None:
             return await self.GUILDTFLOP(ctx, reports, top)
@@ -44,10 +39,9 @@ class TopFlop(commands.Cog):
             return
 
         if identifier is None:
-            embed, sortedList, top = await self.count(ctx, guild, reports, server, serverReports, top, "upvote")
+            embed, sortedList, top = await self.getCount(ctx, guild, reports, server, top, "upvote")
         else:
-
-            embed, sortedList, top = await self.count(ctx, guild, results, server, serverReports, top, "upvote")
+            embed, sortedList, top = await self.getCount(ctx, guild, results, server, top, "upvote")
 
         i = 1
         for report in sortedList[:top]:
@@ -61,13 +55,7 @@ class TopFlop(commands.Cog):
     async def flop(self, ctx, identifier: str = None, top=10):
         """Gets top x or top 10"""
         # -2 in attachment
-        reports = await GG.MDB.Reports.find({}).to_list(length=None)
-        results = []
-        for x in reports:
-            if identifier.upper() in x['report_id']:
-                results.append(x)
-        reports = results
-        serverReports = []
+        reports, results = await self.getResults(identifier)
 
         if ctx.guild.id == 363680385336606740 and identifier is None:
             return await self.GUILDTFLOP(ctx, reports, top, flop=True)
@@ -80,9 +68,9 @@ class TopFlop(commands.Cog):
             return
 
         if identifier is None:
-            embed, sortedList, top = await self.count(ctx, guild, reports, server, serverReports, top, "downvote")
+            embed, sortedList, top = await self.getCount(ctx, guild, reports, server, top, "downvote")
         else:
-            embed, sortedList, top = await self.count(ctx, guild, results, server, serverReports, top, "downvote")
+            embed, sortedList, top = await self.getCount(ctx, guild, results, server, top, "downvote")
 
         i = 1
         for report in sortedList[:top]:
@@ -91,7 +79,18 @@ class TopFlop(commands.Cog):
             i += 1
         await ctx.send(embed=embed)
 
-    async def count(self, ctx, guild, reports, server, serverReports, top, type):
+    async def getResults(self, identifier):
+        reports = await GG.MDB.Reports.find({}).to_list(length=None)
+        results = []
+        if identifier is not None:
+            for x in reports:
+                if identifier.upper() in x['report_id']:
+                    results.append(x)
+        reports = results
+        return reports, results
+
+    async def getCount(self, ctx, guild, reports, server, top, type):
+        serverReports = []
         if server is not None:
             for report in reports:
                 repo = report.get('github_repo', None)
