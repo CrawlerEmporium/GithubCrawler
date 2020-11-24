@@ -13,7 +13,7 @@ from models.server import Server
 from utils import logger, checks
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
-    DOWNVOTE_REACTION, INFORMATION_REACTION
+    DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION
 
 log = logger.logger
 
@@ -185,6 +185,17 @@ class Issue(commands.Cog):
         await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
         await report.update(ctx, ctx.guild.id)
 
+    @commands.command(aliases=['shrug'])
+    @commands.guild_only()
+    async def indifferent(self, ctx, _id, *, msg=''):
+        """Adds a shrug to the selected feature request."""
+        report = await Report.from_id(_id)
+        await report.indifferent(ctx.message.author.id, msg, ctx, ctx.guild.id)
+        # report.subscribe(ctx)
+        await report.commit()
+        await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await report.update(ctx, ctx.guild.id)
+
     @commands.command()
     @commands.guild_only()
     async def note(self, ctx, _id, *, msg=''):
@@ -335,7 +346,7 @@ class Issue(commands.Cog):
                 await ctx.send(f"Merged `{dupe.report_id}` into `{merge.report_id}`")
 
     async def handle_reaction(self, msg_id, member, emoji, server):
-        if emoji.name not in (UPVOTE_REACTION, DOWNVOTE_REACTION, INFORMATION_REACTION):
+        if emoji.name not in (UPVOTE_REACTION, DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION):
             return
 
         try:
@@ -382,6 +393,9 @@ class Issue(commands.Cog):
                         await DM.send(embed=em)
                     except:
                         pass
+                elif emoji.name == SHRUG_REACTION:
+                    print(f"Shrugged: {member} - {report.report_id}")
+                    await report.indifferent(member.id, '', ContextProxy(self.bot), server.id)
                 else:
                     print(f"Downvote: {member} - {report.report_id}")
                     await report.downvote(member.id, '', ContextProxy(self.bot), server.id)

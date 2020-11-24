@@ -30,18 +30,22 @@ VERI_EMOJI = {
     0: "\u2139",  # INFORMATION SOURCE
     1: "\u2705",  # WHITE HEAVY CHECK MARK
     2: "\u2b06",  # UPVOTE
+    3: "\U0001F937",  # SHRUG
 }
+
 VERI_KEY = {
     -2: "Downvote",
     -1: "Cannot Reproduce",
     0: "Note",
     1: "Can Reproduce",
-    2: "Upvote"
+    2: "Upvote",
+    3: "Indifferent"
 }
 
 GITHUB_BASE = "https://github.com"
 UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
+SHRUG_REACTION = "\U0001F937"
 INFORMATION_REACTION = "\U00002139"
 GITHUB_THRESHOLD = 5
 GITHUB_THRESHOLD_5ET = 5
@@ -67,6 +71,10 @@ class Attachment:
     @classmethod
     def downvote(cls, author, msg=''):
         return cls(author, msg, -2)
+
+    @classmethod
+    def indifferent(cls, author, msg=''):
+        return cls(author, msg, 3)
 
     @classmethod
     def cr(cls, author, msg=''):
@@ -106,7 +114,7 @@ class Report:
     messageIds = message_ids
 
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
-                 message, upvotes: int = 0, downvotes: int = 0, github_issue: int = None,
+                 message, upvotes: int = 0, downvotes: int = 0, shrugs: int = 0, github_issue: int = None,
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
                  trackerId: int = None, assignee = None):
         if subscribers is None:
@@ -132,6 +140,7 @@ class Report:
         self.is_bug = is_bug
         self.upvotes = upvotes
         self.downvotes = downvotes
+        self.shrugs = shrugs
 
         self.verification = verification
         self.collection = GG.MDB['Reports']
@@ -177,7 +186,7 @@ class Report:
     def to_dict(self):
         return {
             'reporter': self.reporter, 'report_id': self.report_id, 'title': self.title, 'severity': self.severity,
-            'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes,
+            'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes, 'shrugs': self.shrugs,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
             'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee
@@ -246,6 +255,7 @@ class Report:
         if not self.is_bug:
             await report_message.add_reaction(UPVOTE_REACTION)
             await report_message.add_reaction(DOWNVOTE_REACTION)
+            await report_message.add_reaction(SHRUG_REACTION)
             await report_message.add_reaction("ℹ")
 
     async def commit(self):
@@ -268,7 +278,7 @@ class Report:
                 text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
         else:
             embed.colour = 0x00ff00
-            embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes))
+            embed.add_field(name="Votes", value="\u2b06 " + str(self.upvotes) + " **|** \u2b07 " + str(self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
             vote_msg = "Vote by reacting"
             if not self.github_issue:
                 vote_msg += f" | {GITHUB_THRESHOLD} upvotes required to track"
@@ -350,7 +360,7 @@ class Report:
                 embed.add_field(name="Verification", value=str(self.verification))
             else:
                 embed.colour = 0x00ff00
-                embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes))
+                embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
 
             if self.jumpUrl is not None:
                 embed.add_field(name="Original Request Link", value=str(self.jumpUrl))
@@ -415,7 +425,7 @@ class Report:
                 for line in attachMessage.strip().splitlines():
                     msg += f"> {line}\n"
                 desc += f"\n\n{msg}"
-            desc += f"\nVotes: +{self.upvotes} / -{self.downvotes}"
+            desc += f"\nVotes: +{self.upvotes} / -{self.downvotes} / ±{self.shrugs}"
         else:
             for attachment in self.attachments[1:]:
                 if attachment.message:
@@ -470,7 +480,7 @@ class Report:
 
     async def upvote(self, author, msg, ctx, serverId):
         if [a for a in self.attachments if a.author == author and a.veri]:
-            raise ReportException("You have already either upvoted or downvoted this report.")
+            raise ReportException("You have already either upvoted, downvoted, or were indifferent about this report.")
         if self.is_bug:
             raise ReportException("You cannot upvote a bug report.")
         attachment = Attachment.upvote(author, msg)
@@ -498,7 +508,7 @@ class Report:
 
     async def downvote(self, author, msg, ctx, serverId):
         if [a for a in self.attachments if a.author == author and a.veri]:
-            raise ReportException("You have already either downvoted or upvoted this report.")
+            raise ReportException("You have already either upvoted, downvoted, or were indifferent about this report.")
         if self.is_bug:
             raise ReportException("You cannot downvote a bug report.")
         attachment = Attachment.downvote(author, msg)
@@ -508,6 +518,15 @@ class Report:
             await self.notify_subscribers(ctx, f"New downvote by <@{author}>: {msg}")
         if self.upvotes - self.downvotes in (14, 9) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
+
+    async def indifferent(self, author, msg, ctx, serverId):
+        if [a for a in self.attachments if a.author == author and a.veri]:
+            raise ReportException("You have already either upvoted, downvoted, or were indifferent about this report.")
+        if self.is_bug:
+            raise ReportException("You cannot be indifferent about a bug report.")
+        attachment = Attachment.indifferent(author, msg)
+        self.shrugs += 1
+        await self.add_attachment(ctx, serverId, attachment)
 
     async def addnote(self, author, msg, ctx, serverId, add_to_github=True):
         attachment = Attachment(author, msg)

@@ -79,8 +79,9 @@ class Help(commands.Cog):
         embed.title = "Commands to communicate with the bot."
         embed.add_field(name="cannotrepro", value=f"``{prefix}cannotrepro <reportId> [message]``\nAdds a note of 'I can't reproduce this bug' to the bug.", inline=False)
         embed.add_field(name="canrepro", value=f"``{prefix}canrepro <reportId> [message]``\nAdds a note of 'I can reproduce this bug' to the bug.", inline=False)
-        embed.add_field(name="downvote", value=f"``{prefix}downvote< reportId> [message]``\nAdds a downvote to the selected feature request.", inline=False)
+        embed.add_field(name="downvote", value=f"``{prefix}downvote <reportId> [message]``\nAdds a downvote to the selected feature request.", inline=False)
         embed.add_field(name="upvote", value=f"``{prefix}upvote <reportId> [message]``\nAdds an upvote to the selected feature request.", inline=False)
+        embed.add_field(name="shrug", value=f"``{prefix}shrug <reportId> [message]``\nAdds a shrug to the selected feature request.", inline=False)
         embed.add_field(name="note", value=f"``{prefix}note <reportId> [message]``\nAdds a note to a report.", inline=False)
         embed.add_field(name="report", value=f"``{prefix}report <reportId>``\nGets the detailed status of a report.", inline=False)
         embed.add_field(name="subscribe", value=f"``{prefix}subscribe <reportId>``\nSubscribes to a report.", inline=False)
