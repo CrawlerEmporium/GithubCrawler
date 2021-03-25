@@ -101,7 +101,10 @@ def getListenerURL(identifier, trackerId):
         server = next((item for item in GG.BUG_LISTEN_CHANS if item['tracker'] == trackerId and item['identifier'] == identifier), None)
     except:
         return ""
-    return server['url']
+    if server is not None and server['url'] is not None:
+        return server['url']
+    else:
+        return ""
 
 
 class Report:
