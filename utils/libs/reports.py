@@ -383,7 +383,10 @@ class Report:
                             user = ctx.guild.get_member(attachment.author)
                         else:
                             user = attachment.author
-                    msg = attachment.message[:1020] or "No details."
+                    if attachment.message is not None:
+                        msg = attachment.message[:1020] or "No details."
+                    else:
+                        msg = "No details."
                     embed.add_field(name=f"{VERI_EMOJI.get(attachment.veri, '')} {user}",
                                     value=msg, inline=False)
 
