@@ -282,7 +282,7 @@ class Tracker(commands.Cog):
             await ctx.send("Invalid member, please check the name/id and try again.")
             return
 
-        manager = await GG.MDB.Managers.find_one({"user": member.id})
+        manager = await GG.MDB.Managers.find_one({"user": member.id, "server": ctx.guild.id})
         if manager is not None:
             await ctx.send("Manager already found in the database.")
             return
@@ -297,7 +297,7 @@ class Tracker(commands.Cog):
         if member is None:
             await ctx.send("Invalid member, please check the name/id and try again.")
 
-        manager = await GG.MDB.Managers.find_one({"user": member.id})
+        manager = await GG.MDB.Managers.find_one({"user": member.id, "server": ctx.guild.id})
         if manager is None:
             await ctx.send("Manager not found in the database, please check the name/id and try again.")
 
