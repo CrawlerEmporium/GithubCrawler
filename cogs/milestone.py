@@ -19,6 +19,7 @@ class Milestones(commands.Cog):
                        f"```{prefix}milestone\n"
                        f"{prefix}milestone view <milestone_id>\n"
                        f"{prefix}milestone create <milestone_title>\n"
+                       f"*Below are admin/manager commands*:\n"
                        f"{prefix}milestone title <milestone_id> <milestone_title>\n"
                        f"{prefix}milestone description <milestone_id> <milestone_description>\n"
                        f"{prefix}milestone add <milestone_id> <feature/bug_id>\n"
@@ -33,48 +34,47 @@ class Milestones(commands.Cog):
 
     @milestone.command(name='create')
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
     async def milestoneCreate(self, ctx, *, title):
-        milestone_id = await get_next_milestone_id(ctx.guild.id)
-        milestone = await Milestone.new(ctx.message.author.id, ctx.guild.id, milestone_id, title)
-        await milestone.commit()
-        await ctx.send(content=f"Milestone `{milestone_id}` created", embed=await milestone.get_embed())
+        if await GG.isManager(ctx):
+            milestone_id = await get_next_milestone_id(ctx.guild.id)
+            milestone = await Milestone.new(ctx.message.author.id, ctx.guild.id, milestone_id, title)
+            await milestone.commit()
+            await ctx.send(content=f"Milestone `{milestone_id}` created", embed=await milestone.get_embed())
 
     @milestone.command(name='title')
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
     async def milestoneTitle(self, ctx, _id, *, title):
-        milestone = await Milestone.from_id(_id, ctx.guild.id)
-        milestone.title = title
-        await milestone.commit()
-        await ctx.send(f"The title for Milestone `{milestone.milestone_id}` was successfully set to `{title}`")
+        if await GG.isManager(ctx):
+            milestone = await Milestone.from_id(_id, ctx.guild.id)
+            milestone.title = title
+            await milestone.commit()
+            await ctx.send(f"The title for Milestone `{milestone.milestone_id}` was successfully set to `{title}`")
 
     @milestone.command(name='description')
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
     async def milestoneDescription(self, ctx, _id, *, description):
-        milestone = await Milestone.from_id(_id, ctx.guild.id)
-        milestone.description = description
-        await milestone.commit()
-        await ctx.send(f"The description for Milestone `{milestone.milestone_id}` was successfully set to `{description}`")
+        if await GG.isManager(ctx):
+            milestone = await Milestone.from_id(_id, ctx.guild.id)
+            milestone.description = description
+            await milestone.commit()
+            await ctx.send(f"The description for Milestone `{milestone.milestone_id}` was successfully set to `{description}`")
 
     @milestone.command(name='add')
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
     async def milestoneAdd(self, ctx, _id, report_id):
-        milestone = await Milestone.from_id(_id, ctx.guild.id)
-        await ctx.send(await milestone.add_report(report_id))
+        if await GG.isManager(ctx):
+            milestone = await Milestone.from_id(_id, ctx.guild.id)
+            await ctx.send(await milestone.add_report(report_id))
 
     @milestone.command(name='remove')
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
     async def milestoneRemove(self, ctx, _id, report_id):
-        milestone = await Milestone.from_id(_id, ctx.guild.id)
-        await ctx.send(await milestone.remove_report(report_id))
+        if await GG.isManager(ctx):
+            milestone = await Milestone.from_id(_id, ctx.guild.id)
+            await ctx.send(await milestone.remove_report(report_id))
 
     @milestone.command(name='subscribe')
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
     async def milestoneSubscribe(self, ctx, _id):
         #TODO implementatation to subscribe to milestones
         pass
