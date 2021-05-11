@@ -38,35 +38,6 @@ def getAllReports():
     return REPORTS
 
 
-def checkUserVsAdmin(server, member):
-    User = {"guild": server, "user": member}
-    wanted = next((item for item in GG.GITHUBSERVERS if item.server == server), None)
-    if wanted is not None:
-        Server = {"guild": wanted.server, "user": wanted.admin}
-        if User == Server:
-            return True
-    return False
-
-
-async def isManager(ctx):
-    manager = await GG.MDB.Managers.find_one({"user": ctx.message.author.id, "server": ctx.guild.id})
-    if manager is None:
-        manager = False
-        server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-        if ctx.message.author.id == server['admin']:
-            manager = True
-    else:
-        manager = True
-    return manager
-
-
-def isAssignee(ctx, report):
-    if ctx.message.author.id == report.assignee:
-        return True
-    else:
-        return False
-
-
 class Issue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -117,8 +88,24 @@ class Issue(commands.Cog):
                     if repo is not None:
                         await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
-            await report.setup_message(self.bot, message.guild.id, report.trackerId)
+            reportMessage = await report.setup_message(self.bot, message.guild.id, report.trackerId)
             await report.commit()
+            prefix = await self.bot.get_server_prefix(message)
+
+            embed = discord.Embed()
+            embed.title = f"Your submission ``{report_id} - {title}`` was accepted."
+            embed.add_field(name="Status Checking", value=f"To check on its status: `{prefix}report {report_id}`.",
+                            inline=False)
+            embed.add_field(name="Note Adding",
+                            value=f"To add a note, ie. when you forgot something, or want to add something later: `{prefix}note {report_id} <comment>`.",
+                            inline=False)
+            embed.add_field(name="Subscribing",
+                            value=f"To subscribe to this ticket, so you get notified when changes are made: `{prefix}subscribe {report_id}`. (This is only for others, the submittee is automatically subscribed).",
+                            inline=False)
+            embed.add_field(name="Voting",
+                            value=f"You can find your feature request/bug report here: [Click me]({reportMessage.jump_url})",
+                            inline=False)
+            await message.channel.send(embed=embed)
             await message.add_reaction("\U00002705")
 
     @commands.Cog.listener()
@@ -241,7 +228,7 @@ class Issue(commands.Cog):
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
         report = await Report.from_id(_id)
-        if await isManager(ctx) or isAssignee(ctx, report):
+        if await GG.isManager(ctx) or GG.isAssignee(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")
@@ -250,7 +237,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def unresolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Unresolves a report."""
-        if await isManager(ctx):
+        if await GG.isManager(ctx):
             report = await Report.from_id(_id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -260,7 +247,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def reidentify(self, ctx, report_id, identifier):
         """Server Admins only - Changes the identifier of a report."""
-        if await isManager(ctx):
+        if await GG.isManager(ctx):
             identifier = identifier.upper()
             id_num = await get_next_report_num(identifier, ctx.guild.id)
 
@@ -283,7 +270,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def rename(self, ctx, report_id, *, name):
         """Server Admins only - Changes the title of a report."""
-        if await isManager(ctx):
+        if await GG.isManager(ctx):
             report = await Report.from_id(report_id)
             report.title = name
             if report.github_issue and report.repo is not None:
@@ -296,7 +283,7 @@ class Issue(commands.Cog):
     @commands.guild_only()
     async def priority(self, ctx, _id, pri: int, *, msg=''):
         """Server Admins only - Changes the priority of a report."""
-        if await isManager(ctx):
+        if await GG.isManager(ctx):
             report = await Report.from_id(_id)
 
             report.severity = pri
@@ -312,9 +299,9 @@ class Issue(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def assign(self, ctx, _id, member: typing.Optional[discord.Member] = None):
+    async def assign(self, ctx, _id, member: typing.Optional[discord.Member]):
         """Server Admins only - Changes the priority of a report."""
-        if await isManager(ctx):
+        if await GG.isManager(ctx):
             report = await Report.from_id(_id)
 
             report.assignee = member.id
@@ -326,9 +313,24 @@ class Issue(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    async def unassign(self, ctx, _id):
+        """Server Admins only - Changes the priority of a report."""
+        if await GG.isManager(ctx):
+            report = await Report.from_id(_id)
+
+            report.assignee = None
+
+            await report.addnote(ctx.message.author.id, f"Cleared assigned user from {report.report_id}", ctx,
+                                 ctx.guild.id)
+            await report.commit()
+            await report.update(ctx, ctx.guild.id)
+            await ctx.send(f"Cleared assigned user of {report.report_id}.")
+
+    @commands.command()
+    @commands.guild_only()
     async def merge(self, ctx, duplicate, mergeTo):
         """Server Admins only - Merges duplicate into mergeTo."""
-        if await isManager(ctx):
+        if await GG.isManager(ctx):
             dupe = await Report.from_id(duplicate)
             merge = await Report.from_id(mergeTo)
 
@@ -359,7 +361,7 @@ class Issue(commands.Cog):
         if member.bot:
             return
 
-        if checkUserVsAdmin(server.id, member.id):
+        if GG.checkUserVsAdmin(server.id, member.id):
             if emoji.name == UPVOTE_REACTION:
                 await report.force_accept(ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:

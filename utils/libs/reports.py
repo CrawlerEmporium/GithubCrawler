@@ -4,7 +4,7 @@ from cachetools import LRUCache
 from disputils import BotEmbedPaginator
 
 import utils.globals as GG
-from bot import get_prefix
+from models.attachment import Attachment
 from utils.functions import paginate
 from utils.libs.github import GitHubClient
 from utils import logger
@@ -32,7 +32,6 @@ VERI_EMOJI = {
     2: "\u2b06",  # UPVOTE
     3: "\U0001F937",  # SHRUG
 }
-
 VERI_KEY = {
     -2: "Downvote",
     -1: "Cannot Reproduce",
@@ -50,41 +49,6 @@ INFORMATION_REACTION = "\U00002139"
 GITHUB_THRESHOLD = 5
 GITHUB_THRESHOLD_5ET = 5
 
-
-class Attachment:
-    def __init__(self, author, message: str = '', veri: int = 0):
-        self.author = author
-        self.message = message or None
-        self.veri = veri
-
-    @classmethod
-    def from_dict(cls, attachment):
-        return cls(**attachment)
-
-    def to_dict(self):
-        return {"author": self.author, "message": self.message, "veri": self.veri}
-
-    @classmethod
-    def upvote(cls, author, msg=''):
-        return cls(author, msg, 2)
-
-    @classmethod
-    def downvote(cls, author, msg=''):
-        return cls(author, msg, -2)
-
-    @classmethod
-    def indifferent(cls, author, msg=''):
-        return cls(author, msg, 3)
-
-    @classmethod
-    def cr(cls, author, msg=''):
-        return cls(author, msg, 1)
-
-    @classmethod
-    def cnr(cls, author, msg=''):
-        return cls(author, msg, -1)
-
-
 message_ids = {}
 
 
@@ -98,7 +62,9 @@ def each(result, error):
 
 def getListenerURL(identifier, trackerId):
     try:
-        server = next((item for item in GG.BUG_LISTEN_CHANS if item['tracker'] == trackerId and item['identifier'] == identifier), None)
+        server = next(
+            (item for item in GG.BUG_LISTEN_CHANS if item['tracker'] == trackerId and item['identifier'] == identifier),
+            None)
     except:
         return ""
     if server is not None and server['url'] is not None:
@@ -119,9 +85,11 @@ class Report:
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, shrugs: int = 0, github_issue: int = None,
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
-                 trackerId: int = None, assignee = None):
+                 trackerId: int = None, assignee=None, milestone: list = None):
         if subscribers is None:
             subscribers = []
+        if milestone is None:
+            milestone = []
         if github_repo is None:
             github_repo = 'NoRepo'
         if message is None:
@@ -136,6 +104,7 @@ class Report:
         self.attachments = attachments
         self.message = int(message)
         self.subscribers = subscribers
+        self.milestone = milestone
 
         self.repo: str = github_repo
         self.github_issue = int(github_issue)
@@ -153,12 +122,12 @@ class Report:
 
     @classmethod
     async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None,
-                  trackerId=None, assignee=None):
+                  trackerId=None, assignee=None, milestone=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
         inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug,
-                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee)
+                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone)
         return inst
 
     @classmethod
@@ -189,10 +158,11 @@ class Report:
     def to_dict(self):
         return {
             'reporter': self.reporter, 'report_id': self.report_id, 'title': self.title, 'severity': self.severity,
-            'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes, 'shrugs': self.shrugs,
+            'verification': self.verification, 'upvotes': self.upvotes, 'downvotes': self.downvotes,
+            'shrugs': self.shrugs,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
-            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee
+            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee, 'milestone': self.milestone
         }
 
     @classmethod
@@ -260,6 +230,7 @@ class Report:
             await report_message.add_reaction(DOWNVOTE_REACTION)
             await report_message.add_reaction(SHRUG_REACTION)
             await report_message.add_reaction("ℹ")
+        return report_message
 
     async def commit(self):
         await self.collection.replace_one({"report_id": self.report_id}, self.to_dict(), upsert=True)
@@ -281,14 +252,18 @@ class Report:
                 text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
         else:
             embed.colour = 0x00ff00
-            embed.add_field(name="Votes", value="\u2b06 " + str(self.upvotes) + " **|** \u2b07 " + str(self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
+            embed.add_field(name="Votes", value="\u2b06 " + str(self.upvotes) + " **|** \u2b07 " + str(
+                self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
             vote_msg = "Vote by reacting"
             if not self.github_issue:
                 vote_msg += f" | {GITHUB_THRESHOLD} upvotes required to track"
             embed.set_footer(text=f"!report {self.report_id} for details or react with ℹ | {vote_msg}")
 
+        if self.milestone is not None and len(self.milestone) > 0:
+            embed.add_field(name="In milestone(s)", value=', '.join(self.milestone))
+
         if self.jumpUrl is not None:
-            embed.add_field(name="Original Request Link", value=str(self.jumpUrl))
+            embed.add_field(name="Original Request Link", value=f"[Click me]({self.jumpUrl})")
 
         embed.title = f"`{self.report_id}` {self.title}"
         if len(embed.title) > 256:
@@ -363,10 +338,14 @@ class Report:
                 embed.add_field(name="Verification", value=str(self.verification))
             else:
                 embed.colour = 0x00ff00
-                embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
+                embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(
+                    self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
+
+            if self.milestone is not None and len(self.milestone) > 0:
+                embed.add_field(name="In milestone(s)", value=', '.join(self.milestone))
 
             if self.jumpUrl is not None:
-                embed.add_field(name="Original Request Link", value=str(self.jumpUrl))
+                embed.add_field(name="Original Request Link", value=f"[Click me]({self.jumpUrl})")
 
             embed.title = f"`{self.report_id}` {self.title}"
             if len(embed.title) > 256:
@@ -496,7 +475,8 @@ class Report:
             await self.notify_subscribers(ctx, f"New Upvote by <@{author}>: {msg}")
 
         guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
-        if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and (self.repo is not None or self.repo != 'NoRepo'):
+        if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and (
+                self.repo is not None or self.repo != 'NoRepo'):
             await self.setup_github(ctx, serverId)
 
         if self.upvotes - self.downvotes in (15, 10) and self.repo is not None and self.repo != 'NoRepo':

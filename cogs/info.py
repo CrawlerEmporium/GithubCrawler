@@ -59,7 +59,6 @@ class Info(commands.Cog):
         await ctx.send(embed=em)
 
 
-
 def setup(bot):
     log.info("[Cogs] Info...")
     bot.add_cog(Info(bot))

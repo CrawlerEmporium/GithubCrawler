@@ -86,6 +86,35 @@ def checkPermission(ctx, permission):
         return False
 
 
+async def isManager(ctx):
+    manager = await MDB.Managers.find_one({"user": ctx.message.author.id, "server": ctx.guild.id})
+    if manager is None:
+        manager = False
+        server = await MDB.Github.find_one({"server": ctx.guild.id})
+        if ctx.message.author.id == server['admin']:
+            manager = True
+    else:
+        manager = True
+    return manager
+
+
+def isAssignee(ctx, report):
+    if ctx.message.author.id == report.assignee:
+        return True
+    else:
+        return False
+
+
+def checkUserVsAdmin(server, member):
+    User = {"guild": server, "user": member}
+    wanted = next((item for item in GITHUBSERVERS if item.server == server), None)
+    if wanted is not None:
+        Server = {"guild": wanted.server, "user": wanted.admin}
+        if User == Server:
+            return True
+    return False
+
+
 class EmbedWithAuthor(discord.Embed):
     """An embed with author image and nickname set."""
 

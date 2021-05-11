@@ -12,7 +12,7 @@ from utils.functions import loadGithubServers
 
 log = logger.logger
 
-version = "2.0.3"
+version = "2.1"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '('
@@ -118,5 +118,6 @@ if __name__ == "__main__":
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
     log.info("-------------------")
+    # bot.load_extension(GG.COGS+'.milestone')
     log.info("Finished Loading All Cogs...")
     bot.run(bot.token)
