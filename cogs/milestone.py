@@ -152,7 +152,7 @@ class Milestones(commands.Cog):
                 except MilestoneException as e:
                     await ctx.send(e)
             else:
-                await ctx.send(f"Status {status}, is not a valid status, you can use the following statuses:\n"
+                await ctx.send(f"The following statuses are valid:\n"
                                f"```-1: Outdated\n"
                                f"0: New\n"
                                f"1: Closed\n"
