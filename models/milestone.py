@@ -3,11 +3,14 @@ import discord
 from utils.libs.reports import Report
 import utils.globals as GG
 
+STATUS = {
+    -1: "Outdated", 0: "New", 1: "Closed", 2: "Released"
+}
 
 class Milestone:
     collection = GG.MDB['Milestone']
 
-    def __init__(self, owner: int, server: int, milestone_id: str, title: str = '', description: str = '',
+    def __init__(self, owner: int, server: int, milestone_id: str, status: int = 0, title: str = '', description: str = '',
                  reports: list = None):
         if reports is None:
             reports = []
@@ -17,10 +20,11 @@ class Milestone:
         self.title = title
         self.description = description
         self.reports = reports
+        self.status = status
 
     @classmethod
     async def new(cls, owner, server, milestone_id, title):
-        inst = cls(owner, server, milestone_id, title, description='', reports=None)
+        inst = cls(owner, server, milestone_id, 0, title, description='', reports=None)
         return inst
 
     @classmethod
@@ -28,7 +32,7 @@ class Milestone:
         return cls(**milestone_dict)
 
     def to_dict(self):
-        return {"owner": self.owner, "server": self.server, "milestone_id": self.milestone_id, "title": self.title,
+        return {"owner": self.owner, "server": self.server, "milestone_id": self.milestone_id, "status": self.status, "title": self.title,
                 "description": self.description, "reports": self.reports}
 
     @classmethod
@@ -40,11 +44,11 @@ class Milestone:
             try:
                 return cls.from_dict(milestone)
             except KeyError:
-                raise MilestoneException(f"`{id}` Milestone not found.")
+                raise MilestoneException(f"Milestone `{id}` not found.")
         else:
-            raise MilestoneException(f"`{id}` Milestone not found.")
+            raise MilestoneException(f"Milestone `{id}` not found.")
 
-    async def add_report(self, _id):
+    async def add_report(self, _id, guild_id):
         if _id in self.reports:
             return f"Report `{_id}` is already linked to milestone `{self.milestone_id}`."
         else:
@@ -53,23 +57,23 @@ class Milestone:
             if self.milestone_id not in report.milestone:
                 report.milestone.append(self.milestone_id)
                 await report.commit()
-            await self.commit()
+            await self.commit(guild_id)
             return f"Added report `{_id}` to milestone `{self.milestone_id}`."
 
-    async def remove_report(self, _id):
+    async def remove_report(self, _id, guild_id):
         if _id in self.reports:
             self.reports.remove(_id)
             report = await Report.from_id(_id)
             if self.milestone_id in report.milestone:
                 report.milestone.remove(self.milestone_id)
                 await report.commit()
-            await self.commit()
+            await self.commit(guild_id)
             return f"Removed report `{_id}` from milestone `{self.milestone_id}`."
         else:
             return f"Report `{_id}` was not found in the linked reports for milestone `{self.milestone_id}`."
 
-    async def commit(self):
-        await self.collection.replace_one({"milestone_id": self.milestone_id}, self.to_dict(), upsert=True)
+    async def commit(self, guild_id):
+        await self.collection.replace_one({"milestone_id": self.milestone_id, "server": guild_id}, self.to_dict(), upsert=True)
 
     async def get_embed(self):
         embed = discord.Embed()
@@ -86,6 +90,8 @@ class Milestone:
         resolved = 0
         resolvedReports = "**Resolved: **"
         reports = len(self.reports)
+
+        embed.add_field(name="Status", value=f"{STATUS.get(self.status)}", inline=False)
 
         embed.add_field(name="Total Tickets", value=f"{reports}")
         for report in self.reports:
