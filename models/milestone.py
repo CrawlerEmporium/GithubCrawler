@@ -4,27 +4,31 @@ from utils.libs.reports import Report
 import utils.globals as GG
 
 STATUS = {
-    -1: "Outdated", 0: "New", 1: "Closed", 2: "Released"
+    -1: "Outdated", 0: "New", 1: "Closed", 2: "Resolved", 3: "Released"
 }
 
 class Milestone:
     collection = GG.MDB['Milestone']
 
     def __init__(self, owner: int, server: int, milestone_id: str, status: int = 0, title: str = '', description: str = '',
-                 reports: list = None):
+                 reports: list = None,
+                 subscribers: list = None):
         if reports is None:
             reports = []
+        if subscribers is None:
+            subscribers = []
         self.owner = owner
         self.server = server
         self.milestone_id = milestone_id
         self.title = title
         self.description = description
         self.reports = reports
+        self.subscribers = subscribers
         self.status = status
 
     @classmethod
     async def new(cls, owner, server, milestone_id, title):
-        inst = cls(owner, server, milestone_id, 0, title, description='', reports=None)
+        inst = cls(owner, server, milestone_id, 0, title, description='', reports=None, subscribers=None)
         return inst
 
     @classmethod
@@ -33,7 +37,7 @@ class Milestone:
 
     def to_dict(self):
         return {"owner": self.owner, "server": self.server, "milestone_id": self.milestone_id, "status": self.status, "title": self.title,
-                "description": self.description, "reports": self.reports}
+                "description": self.description, "reports": self.reports, "subscribers": self.subscribers}
 
     @classmethod
     async def from_id(cls, milestone_id, server):
@@ -71,6 +75,25 @@ class Milestone:
             return f"Removed report `{_id}` from milestone `{self.milestone_id}`."
         else:
             return f"Report `{_id}` was not found in the linked reports for milestone `{self.milestone_id}`."
+
+    def subscribe(self, ctx):
+        """Ensures a user is subscribed to this report."""
+        if ctx.message.author.id not in self.subscribers:
+            self.subscribers.append(ctx.message.author.id)
+
+    def unsubscribe(self, ctx):
+        """Ensures a user is not subscribed to this report."""
+        if ctx.message.author.id in self.subscribers:
+            self.subscribers.remove(ctx.message.author.id)
+
+    async def notify_subscribers(self, ctx, msg):
+        msg = f"`{self.milestone_id}` - {self.title}: {msg}"
+        for sub in self.subscribers:
+            try:
+                member = next(m for m in ctx.bot.get_all_members() if m.id == sub)
+                await member.send(msg)
+            except (StopIteration, discord.HTTPException):
+                continue
 
     async def commit(self, guild_id):
         await self.collection.replace_one({"milestone_id": self.milestone_id, "server": guild_id}, self.to_dict(), upsert=True)

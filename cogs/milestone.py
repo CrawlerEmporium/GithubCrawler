@@ -37,6 +37,7 @@ class Milestones(commands.Cog):
                        f"{prefix}milestone resolve <milestone_id>\n"
                        f"{prefix}milestone add <milestone_id> <feature/bug_id>\n"
                        f"{prefix}milestone remove <milestone_id> <feature/bug_id>\n"
+                       f"{prefix}milestone merge <dupe_milestone_id> <merge_to_milestone_id>\n"
                        f"```")
 
     @milestone.command(name='view')
@@ -64,11 +65,11 @@ class Milestones(commands.Cog):
     async def milestoneSubscribe(self, ctx, _id):
         try:
             milestone = await Milestone.from_id(_id, ctx.guild.id)
-            for rep in milestone.reports:
-                report = await Report.from_id(rep.report_id)
-                report.subscribe(ctx)
-                await report.commit()
-            await ctx.send(f"Subscribed to {len(milestone.reports)} reports, all linked to `{milestone.milestone_id}`.")
+            if ctx.message.author.id not in milestone.subscribers:
+                milestone.subscribe(ctx)
+                await ctx.send(f"{ctx.message.author.mention}, you just subscribed to `{milestone.milestone_id}` - {milestone.title}.")
+            else:
+                await ctx.send(f"{ctx.message.author.mention}, you are already subscribed `{milestone.milestone_id}` - {milestone.title}.")
         except MilestoneException as e:
             await ctx.send(e)
 
@@ -77,11 +78,11 @@ class Milestones(commands.Cog):
     async def milestoneSubscribe(self, ctx, _id):
         try:
             milestone = await Milestone.from_id(_id, ctx.guild.id)
-            for rep in milestone.reports:
-                report = await Report.from_id(rep.report_id)
-                report.unsubscribe(ctx)
-                await report.commit()
-            await ctx.send(f"Unsubscribed to {len(milestone.reports)} reports, all linked to `{milestone.milestone_id}`.")
+            if ctx.message.author.id in milestone.subscribers:
+                milestone.unsubscribe(ctx)
+                await ctx.send(f"{ctx.message.author.mention}, you just unsubscribed to `{milestone.milestone_id}` - {milestone.title}.")
+            else:
+                await ctx.send(f"{ctx.message.author.mention}, you are not subscribed to `{milestone.milestone_id}` - {milestone.title}.")
         except MilestoneException as e:
             await ctx.send(e)
 
@@ -126,6 +127,7 @@ class Milestones(commands.Cog):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 await ctx.send(await milestone.add_report(report_id, ctx.guild.id))
+                await milestone.notify_subscribers(ctx, f"A new ticket was added to milestone `{_id}`.\nTicket: `{report_id}`")
             except MilestoneException as e:
                 await ctx.send(e)
 
@@ -136,6 +138,7 @@ class Milestones(commands.Cog):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 await ctx.send(await milestone.remove_report(report_id, ctx.guild.id))
+                await milestone.notify_subscribers(ctx, f"A ticket was removed from milestone `{_id}`.\nTicket: `{report_id}`")
             except MilestoneException as e:
                 await ctx.send(e)
 
@@ -149,6 +152,7 @@ class Milestones(commands.Cog):
                     milestone.status = status
                     await milestone.commit(ctx.guild.id)
                     await ctx.send(f"Updated `{milestone.milestone_id}` to `{STATUS.get(status)}`\n")
+                    await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(status)}`.")
                 except MilestoneException as e:
                     await ctx.send(e)
             else:
@@ -160,13 +164,19 @@ class Milestones(commands.Cog):
 
     @milestone.command(name='close')
     @commands.guild_only()
-    async def milestoneClose(self, ctx, _id):
+    async def milestoneClose(self, ctx, _id, msg=None):
         if await GG.isManager(ctx):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 milestone.status = 1
                 await milestone.commit(ctx.guild.id)
-                await ctx.send(f"Closed `{milestone.milestone_id}`")
+                if msg is not None:
+                    await ctx.send(f"Closed `{milestone.milestone_id}`")
+                    await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(1)}`.")
+                else:
+                    await ctx.send(f"Closed `{milestone.milestone_id}`\n{msg}")
+                    await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(1)}`.\n"
+                                                       f"With message: {msg}")
             except MilestoneException as e:
                 await ctx.send(e)
 
@@ -179,8 +189,30 @@ class Milestones(commands.Cog):
                 milestone.status = 2
                 await milestone.commit(ctx.guild.id)
                 await ctx.send(f"Resolved `{milestone.milestone_id}`")
+                await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(2)}`.")
             except MilestoneException as e:
                 await ctx.send(e)
+
+    @milestone.command(name='merge')
+    @commands.guild_only()
+    async def milestoneMerge(self, ctx, duplicate, mergeTo):
+        if await GG.isManager(ctx):
+            dupe = await Milestone.from_id(duplicate)
+            merge = await Milestone.from_id(mergeTo)
+
+            if dupe is not None and merge is not None:
+                for x in dupe.reports:
+                    if x not in merge.reports:
+                        await merge.add_report(x, ctx.guild.id)
+
+                dupe.status = 1
+                await dupe.commit()
+                await dupe.notify_subscribers(ctx, f"The status of milestone `{dupe.milestone_id}` was updated to `{STATUS.get(1)}`.\n"
+                                                   f"With message: Merged `{dupe.milestone_id}` into `{merge.milestone_id}`.")
+
+                await merge.commit()
+                await merge.notify_subscribers(ctx, f"Merged `{dupe.milestone_id}` into `{merge.milestone_id}`.")
+                await ctx.send(f"Merged `{dupe.milestone_id}` into `{merge.milestone_id}`")
 
 
 def setup(bot):
