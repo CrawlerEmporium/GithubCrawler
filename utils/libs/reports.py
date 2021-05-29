@@ -230,14 +230,14 @@ class Report:
         if not self.is_bug:
             report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed(),
                                                                         components=
-                                                                        [Button(label=UPVOTE, style=ButtonStyle.green,
+                                                                        [[Button(label=UPVOTE, style=ButtonStyle.green,
                                                                                 emoji="⬆️"),
                                                                          Button(label=DOWNVOTE, style=ButtonStyle.red,
                                                                                 emoji="⬇️"),
                                                                          Button(label=SHRUG, style=ButtonStyle.gray,
                                                                                 emoji="🤷"),
                                                                          Button(label=INFORMATION,
-                                                                                style=ButtonStyle.blue, emoji="ℹ️")]
+                                                                                style=ButtonStyle.blue, emoji="ℹ️")]]
                                                                         )
         else:
             report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed())
@@ -468,7 +468,7 @@ class Report:
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
-        if [a for a in self.attachments if a.author == author and a.veri]:
+        if [a for a in self.attachments if a.author == author and a.veri == 1]:
             raise ReportException("You have already verified this report.")
         if not self.is_bug:
             raise ReportException("You cannot CR a feature request.")
@@ -478,8 +478,16 @@ class Report:
         await self.notify_subscribers(ctx, f"New CR by <@{author}>: {msg}")
 
     async def upvote(self, author, msg, ctx, serverId):
-        if [a for a in self.attachments if a.author == author and a.veri]:
-            raise ReportException("You have already either upvoted, downvoted, or were indifferent about this report.")
+        for attachment in self.attachments:
+            if attachment.author == author and attachment.veri == 2:
+                raise ReportException("You have already upvoted this report.")
+            if attachment.author == author and attachment.veri == -2:
+                self.downvotes -= 1
+                self.attachments.remove(attachment)
+            elif attachment.author == author and attachment.veri == 3:
+                self.shrugs -= 1
+                self.attachments.remove(attachment)
+
         if self.is_bug:
             raise ReportException("You cannot upvote a bug report.")
         attachment = Attachment.upvote(author, msg)
@@ -497,7 +505,7 @@ class Report:
             await self.update_labels()
 
     async def cannotrepro(self, author, msg, ctx, serverId):
-        if [a for a in self.attachments if a.author == author and a.veri]:
+        if [a for a in self.attachments if a.author == author and a.veri == -1]:
             raise ReportException("You have already verified this report.")
         if not self.is_bug:
             raise ReportException("You cannot CNR a feature request.")
@@ -507,8 +515,16 @@ class Report:
         await self.notify_subscribers(ctx, f"New CNR by <@{author}>: {msg}")
 
     async def downvote(self, author, msg, ctx, serverId):
-        if [a for a in self.attachments if a.author == author and a.veri]:
-            raise ReportException("You have already either upvoted, downvoted, or were indifferent about this report.")
+        for attachment in self.attachments:
+            if attachment.author == author and attachment.veri == 2:
+                self.upvotes -= 1
+                self.attachments.remove(attachment)
+            if attachment.author == author and attachment.veri == -2:
+                raise ReportException("You have already downvoted this report.")
+            if attachment.author == author and attachment.veri == 3:
+                self.shrugs -= 1
+                self.attachments.remove(attachment)
+
         if self.is_bug:
             raise ReportException("You cannot downvote a bug report.")
         attachment = Attachment.downvote(author, msg)
@@ -520,8 +536,16 @@ class Report:
             await self.update_labels()
 
     async def indifferent(self, author, msg, ctx, serverId):
-        if [a for a in self.attachments if a.author == author and a.veri]:
-            raise ReportException("You have already either upvoted, downvoted, or were indifferent about this report.")
+        for attachment in self.attachments:
+            if attachment.author == author and attachment.veri == 2:
+                self.upvotes -= 1
+                self.attachments.remove(attachment)
+            if attachment.author == author and attachment.veri == -2:
+                self.downvotes -= 1
+                self.attachments.remove(attachment)
+            if attachment.author == author and attachment.veri == 3:
+                raise ReportException("You were already indifferent about this report.")
+
         if self.is_bug:
             raise ReportException("You cannot be indifferent about a bug report.")
         attachment = Attachment.indifferent(author, msg)
