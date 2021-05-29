@@ -7,12 +7,13 @@ from utils import logger
 from os import listdir
 from os.path import isfile, join
 from discord.ext import commands
+from discord_components import DiscordComponents
 
 from utils.functions import loadGithubServers
 
 log = logger.logger
 
-version = "2.2.2"
+version = "2.3.0"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '('
@@ -67,6 +68,7 @@ bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=
 @bot.event
 async def on_ready():
     await loadGithubServers()
+    DiscordComponents(bot)
     await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | !help | v{version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 

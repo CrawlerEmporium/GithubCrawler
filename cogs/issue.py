@@ -7,6 +7,7 @@ import discord
 from discord import NotFound
 from discord.ext import commands
 from discord.ext.commands import CommandInvokeError
+from discord_components import InteractionType
 
 import utils.globals as GG
 from models.server import Server
@@ -22,6 +23,10 @@ REPORTS = []
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
 FEATURE_RE = re.compile(r"\**Feature [Rr]equest\**:?\s?(.+?)(\n|$)")
 
+UPVOTE = "Upvote"
+DOWNVOTE = "Downvote"
+SHRUG = "Shrug"
+INFORMATION = "Info"
 
 def loop(result, error):
     if error:
@@ -119,6 +124,10 @@ class Issue(commands.Cog):
         emoji = event.emoji
 
         await self.handle_reaction(msg_id, member, emoji, server)
+
+    @commands.Cog.listener()
+    async def on_button_click(self, res):
+        await self.handle_button(res.message, res.user, res.component.label, res.guild, res)
 
     # USER METHODS
     @commands.command(name="report")
@@ -406,6 +415,59 @@ class Issue(commands.Cog):
 
         await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
+
+    async def handle_button(self, message, member, label, server, response):
+        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG):
+            return
+
+        try:
+            report = await Report.from_message_id(message.id)
+        except ReportException:
+            return
+
+        if report.is_bug:
+            return
+        if member.bot:
+            return
+
+        if GG.checkUserVsAdmin(server.id, member.id):
+            if label == UPVOTE:
+                await report.force_accept(ContextProxy(self.bot), server.id)
+            elif label == INFORMATION:
+                em = report.get_embed(True)
+                await response.respond(embed=em)
+            else:
+                log.info(f"Force denying {report.title}")
+                await report.force_deny(ContextProxy(self.bot), server.id)
+                await report.commit()
+                return
+        else:
+            try:
+                if label == UPVOTE:
+                    print(f"Upvote: {member} - {report.report_id}")
+                    await report.upvote(member.id, '', ContextProxy(self.bot), server.id)
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have upvoted {report.report_id}")
+                elif label == INFORMATION:
+                    print(f"Information: {member} - {report.report_id}")
+                    em = report.get_embed(True)
+                    await response.respond(embed=em)
+                elif label == SHRUG:
+                    print(f"Shrugged: {member} - {report.report_id}")
+                    await report.indifferent(member.id, '', ContextProxy(self.bot), server.id)
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have shown indifference for {report.report_id}")
+                else:
+                    print(f"Downvote: {member} - {report.report_id}")
+                    await report.downvote(member.id, '', ContextProxy(self.bot), server.id)
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have downvoted {report.report_id}")
+            except ReportException as e:
+                if response.channel == message.channel:
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=str(e))
+                else:
+                    await member.send(str(e))
+
+        await report.commit()
+        await report.update(ContextProxy(self.bot), server.id)
+
 
 
 def setup(bot):

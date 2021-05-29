@@ -4,6 +4,7 @@ from cachetools import LRUCache
 from disputils import BotEmbedPaginator
 
 import utils.globals as GG
+from discord_components import Button, ButtonStyle, InteractionType, FlagsType
 from models.attachment import Attachment
 from utils.functions import paginate
 from utils.libs.github import GitHubClient
@@ -46,6 +47,10 @@ UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
 SHRUG_REACTION = "\U0001F937"
 INFORMATION_REACTION = "\U00002139"
+UPVOTE = "Upvote"
+DOWNVOTE = "Downvote"
+SHRUG = "Shrug"
+INFORMATION = "Info"
 GITHUB_THRESHOLD = 5
 GITHUB_THRESHOLD_5ET = 5
 
@@ -162,7 +167,8 @@ class Report:
             'shrugs': self.shrugs,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
-            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee, 'milestone': self.milestone
+            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee,
+            'milestone': self.milestone
         }
 
     @classmethod
@@ -221,15 +227,23 @@ class Report:
             # await GitHubClient.get_instance().add_issue_to_project(issue.number, is_bug=self.is_bug)
 
     async def setup_message(self, bot, guildID, trackerChannel):
-        report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed())
+        if not self.is_bug:
+            report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed(),
+                                                                        components=
+                                                                        [Button(label=UPVOTE, style=ButtonStyle.green,
+                                                                                emoji="⬆️"),
+                                                                         Button(label=DOWNVOTE, style=ButtonStyle.red,
+                                                                                emoji="⬇️"),
+                                                                         Button(label=SHRUG, style=ButtonStyle.gray,
+                                                                                emoji="🤷"),
+                                                                         Button(label=INFORMATION,
+                                                                                style=ButtonStyle.blue, emoji="ℹ️")]
+                                                                        )
+        else:
+            report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed())
 
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
-        if not self.is_bug:
-            await report_message.add_reaction(UPVOTE_REACTION)
-            await report_message.add_reaction(DOWNVOTE_REACTION)
-            await report_message.add_reaction(SHRUG_REACTION)
-            await report_message.add_reaction("ℹ")
         return report_message
 
     async def commit(self):
@@ -581,7 +595,17 @@ class Report:
         if msg is None and self.is_open():
             await self.setup_message(ctx.bot, serverId, self.trackerId)
         elif self.is_open():
-            await msg.edit(embed=self.get_embed())
+            await msg.clear_reactions()
+            await msg.edit(embed=self.get_embed(), components=
+                                                                        [[Button(label=UPVOTE, style=ButtonStyle.green,
+                                                                                emoji="⬆️"),
+                                                                         Button(label=DOWNVOTE, style=ButtonStyle.red,
+                                                                                emoji="⬇️"),
+                                                                         Button(label=SHRUG, style=ButtonStyle.gray,
+                                                                                emoji="🤷"),
+                                                                         Button(label=INFORMATION,
+                                                                                style=ButtonStyle.blue, emoji="ℹ️")]]
+                                                                        )
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:

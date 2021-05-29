@@ -24,3 +24,4 @@ text_to_image
 PyGithub==1.40
 cachetools==2.1.0
 motor
+discord-components>=0.5.2.4
