@@ -124,6 +124,21 @@ async def get_selection(ctx, choices, delete=True, pm=False, message=None, force
     else:
         return None
 
+
 def paginate(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return [i for i in zip_longest(*args, fillvalue=fillvalue) if i is not None]
+
+
+async def splitDiscordEmbedField(embed, input, embed_field_name):
+    texts = []
+    while len(input) > 1024:
+        next_text = input[:1024]
+        last_space = next_text.rfind(" ")
+        input = "…" + input[last_space + 1:]
+        next_text = next_text[:last_space] + "…"
+        texts.append(next_text)
+    texts.append(input)
+    embed.add_field(name=embed_field_name, value=texts[0], inline=False)
+    for piece in texts[1:]:
+        embed.add_field(name="** **", value=piece, inline=False)

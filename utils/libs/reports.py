@@ -6,7 +6,7 @@ from disputils import BotEmbedPaginator
 import utils.globals as GG
 from discord_components import Button, ButtonStyle, InteractionType, FlagsType
 from models.attachment import Attachment
-from utils.functions import paginate
+from utils.functions import paginate, splitDiscordEmbedField
 from utils.libs.github import GitHubClient
 from utils import logger
 
@@ -305,9 +305,11 @@ class Report:
                                 user = ctx.guild.get_member(attachment.author)
                             else:
                                 user = attachment.author
-                        msg = attachment.message[:1020] or "No details."
-                        embed.add_field(name=f"{VERI_EMOJI.get(attachment.veri, '')} {user}",
-                                        value=msg, inline=False)
+                        if attachment.message is not None:
+                            await splitDiscordEmbedField(embed, attachment.message,
+                                                         f"{VERI_EMOJI.get(attachment.veri, '')} {user}")
+                        else:
+                            embed.add_field(name=f"{VERI_EMOJI.get(attachment.veri, '')} {user}", value="No details.", inline=False)
                         countAttachments += 1
             if countNotes >= 10:
                 embed.description = f"*{countNotes} notes, showing first 10*"
@@ -377,11 +379,9 @@ class Report:
                         else:
                             user = attachment.author
                     if attachment.message is not None:
-                        msg = attachment.message[:1020] or "No details."
+                        await splitDiscordEmbedField(embed, attachment.message, f"{VERI_EMOJI.get(attachment.veri, '')} {user}")
                     else:
-                        msg = "No details."
-                    embed.add_field(name=f"{VERI_EMOJI.get(attachment.veri, '')} {user}",
-                                    value=msg, inline=False)
+                        embed.add_field(name=f"{VERI_EMOJI.get(attachment.veri, '')} {user}", value="No details.", inline=False)
 
             split = self.report_id.split("-")
             url = getListenerURL(split[0], self.trackerId)
@@ -477,10 +477,20 @@ class Report:
         await self.add_attachment(ctx, serverId, attachment)
         await self.notify_subscribers(ctx, f"New CR by <@{author}>: {msg}")
 
+    async def cannotrepro(self, author, msg, ctx, serverId):
+        if [a for a in self.attachments if a.author == author and a.veri == -1]:
+            raise ReportException("You have already verified this report.")
+        if not self.is_bug:
+            raise ReportException("You cannot CNR a feature request.")
+        attachment = Attachment.cnr(author, msg)
+        self.verification -= 1
+        await self.add_attachment(ctx, serverId, attachment)
+        await self.notify_subscribers(ctx, f"New CNR by <@{author}>: {msg}")
+
     async def upvote(self, author, msg, ctx, serverId):
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
-                raise ReportException("You have already upvoted this report.")
+                raise ReportException(f"You have already upvoted {self.report_id}.")
             if attachment.author == author and attachment.veri == -2:
                 self.downvotes -= 1
                 self.attachments.remove(attachment)
@@ -504,23 +514,13 @@ class Report:
         if self.upvotes - self.downvotes in (15, 10) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
 
-    async def cannotrepro(self, author, msg, ctx, serverId):
-        if [a for a in self.attachments if a.author == author and a.veri == -1]:
-            raise ReportException("You have already verified this report.")
-        if not self.is_bug:
-            raise ReportException("You cannot CNR a feature request.")
-        attachment = Attachment.cnr(author, msg)
-        self.verification -= 1
-        await self.add_attachment(ctx, serverId, attachment)
-        await self.notify_subscribers(ctx, f"New CNR by <@{author}>: {msg}")
-
     async def downvote(self, author, msg, ctx, serverId):
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
                 self.upvotes -= 1
                 self.attachments.remove(attachment)
             if attachment.author == author and attachment.veri == -2:
-                raise ReportException("You have already downvoted this report.")
+                raise ReportException(f"You have already downvoted {self.report_id}.")
             if attachment.author == author and attachment.veri == 3:
                 self.shrugs -= 1
                 self.attachments.remove(attachment)
@@ -544,7 +544,7 @@ class Report:
                 self.downvotes -= 1
                 self.attachments.remove(attachment)
             if attachment.author == author and attachment.veri == 3:
-                raise ReportException("You were already indifferent about this report.")
+                raise ReportException(f"You were already indifferent about {self.report_id}.")
 
         if self.is_bug:
             raise ReportException("You cannot be indifferent about a bug report.")
