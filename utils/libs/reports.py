@@ -228,7 +228,7 @@ class Report:
 
     async def setup_message(self, bot, guildID, trackerChannel):
         if not self.is_bug:
-            report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed(),
+            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(),
                                                                         components=
                                                                         [[Button(label=UPVOTE, style=ButtonStyle.green,
                                                                                 emoji="⬆️"),
@@ -240,7 +240,7 @@ class Report:
                                                                                 style=ButtonStyle.blue, emoji="ℹ️")]]
                                                                         )
         else:
-            report_message = await bot.get_channel(trackerChannel).send(embed=self.get_embed())
+            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed())
 
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
@@ -249,7 +249,7 @@ class Report:
     async def commit(self):
         await self.collection.replace_one({"report_id": self.report_id}, self.to_dict(), upsert=True)
 
-    def get_embed(self, detailed=False, ctx=None):
+    async def get_embed(self, detailed=False, ctx=None):
         embed = discord.Embed()
         if isinstance(self.reporter, int):
             embed.add_field(name="Added By", value=f"<@{self.reporter}>")
@@ -620,7 +620,7 @@ class Report:
             await self.setup_message(ctx.bot, serverId, self.trackerId)
         elif self.is_open():
             await msg.clear_reactions()
-            await msg.edit(embed=self.get_embed(), components=
+            await msg.edit(embed=await self.get_embed(), components=
                                                                         [[Button(label=UPVOTE, style=ButtonStyle.green,
                                                                                 emoji="⬆️"),
                                                                          Button(label=DOWNVOTE, style=ButtonStyle.red,

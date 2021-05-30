@@ -266,7 +266,7 @@ class Issue(commands.Cog):
             await report.commit()
 
             new_report.report_id = f"{identifier}-{id_num}"
-            msg = await self.bot.get_channel(report.trackerId).send(embed=new_report.get_embed())
+            msg = await self.bot.get_channel(report.trackerId).send(embed=await new_report.get_embed())
 
             new_report.message = msg.id
             if new_report.github_issue:
@@ -374,7 +374,7 @@ class Issue(commands.Cog):
             if emoji.name == UPVOTE_REACTION:
                 await report.force_accept(ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:
-                em = report.get_embed(True)
+                em = await report.get_embed(True)
                 if member.dm_channel is not None:
                     DM = member.dm_channel
                 else:
@@ -395,7 +395,7 @@ class Issue(commands.Cog):
                     await report.upvote(member.id, '', ContextProxy(self.bot), server.id)
                 elif emoji.name == INFORMATION_REACTION:
                     print(f"Information: {member} - {report.report_id}")
-                    em = report.get_embed(True)
+                    em = await report.get_embed(True)
                     if member.dm_channel is not None:
                         DM = member.dm_channel
                     else:
@@ -434,7 +434,7 @@ class Issue(commands.Cog):
             if label == UPVOTE:
                 await report.force_accept(ContextProxy(self.bot), server.id)
             elif label == INFORMATION:
-                em = report.get_embed(True)
+                em = await report.get_embed(True)
                 await response.respond(embed=em)
             else:
                 log.info(f"Force denying {report.title}")
@@ -449,7 +449,7 @@ class Issue(commands.Cog):
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have upvoted {report.report_id}")
                 elif label == INFORMATION:
                     print(f"Information: {member} - {report.report_id}")
-                    em = report.get_embed(True)
+                    em = await report.get_embed(True)
                     await response.respond(embed=em)
                 elif label == SHRUG:
                     print(f"Shrugged: {member} - {report.report_id}")

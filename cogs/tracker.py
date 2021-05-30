@@ -230,7 +230,7 @@ class Tracker(commands.Cog):
             if selection is not None:
                 report = await Report.from_id(selection['report_id'])
                 if report is not None:
-                    await ctx.send(embed=report.get_embed(True, ctx))
+                    await ctx.send(embed=await report.get_embed(True, ctx))
                 else:
                     await ctx.send("Selected report not found.")
             else:
@@ -256,7 +256,7 @@ class Tracker(commands.Cog):
             if selection is not None:
                 report = await Report.from_id(selection['report_id'])
                 if report is not None:
-                    await ctx.send(embed=report.get_embed(True, ctx))
+                    await ctx.send(embed=await report.get_embed(True, ctx))
                 else:
                     await ctx.send("Selected report not found.")
             else:
