@@ -15,7 +15,7 @@ environs
 numexpr
 certifi==2018.4.16
 requests==2.20.0
-urllib3==1.24.2
+urllib3==1.26.5
 python-dateutil
 igdb_api_python
 pytablewriter
