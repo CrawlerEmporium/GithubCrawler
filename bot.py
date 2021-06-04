@@ -1,6 +1,8 @@
 import asyncio
 
 import discord
+import motor.motor_asyncio
+
 import utils.globals as GG
 
 from utils import logger
@@ -12,6 +14,8 @@ from discord_components import DiscordComponents
 from utils.functions import loadGithubServers
 
 log = logger.logger
+
+MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 
 version = "2.3.1"
 SHARD_COUNT = 1
@@ -44,6 +48,7 @@ class Crawler(commands.AutoShardedBot):
         self.testing = TESTING
         self.prefixes = dict()
         self.token = GG.TOKEN
+        self.mdb = MDB
 
     async def get_server_prefix(self, msg):
         return (await get_prefix(self, msg))[-1]

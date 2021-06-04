@@ -128,7 +128,8 @@ class Issue(commands.Cog):
 
     @commands.Cog.listener()
     async def on_button_click(self, res):
-        await self.handle_button(res.message, res.user, res.component.label, res.guild, res)
+        label = res.component.label
+        await self.handle_button(res.message, res.user, label, res.guild, res)
 
     # USER METHODS
     @commands.command(name="report")
@@ -238,7 +239,7 @@ class Issue(commands.Cog):
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
         report = await Report.from_id(_id)
-        if await GG.isManager(ctx) or GG.isAssignee(ctx, report) or GG.isReporter(ctx, report):
+        if await GG.isManager(ctx) or GG.isAssignee(ctx, report) or await GG.isReporter(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")

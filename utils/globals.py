@@ -22,11 +22,12 @@ OWNER = int(env('OWNER'))
 
 GITHUB_TOKEN = env('GITHUB_TOKEN')
 GITHUB_REPO = env('GITHUB_REPO')
+MONGODB = env('MONGODB')
 
 BOT = 574554734187380756
 PM_TRUE = True
 
-MDB = motor.motor_asyncio.AsyncIOMotorClient(env('MONGODB'))['issuetracking']
+MDB = motor.motor_asyncio.AsyncIOMotorClient(MONGODB)['issuetracking']
 
 GITHUBSERVERS = []
 BUG_LISTEN_CHANS = []
@@ -106,7 +107,7 @@ def isAssignee(ctx, report):
         return False
 
 
-def isReporter(ctx, report):
+async def isReporter(ctx, report):
     if ctx.message.author.id == report.reporter:
         guild_settings = await get_settings(ctx, ctx.guild)
         allow_selfClose = guild_settings.get("allow_selfClose", True)
