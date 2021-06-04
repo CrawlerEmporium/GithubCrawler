@@ -125,6 +125,25 @@ async def get_selection(ctx, choices, delete=True, pm=False, message=None, force
         return None
 
 
+def get_positivity(string):
+    if isinstance(string, bool):  # oi!
+        return string
+    lowered = string.lower()
+    if lowered in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
+        return True
+    elif lowered in ('no', 'n', 'false', 'f', '0', 'disable', 'off'):
+        return False
+    else:
+        return None
+
+
+async def get_settings(ctx, guild):
+    settings = {}  # default PM settings
+    if guild is not None:
+        settings = await ctx.bot.mdb.issuesettings.find_one({"server": str(guild.id)})
+    return settings or {}
+
+
 def paginate(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return [i for i in zip_longest(*args, fillvalue=fillvalue) if i is not None]

@@ -12,6 +12,7 @@ from discord_components import InteractionType
 import utils.globals as GG
 from models.server import Server
 from utils import logger, checks
+from utils.functions import get_settings
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
     DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION
@@ -237,7 +238,7 @@ class Issue(commands.Cog):
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
         report = await Report.from_id(_id)
-        if await GG.isManager(ctx) or GG.isAssignee(ctx, report):
+        if await GG.isManager(ctx) or GG.isAssignee(ctx, report) or GG.isReporter(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")

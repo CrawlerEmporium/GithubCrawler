@@ -5,6 +5,7 @@ from environs import Env
 import motor.motor_asyncio
 
 from models.server import Server
+from utils.functions import get_settings
 from utils.libs.github import GitHubClient
 
 from utils import logger
@@ -101,6 +102,18 @@ async def isManager(ctx):
 def isAssignee(ctx, report):
     if ctx.message.author.id == report.assignee:
         return True
+    else:
+        return False
+
+
+def isReporter(ctx, report):
+    if ctx.message.author.id == report.reporter:
+        guild_settings = await get_settings(ctx, ctx.guild)
+        allow_selfClose = guild_settings.get("allow_selfClose", True)
+        if allow_selfClose:
+            return True
+        else:
+            return False
     else:
         return False
 

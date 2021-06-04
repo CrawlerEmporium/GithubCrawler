@@ -3,8 +3,10 @@ from discord.ext import commands
 import utils.globals as GG
 from utils import logger
 from utils import checks
+from utils.functions import get_positivity
 
 log = logger.logger
+
 
 class Settings(commands.Cog):
     def __init__(self, bot):
@@ -34,6 +36,39 @@ class Settings(commands.Cog):
         )
 
         await ctx.send("Prefix set to `{}` for this server.".format(prefix))
+
+    @commands.command()
+    @commands.guild_only()
+    @checks.admin_or_permissions(manage_guild=True)
+    async def settings(self, ctx, *args):
+        """Changes settings for the lookup module.
+        __Valid Settings__
+        -allow_selfClose [True/False] - Requires a Game Master role to show a full monster stat block.
+        """
+        guild_id = str(ctx.guild.id)
+        guild_settings = await self.bot.mdb.issuesettings.find_one({"server": guild_id})
+        if guild_settings is None:
+            guild_settings = {}
+        out = ""
+        if '-allow_selfClose' in args:
+            try:
+                setting = args[args.index('-allow_selfClose') + 1]
+            except IndexError:
+                setting = 'True'
+            setting = get_positivity(setting)
+            guild_settings['allow_selfClose'] = setting if setting is not None else True
+            out += 'allow_selfClose set to {}!\n'.format(str(guild_settings['allow_selfClose']))
+
+        if guild_settings:
+            await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
+            out += 'Allow people to close their own requests/bugs: {}\n'.format(
+                str(guild_settings.get('req_dm_monster', 'False')))
+            await ctx.send("Settings for this server are:\n" + out)
+        else:
+            await ctx.send("No settings found. Make sure your syntax is correct.")
+            await ctx.send(
+                "> __Valid Settings__\n"
+                "> **-allow_selfClose [True/False]** - Allow people to close their own requests/bugs.")
 
 
 def setup(bot):
