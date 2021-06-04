@@ -632,7 +632,7 @@ class Report:
                                                                                 style=ButtonStyle.blue, emoji="ℹ️")]]
                                                                         )
             else:
-                await msg.edit(embed=await self.get_embed())
+                await msg.edit(embed=await self.get_embed(), components=[])
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:
