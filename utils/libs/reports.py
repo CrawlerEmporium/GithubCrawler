@@ -620,7 +620,8 @@ class Report:
             await self.setup_message(ctx.bot, serverId, self.trackerId)
         elif self.is_open():
             await msg.clear_reactions()
-            await msg.edit(embed=await self.get_embed(), components=
+            if not self.is_bug:
+                await msg.edit(embed=await self.get_embed(), components=
                                                                         [[Button(label=UPVOTE, style=ButtonStyle.green,
                                                                                 emoji="⬆️"),
                                                                          Button(label=DOWNVOTE, style=ButtonStyle.red,
@@ -630,6 +631,8 @@ class Report:
                                                                          Button(label=INFORMATION,
                                                                                 style=ButtonStyle.blue, emoji="ℹ️")]]
                                                                         )
+            else:
+                await msg.edit(embed=await self.get_embed())
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:
