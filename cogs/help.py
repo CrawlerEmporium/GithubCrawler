@@ -1,10 +1,10 @@
 import asyncio
 import discord
 from discord.ext import commands
+from disputils import BotEmbedPaginator
 
 from utils import globals as GG
 from utils import logger
-from utils.embeds import EmbedWithAuthor
 
 log = logger.logger
 
@@ -13,131 +13,80 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="help")
-    async def help(self, ctx):
-        if GG.checkPermission(ctx, "ar"):
-            prefix = await self.bot.get_server_prefix(ctx.message)
-            embed = await self.helpCommand(ctx, prefix)
-            message = await ctx.send(embed=embed)
-            await message.add_reaction('🔎')
-            await message.add_reaction('🔍')
-            await message.add_reaction('📖')
-            await message.add_reaction('🎚️')
-            await message.add_reaction('❌')
+    @commands.command()
+    async def help(self, ctx, *, command=None):
+        if command is not None:
+            helpCommand = await GG.HELP['help'].find_one({"bots": "issue", "command": command})
+            if helpCommand is not None:
+                prefix = await self.bot.get_server_prefix(ctx.message)
+                description = helpCommand['description'][0]
+                embed = discord.Embed(title=f"{helpCommand['command'].title()}",
+                                      description=f"{description.replace('{/prefix}', prefix)}")
 
-            await self.waitChangeMessage(ctx, message)
+                if len(helpCommand['syntax']) > 1:
+                    for i in range(len(helpCommand['syntax'])):
+                        embed.add_field(name=f"Syntax {i + 1}",
+                                        value=f"{helpCommand['syntax'][i].replace('{/prefix}', prefix)}", inline=False)
+                else:
+                    embed.add_field(name=f"Syntax", value=f"{helpCommand['syntax'][0].replace('{/prefix}', prefix)}",
+                                    inline=False)
+
+                if helpCommand.get('aliasFor', None) is not None:
+                    aliasString = ', '.join(helpCommand['aliasFor'])
+                    embed.add_field(name=f"Aliases", value=f"{aliasString.replace('{/prefix}', prefix)}", inline=False)
+
+                if len(helpCommand['options']) > 1:
+                    for i in range(len(helpCommand['options'])):
+                        entryString = '\n'.join(helpCommand['options'][i]['entries'])
+                        embed.add_field(name=f"Option #{i + 1}",
+                                        value=f"{helpCommand['options'][i]['argument']}: {entryString.replace('{/prefix}', prefix)}",
+                                        inline=False)
+                else:
+                    entryString = '\n'.join(helpCommand['options'][0]['entries'])
+                    embed.add_field(name=f"Option",
+                                    value=f"{helpCommand['options'][0]['argument']}: {entryString.replace('{/prefix}', prefix)}",
+                                    inline=False)
+
+                if len(helpCommand['examples']) > 1:
+                    for i in range(len(helpCommand['examples'])):
+                        embed.add_field(name=f"Example #{i + 1}",
+                                        value=f"{helpCommand['examples'][i].replace('{/prefix}', prefix)}",
+                                        inline=False)
+                else:
+                    embed.add_field(name=f"Example", value=f"{helpCommand['examples'][0].replace('{/prefix}', prefix)}",
+                                    inline=False)
+
+                typeString = ", ".join(helpCommand['types'])
+                embed.add_field(name=f"Types", value=f"{typeString}", inline=False)
+
+                permString = "Permissions: "
+                permString += ", ".join(helpCommand['permissions'])
+                embed.set_footer(text=permString)
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send("Command doesn't exist")
         else:
-            await ctx.invoke(self.bot.get_command("oldhelp"))
+            helpCommands = await GG.HELP['help'].find({"bots": "issue"}).to_list(length=None)
+            if helpCommands is not None:
+                embeds = await self.list_embed(helpCommands, ctx)
+                paginator = BotEmbedPaginator(ctx, embeds)
+                await paginator.run()
+            else:
+                return
 
-    async def waitChangeMessage(self, ctx, message):
-        def check(reaction, user):
-            return (user == ctx.message.author and str(reaction.emoji) == '🔎') or \
-                   (user == ctx.message.author and str(reaction.emoji) == '📖') or \
-                   (user == ctx.message.author and str(reaction.emoji) == '🔍') or \
-                   (user == ctx.message.author and str(reaction.emoji) == '🎚️') or \
-                   (user == ctx.message.author and str(reaction.emoji) == '❌')
-
-        try:
-            reaction, user = await ctx.bot.wait_for('reaction_add', timeout=60.0, check=check)
-        except asyncio.TimeoutError:
-            if not isinstance(message.channel, discord.DMChannel):
-                await message.clear_reactions()
-        else:
-            prefix = await self.bot.get_server_prefix(ctx.message)
-            embed = None
-            if str(reaction.emoji) == '🔎':
-                embed = await self.issueCommand(ctx, prefix)
-            if str(reaction.emoji) == '🔍':
-                embed = await self.issueStaffCommand(ctx, prefix)
-            if str(reaction.emoji) == '📖':
-                embed = await self.trackerCommand(ctx, prefix)
-            if str(reaction.emoji) == '🎚️':
-                embed = await self.settingsCommand(ctx, prefix)
-            if str(reaction.emoji) == '❌':
-                await message.delete()
-                if not isinstance(message.channel, discord.DMChannel):
-                    await ctx.message.delete()
-            if embed is not None:
-                await message.edit(embed=embed)
-                if not isinstance(message.channel, discord.DMChannel):
-                    await reaction.remove(user)
-                await self.waitChangeMessage(ctx, message)
-
-    async def helpCommand(self, ctx, prefix):
-        embed = EmbedWithAuthor(ctx)
-        embed.title = "Help command with clickable categories."
-        embed.add_field(name='🔎', value='Issue')
-        embed.add_field(name='🔍', value='Staff Issue')
-        embed.add_field(name='📖', value='Tracker')
-        embed.add_field(name='🎚️', value='Settings')
-        embed.add_field(name='❌', value='Deletes this message')
-        embed.set_footer(text='These reactions are available for 60 seconds, afterwards it will stop responding.')
-        return embed
-
-    async def issueCommand(self, ctx, prefix):
-        embed = EmbedWithAuthor(ctx)
-        embed.title = "Commands to communicate with the bot."
-        embed.add_field(name="cannotrepro", value=f"``{prefix}cannotrepro <reportId> [message]``\nAdds a note of 'I can't reproduce this bug' to the bug.", inline=False)
-        embed.add_field(name="canrepro", value=f"``{prefix}canrepro <reportId> [message]``\nAdds a note of 'I can reproduce this bug' to the bug.", inline=False)
-        embed.add_field(name="downvote", value=f"``{prefix}downvote <reportId> [message]``\nAdds a downvote to the selected feature request.", inline=False)
-        embed.add_field(name="upvote", value=f"``{prefix}upvote <reportId> [message]``\nAdds an upvote to the selected feature request.", inline=False)
-        embed.add_field(name="shrug", value=f"``{prefix}shrug <reportId> [message]``\nAdds a shrug to the selected feature request.", inline=False)
-        embed.add_field(name="note", value=f"``{prefix}note <reportId> [message]``\nAdds a note to a report.", inline=False)
-        embed.add_field(name="report", value=f"``{prefix}report <reportId>``\nGets the detailed status of a report.", inline=False)
-        embed.add_field(name="subscribe", value=f"``{prefix}subscribe <reportId>``\nSubscribes to a report.", inline=False)
-        embed.add_field(name="unsuball", value=f"``{prefix}unsuball``\nUnsubscribes from all reports.", inline=False)
-        embed.add_field(name="top", value=f"``{prefix}top [amount=10]``\nGets top x or top 10 most upvoted features.", inline=False)
-        embed.add_field(name="flop", value=f"``{prefix}flop [amount=10]``\nGets top x or top 10 most downvoted features.", inline=False)
-        self.setFooter(embed)
-        return embed
-
-    async def issueStaffCommand(self, ctx, prefix):
-        embed = EmbedWithAuthor(ctx)
-        embed.title = "Commands to communicate with the bot as Server Owner or as Manager."
-        embed.add_field(name="priority", value=f"``{prefix}priority <reportId> <priority>``\nChanges the priority of a report.", inline=False)
-        embed.add_field(name="reidentify", value=f"``{prefix}reidentify <reportId> <identifier>``\nChanges the identifier of a report.", inline=False)
-        embed.add_field(name="rename", value=f"``{prefix}rename <reportId> <new title>``\nChanges the title of a report.", inline=False)
-        embed.add_field(name="resolve", value=f"``{prefix}resolve <reportId> [message]``\nResolves a report.", inline=False)
-        embed.add_field(name="unresolve", value=f"``{prefix}unresolve <reportId> [message]``\nUnresolves a report.", inline=False)
-        self.setFooter(embed)
-        return embed
-
-    async def trackerCommand(self, ctx, prefix):
-        embed = EmbedWithAuthor(ctx)
-        embed.title = "Commands to start using IssueCrawler."
-        embed.add_field(name="issue", value=f"``{prefix}issue``\nShows message with all possible issue commands.", inline=False)
-        embed.add_field(name="register", value=f"``{prefix}issue register``\nRegisters server to the bot, from this point on you can use the {prefix}issue channel command.", inline=False)
-        embed.add_field(name="channel", value=f"``{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]``\n"
-                                              f"Adds a new listener/tracker for the bot.\nUsage:\n"
-                                              f"type = 'bug' or 'feature'.\n"
-                                              f"identifier = what you want your prefix to be.\n"
-                                              f"tracker = OPTIONAL ChannelID of the channel you want as your posting channel, will create a new channel if not supplied.\n"
-                                              f"channel = OPTIONAL ChannelID of the channel you want as your listening channel, will create a new channel if not supplied.", inline=False)
-        embed.add_field(name="trackers", value=f"``{prefix}issue trackers``\nShows all current trackers of this server.", inline=False)
-        embed.add_field(name="intro", value=f"``{prefix}issue intro <type>``\nMakes the bot post the intro message in a channel of your choice, options are bug and feature.", inline=False)
-        embed.add_field(name="search", value=f"``{prefix}issue search <identifier> <keyword(s)>``\nSearches through the database for Open reports that match your keywords and your given identifier. Only shows reports from this server..", inline=False)
-        embed.add_field(name="searchAll", value=f"``{prefix}issue searchAll <identifier> <keyword(s)>``\nSearches through the database for All reports that match your keywords and your given identifier. Only shows reports from this server..", inline=False)
-        embed.add_field(name="remove", value=f"``{prefix}issue remove <identifier>``\nDisconnects the identifier from the bot, allowing you to delete its listening and tracking channels. **Read the warning that pops up after removing**.", inline=False)
-        embed.add_field(name="manager", value=f"``{prefix}issue manager``\nShows  message with all possible manager commands.",
-                        inline=False)
-        self.setFooter(embed)
-        return embed
-
-    async def settingsCommand(self, ctx, prefix):
-        embed = EmbedWithAuthor(ctx)
-        embed.title = "Settings commands."
-        embed.add_field(name="prefix", value=f"``{prefix}prefix``\nSets the bot's prefix for this server.", inline=False)
-        self.setFooter(embed)
-        return embed
-
-    def setFooter(self, embed):
-        embed.add_field(name="General Usage",
-                        value='**|**\tmeans you can use either of the commands\n'
-                              '**<>**\tmeans that part of the command is required.\n'
-                              '**[]**\tmeans it is an optional part of the command.',
-                        inline=False)
-        embed.set_footer(
-            text="These reactions are available for 60 seconds, afterwards it will stop responding.\n\n📔 Returns to the main menu.\n❌ Deletes this message from chat.'")
+    async def list_embed(self, helpCommands, ctx):
+        prefix = await self.bot.get_server_prefix(ctx.message)
+        embedList = []
+        for i in range(0, len(helpCommands), 10):
+            commands = helpCommands[i:i + 10]
+            embed = discord.Embed(title="IssueCrawler Commands",
+                                  description=f"A list of all the commands that the IssueCrawler bot has to offer. Find out more by typing in {prefix}help [command]")
+            for help in commands:
+                embed.add_field(name=f"{help['command']}",
+                                value=f"{help['description'][0].replace('{/prefix}', prefix)}",
+                                inline=False)
+            embedList.append(embed)
+        return embedList
 
 
 def setup(bot):

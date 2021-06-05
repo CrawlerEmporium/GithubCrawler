@@ -43,7 +43,7 @@ class Settings(commands.Cog):
     async def settings(self, ctx, *args):
         """Changes settings for the lookup module.
         __Valid Settings__
-        -allow_selfClose [True/False] - Requires a Game Master role to show a full monster stat block.
+        -allow_selfClose [True/False] - Allow people to close their own requests/bugs.
         """
         guild_id = str(ctx.guild.id)
         guild_settings = await self.bot.mdb.issuesettings.find_one({"server": guild_id})

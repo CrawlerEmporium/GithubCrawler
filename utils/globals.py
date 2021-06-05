@@ -28,6 +28,7 @@ BOT = 574554734187380756
 PM_TRUE = True
 
 MDB = motor.motor_asyncio.AsyncIOMotorClient(MONGODB)['issuetracking']
+HELP = motor.motor_asyncio.AsyncIOMotorClient(MONGODB)['lookup']
 
 GITHUBSERVERS = []
 BUG_LISTEN_CHANS = []
