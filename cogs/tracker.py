@@ -86,7 +86,6 @@ class Tracker(commands.Cog):
                 return
         await GG.MDB.ReportNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
 
-
         # CREATE CHANNELS
         if channel == 0:
             channel = await ctx.guild.create_text_channel(f"{identifier}-listener")
@@ -145,26 +144,45 @@ class Tracker(commands.Cog):
 
     @issue.command(name='intro')
     @commands.guild_only()
-    async def issueIntro(self, ctx, type):
+    async def issueIntro(self, ctx, type, milestone):
         type = type.lower()
         if type == 'bug':
-            await ctx.send(
-                "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
-                "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Severity**: Trivial (typos, "
-                "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
-                "impact) / High (a broken feature, major functional impact) / Critical (bot crash, extremely major "
-                "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
-                "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
-                "trees.```")
+            if milestone == 'milestone':
+                await ctx.send(
+                    "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
+                    "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Milestone**: \n\n**Severity**: Trivial (typos, "
+                    "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
+                    "impact) / High (a broken feature, major functional impact) / Critical (bot crash, extremely major "
+                    "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
+                    "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
+                    "trees.```")
+            else:
+                await ctx.send(
+                    "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
+                    "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Severity**: Trivial (typos, "
+                    "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
+                    "impact) / High (a broken feature, major functional impact) / Critical (bot crash, extremely major "
+                    "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
+                    "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
+                    "trees.```")
         elif type == 'feature':
-            await ctx.send(
-                "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
-                "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
-                "short and to the point.\n```**Feature Request:** Your request\n\n**Extra Information**\n**Who would "
-                "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
-                "others```")
+            if milestone == 'milestone':
+                await ctx.send(
+                    "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
+                    "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
+                    "short and to the point.\n```**Feature Request:** Your request\n\n**Milestone**: n\n**Extra Information**\n**Who would "
+                    "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
+                    "others```")
+            else:
+                await ctx.send(
+                    "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
+                    "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
+                    "short and to the point.\n```**Feature Request:** Your request\n\n**Extra Information**\n**Who would "
+                    "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
+                    "others```")
         else:
-            await ctx.send("Proper command usage is ``issue intro bug`` or issue intro feature``.")
+            await ctx.send("Proper command usage is ``issue intro bug`` or ``issue intro feature``.\n"
+                           "If you want the add the default milestone line, you can use ``issue intro bug milestone`` or ``issue intro feature milestone``")
 
     @issue.command(name='trackers')
     @commands.guild_only()

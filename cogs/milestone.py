@@ -127,7 +127,7 @@ class Milestones(commands.Cog):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 await ctx.send(await milestone.add_report(report_id, ctx.guild.id))
-                await milestone.notify_subscribers(ctx, f"A new ticket was added to milestone `{_id}`.\nTicket: `{report_id}`")
+                await milestone.notify_subscribers(self.bot, f"A new ticket was added to milestone `{_id}`.\nTicket: `{report_id}`")
             except MilestoneException as e:
                 await ctx.send(e)
 
@@ -138,7 +138,7 @@ class Milestones(commands.Cog):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 await ctx.send(await milestone.remove_report(report_id, ctx.guild.id))
-                await milestone.notify_subscribers(ctx, f"A ticket was removed from milestone `{_id}`.\nTicket: `{report_id}`")
+                await milestone.notify_subscribers(self.bot, f"A ticket was removed from milestone `{_id}`.\nTicket: `{report_id}`")
             except MilestoneException as e:
                 await ctx.send(e)
 
@@ -152,7 +152,7 @@ class Milestones(commands.Cog):
                     milestone.status = status
                     await milestone.commit(ctx.guild.id)
                     await ctx.send(f"Updated `{milestone.milestone_id}` to `{STATUS.get(status)}`\n")
-                    await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(status)}`.")
+                    await milestone.notify_subscribers(self.bot, f"The status of milestone `{_id}` was updated to `{STATUS.get(status)}`.")
                 except MilestoneException as e:
                     await ctx.send(e)
             else:
@@ -172,10 +172,10 @@ class Milestones(commands.Cog):
                 await milestone.commit(ctx.guild.id)
                 if msg is not None:
                     await ctx.send(f"Closed `{milestone.milestone_id}`")
-                    await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(1)}`.")
+                    await milestone.notify_subscribers(self.bot, f"The status of milestone `{_id}` was updated to `{STATUS.get(1)}`.")
                 else:
                     await ctx.send(f"Closed `{milestone.milestone_id}`\n{msg}")
-                    await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(1)}`.\n"
+                    await milestone.notify_subscribers(self.bot, f"The status of milestone `{_id}` was updated to `{STATUS.get(1)}`.\n"
                                                        f"With message: {msg}")
             except MilestoneException as e:
                 await ctx.send(e)
@@ -189,7 +189,7 @@ class Milestones(commands.Cog):
                 milestone.status = 2
                 await milestone.commit(ctx.guild.id)
                 await ctx.send(f"Resolved `{milestone.milestone_id}`")
-                await milestone.notify_subscribers(ctx, f"The status of milestone `{_id}` was updated to `{STATUS.get(2)}`.")
+                await milestone.notify_subscribers(self.bot, f"The status of milestone `{_id}` was updated to `{STATUS.get(2)}`.")
             except MilestoneException as e:
                 await ctx.send(e)
 
@@ -207,11 +207,11 @@ class Milestones(commands.Cog):
 
                 dupe.status = 1
                 await dupe.commit()
-                await dupe.notify_subscribers(ctx, f"The status of milestone `{dupe.milestone_id}` was updated to `{STATUS.get(1)}`.\n"
+                await dupe.notify_subscribers(self.bot, f"The status of milestone `{dupe.milestone_id}` was updated to `{STATUS.get(1)}`.\n"
                                                    f"With message: Merged `{dupe.milestone_id}` into `{merge.milestone_id}`.")
 
                 await merge.commit()
-                await merge.notify_subscribers(ctx, f"Merged `{dupe.milestone_id}` into `{merge.milestone_id}`.")
+                await merge.notify_subscribers(self.bot, f"Merged `{dupe.milestone_id}` into `{merge.milestone_id}`.")
                 await ctx.send(f"Merged `{dupe.milestone_id}` into `{merge.milestone_id}`")
 
 

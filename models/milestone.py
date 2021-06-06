@@ -86,11 +86,11 @@ class Milestone:
         if ctx.message.author.id in self.subscribers:
             self.subscribers.remove(ctx.message.author.id)
 
-    async def notify_subscribers(self, ctx, msg):
+    async def notify_subscribers(self, bot, msg):
         msg = f"`{self.milestone_id}` - {self.title}: {msg}"
         for sub in self.subscribers:
             try:
-                member = next(m for m in ctx.bot.get_all_members() if m.id == sub)
+                member = next(m for m in bot.get_all_members() if m.id == sub)
                 await member.send(msg)
             except (StopIteration, discord.HTTPException):
                 continue
@@ -121,10 +121,10 @@ class Milestone:
             report = await Report.from_id(report)
             if report.severity == 6:
                 open += 1
-                openReports += f"\n`{report.report_id}`: {report.title}"
+                openReports += f"`{report.report_id}`: {report.title}\n"
             if report.severity == -1:
                 resolved += 1
-                resolvedReports += f"\n`{report.report_id}`: {report.title}"
+                resolvedReports += f"`{report.report_id}`: {report.title}\n"
 
         reportString = f"{openReports} {open}\n\n{resolvedReports} {resolved}"
 

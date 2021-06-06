@@ -10,6 +10,7 @@ from discord.ext.commands import CommandInvokeError
 from discord_components import InteractionType
 
 import utils.globals as GG
+from models.milestone import Milestone, MilestoneException
 from models.server import Server
 from utils import logger, checks
 from utils.functions import get_settings
@@ -23,6 +24,7 @@ REPORTS = []
 
 BUG_RE = re.compile(r"\**What is the [Bb]ug\?\**:?\s?(.+?)(\n|$)")
 FEATURE_RE = re.compile(r"\**Feature [Rr]equest\**:?\s?(.+?)(\n|$)")
+MILESTONE_RE = re.compile(r"\**Milestone\**:?\s?(.+?)(\n|$)")
 
 UPVOTE = "Upvote"
 DOWNVOTE = "Downvote"
@@ -58,6 +60,7 @@ class Issue(commands.Cog):
         channel = None
         is_bug = None
         type = None
+        milestoneNotFound = None
 
         feature_match = FEATURE_RE.match(message.content)
         bug_match = BUG_RE.match(message.content)
@@ -95,7 +98,22 @@ class Issue(commands.Cog):
                         await report.setup_github(await self.bot.get_context(message), message.guild.id)
 
             reportMessage = await report.setup_message(self.bot, message.guild.id, report.trackerId)
-            await report.commit()
+
+            milestone_match = MILESTONE_RE.findall(message.content)
+            if milestone_match is not None:
+                await report.commit()
+                matches = [x[0] for x in milestone_match]
+                _id = matches[0].strip(" *.\n")
+                try:
+                    milestone = await Milestone.from_id(_id, message.guild.id)
+                    await milestone.add_report(report_id, message.guild.id)
+                    await milestone.notify_subscribers(self.bot, f"A new ticket was added to milestone `{_id}`.\nTicket: `{report_id}`")
+                except MilestoneException:
+                    milestoneNotFound = f"Milestone {_id} not found, so couldn't add the report to it."
+            else:
+                await report.commit()
+
+
             prefix = await self.bot.get_server_prefix(message)
 
             embed = discord.Embed()
@@ -111,6 +129,8 @@ class Issue(commands.Cog):
             embed.add_field(name="Voting",
                             value=f"You can find your feature request/bug report here: [Click me]({reportMessage.jump_url})",
                             inline=False)
+            if milestoneNotFound is not None:
+                embed.add_field(name="Milestone Not Found", value=milestoneNotFound, inline=False)
             await message.channel.send(embed=embed)
             await message.add_reaction("\U00002705")
 
