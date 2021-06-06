@@ -58,7 +58,7 @@ class Settings(commands.Cog):
                 setting = 'True'
             setting = get_positivity(setting)
             guild_settings['allow_selfClose'] = setting if setting is not None else True
-            out += 'allow_selfClose set to {}!\n'.format(str(guild_settings['allow_selfClose']))
+            out += 'allow_selfClose set to {}!\n\n'.format(str(guild_settings['allow_selfClose']))
         if '-allow_milestoneAdding' in args:
             try:
                 setting = args[args.index('-allow_milestoneAdding') + 1]
@@ -66,10 +66,11 @@ class Settings(commands.Cog):
                 setting = 'True'
             setting = get_positivity(setting)
             guild_settings['allow_milestoneAdding'] = setting if setting is not None else True
-            out += 'allow_milestoneAdding set to {}!\n'.format(str(guild_settings['allow_milestoneAdding']))
+            out += 'allow_milestoneAdding set to {}!\n\n'.format(str(guild_settings['allow_milestoneAdding']))
 
         if guild_settings:
             await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
+            out += 'Current Settings for this server:\n'
             out += 'Allow people to close their own requests/bugs: {}\n'.format(str(guild_settings.get('allow_selfClose', 'False')))
             out += 'Allow people to add requests/bugs directly to milestones: {}\n'.format(str(guild_settings.get('allow_milestoneAdding', 'False')))
             await ctx.send("Settings for this server are:\n" + out)
