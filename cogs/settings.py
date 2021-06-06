@@ -44,6 +44,7 @@ class Settings(commands.Cog):
         """Changes settings for the lookup module.
         __Valid Settings__
         -allow_selfClose [True/False] - Allow people to close their own requests/bugs.
+        -allow_milestoneAdding [True/False] - Allow people to add requests/bugs directly to milestones.
         """
         guild_id = str(ctx.guild.id)
         guild_settings = await self.bot.mdb.issuesettings.find_one({"server": guild_id})
@@ -58,17 +59,26 @@ class Settings(commands.Cog):
             setting = get_positivity(setting)
             guild_settings['allow_selfClose'] = setting if setting is not None else True
             out += 'allow_selfClose set to {}!\n'.format(str(guild_settings['allow_selfClose']))
+        if '-allow_milestoneAdding' in args:
+            try:
+                setting = args[args.index('-allow_milestoneAdding') + 1]
+            except IndexError:
+                setting = 'True'
+            setting = get_positivity(setting)
+            guild_settings['allow_milestoneAdding'] = setting if setting is not None else True
+            out += 'allow_milestoneAdding set to {}!\n'.format(str(guild_settings['allow_milestoneAdding']))
 
         if guild_settings:
             await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
-            out += 'Allow people to close their own requests/bugs: {}\n'.format(
-                str(guild_settings.get('req_dm_monster', 'False')))
+            out += 'Allow people to close their own requests/bugs: {}\n'.format(str(guild_settings.get('allow_selfClose', 'False')))
+            out += 'Allow people to add requests/bugs directly to milestones: {}\n'.format(str(guild_settings.get('allow_milestoneAdding', 'False')))
             await ctx.send("Settings for this server are:\n" + out)
         else:
             await ctx.send("No settings found. Make sure your syntax is correct.")
             await ctx.send(
                 "> __Valid Settings__\n"
-                "> **-allow_selfClose [True/False]** - Allow people to close their own requests/bugs.")
+                "> **-allow_selfClose [True/False]** - Allow people to close their own requests/bugs.\n"
+                "> **-allow_milestoneAdding [True/False]** - Allow people to add requests/bugs directly to milestones.")
 
 
 def setup(bot):

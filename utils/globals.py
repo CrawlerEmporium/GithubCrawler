@@ -110,8 +110,8 @@ def isAssignee(ctx, report):
 
 async def isReporter(ctx, report):
     if ctx.message.author.id == report.reporter:
-        guild_settings = await get_settings(ctx, ctx.guild)
-        allow_selfClose = guild_settings.get("allow_selfClose", True)
+        guild_settings = await get_settings(ctx.bot, ctx.guild.id)
+        allow_selfClose = guild_settings.get("allow_selfClose", False)
         if allow_selfClose:
             return True
         else:

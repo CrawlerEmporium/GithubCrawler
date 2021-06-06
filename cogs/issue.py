@@ -99,17 +99,22 @@ class Issue(commands.Cog):
 
             reportMessage = await report.setup_message(self.bot, message.guild.id, report.trackerId)
 
-            milestone_match = MILESTONE_RE.findall(message.content)
-            if milestone_match is not None:
-                await report.commit()
-                matches = [x[0] for x in milestone_match]
-                _id = matches[0].strip(" *.\n")
-                try:
-                    milestone = await Milestone.from_id(_id, message.guild.id)
-                    await milestone.add_report(report_id, message.guild.id)
-                    await milestone.notify_subscribers(self.bot, f"A new ticket was added to milestone `{_id}`.\nTicket: `{report_id}`")
-                except MilestoneException:
-                    milestoneNotFound = f"Milestone {_id} not found, so couldn't add the report to it."
+            guild_settings = await get_settings(self.bot, message.guild.id)
+            allow_milestoneAdding = guild_settings.get("allow_milestoneAdding", False)
+            if allow_milestoneAdding:
+                milestone_match = MILESTONE_RE.findall(message.content)
+                if milestone_match is not None:
+                    await report.commit()
+                    matches = [x[0] for x in milestone_match]
+                    _id = matches[0].strip(" *.\n")
+                    try:
+                        milestone = await Milestone.from_id(_id, message.guild.id)
+                        await milestone.add_report(report_id, message.guild.id)
+                        await milestone.notify_subscribers(self.bot, f"A new ticket was added to milestone `{_id}`.\nTicket: `{report_id}`")
+                    except MilestoneException:
+                        milestoneNotFound = f"Milestone {_id} not found, so couldn't add the report to it."
+                else:
+                    await report.commit()
             else:
                 await report.commit()
 

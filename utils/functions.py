@@ -137,10 +137,10 @@ def get_positivity(string):
         return None
 
 
-async def get_settings(ctx, guild):
+async def get_settings(bot, guildId):
     settings = {}  # default PM settings
-    if guild is not None:
-        settings = await ctx.bot.mdb.issuesettings.find_one({"server": str(guild.id)})
+    if guildId is not None:
+        settings = await bot.mdb.issuesettings.find_one({"server": str(guildId)})
     return settings or {}
 
 
