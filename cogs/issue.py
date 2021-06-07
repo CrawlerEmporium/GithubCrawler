@@ -84,7 +84,11 @@ class Issue(commands.Cog):
 
         if match and identifier:
             title = match.group(1).strip(" *.\n")
-            report_num = await get_next_report_num(identifier, message.guild.id)
+            try:
+                report_num = await get_next_report_num(identifier, message.guild.id)
+            except ReportException as e:
+                return await message.channel.send(e)
+
             report_id = f"{identifier}-{report_num}"
             attach = "\n" + '\n'.join(f"\n{'!' if item.url.lower().endswith(('.png', '.jpg', '.gif')) else ''}"
                                       f"[{item.filename}]({item.url})" for item in message.attachments)
@@ -463,6 +467,8 @@ class Issue(commands.Cog):
             elif label == INFORMATION:
                 em = await report.get_embed(True)
                 await response.respond(embed=em)
+            elif label == SHRUG:
+                return
             else:
                 log.info(f"Force denying {report.title}")
                 await report.force_deny(ContextProxy(self.bot), server.id)

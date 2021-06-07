@@ -722,11 +722,16 @@ class Report:
 
 async def get_next_report_num(identifier, server):
     reportNum = await GG.MDB.ReportNums.find_one({'key': f'{identifier}', 'server': server})
-    num = reportNum['amount'] + 1
-    reportNum['amount'] += 1
-    num = formatNumber(num)
-    await GG.MDB.ReportNums.replace_one({"key": f'{identifier}', 'server': server}, reportNum)
-    return f"{num}"
+    if reportNum is not None:
+        num = reportNum['amount'] + 1
+        reportNum['amount'] += 1
+        num = formatNumber(num)
+        await GG.MDB.ReportNums.replace_one({"key": f'{identifier}', 'server': server}, reportNum)
+        return f"{num}"
+    else:
+        raise ReportException(f"The bot couldn't find the `{identifier}` identifier.\n"
+                              f"**__THIS IS A BUG__**\n"
+                              f"Report this in the support discord ``!support``.")
 
 
 def formatNumber(num):
