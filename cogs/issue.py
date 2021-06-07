@@ -42,7 +42,7 @@ class Issue(commands.Cog):
                        f"{prefix}issue search <identifier> <keyword(s)>\n"
                        f"{prefix}issue searchAll <identifier> <keyword(s)>\n"
                        f"{prefix}issue remove <identifier>\n"
-                       f"{prefix}issue manager```")
+                       f"{prefix}issue open <identifier>\n```")
 
     @issue.command(name='register')
     @commands.guild_only()
