@@ -598,7 +598,10 @@ class Report:
         elif self.message in self.message_cache:
             return self.message_cache[self.message]
         else:
-            msg = await ctx.bot.get_channel(self.trackerId).fetch_message(self.message)
+            try:
+                msg = await ctx.bot.get_channel(self.trackerId).fetch_message(self.message)
+            except AttributeError:
+                msg = await ctx.bot.get_channel(ctx.channel.id).fetch_message(self.message)
             if msg:
                 Report.message_cache[self.message] = msg
             return msg
