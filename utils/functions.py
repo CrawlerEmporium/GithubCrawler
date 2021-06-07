@@ -114,10 +114,8 @@ async def get_selection(ctx, choices, delete=True, pm=False, message=None, force
         except:
             pass
 
-    valid = [str(v) for v in range(1, len(choices) + 1)]
-
     paginator = BotEmbedPaginator(ctx, embeds)
-    m = await paginator.run(valid=valid)
+    m = await paginator.run()
 
     if m is not None:
         return choices[int(m) - 1][1]
