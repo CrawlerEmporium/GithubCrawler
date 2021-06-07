@@ -305,16 +305,19 @@ class Issue(commands.Cog):
                 reports = await GG.MDB.Reports.find(query,
                                                     {"_id": 0, "reporter": 0, "message": 0, "subscribers": 0, "jumpUrl": 0,
                                                      "attachments": 0, "github_issue": 0, "github_repo": 0, "trackerId": 0,
-                                                     "assignee": 0, "milestone": 0}).to_list(length=None)
+                                                     "milestone": 0}).to_list(length=None)
                 if len(reports) > 0:
                     f = io.StringIO()
 
                     csv.writer(f).writerow(
-                        ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug"])
+                        ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug", "assigned"])
                     for row in reports:
+                        assigned = row.get('assignee', False)
+                        if assigned is not False:
+                            assigned = True
                         csv.writer(f).writerow(
                             [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"), row["verification"],
-                             row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"]])
+                             row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"], assigned])
                     f.seek(0)
 
                     buffer = io.BytesIO()
