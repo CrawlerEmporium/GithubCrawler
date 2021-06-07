@@ -287,43 +287,44 @@ class Issue(commands.Cog):
     @issue.command(name='open')
     @commands.guild_only()
     async def issueOpen(self, ctx, identifier=None):
-        if identifier is None:
-            server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-            identString = ""
-            for x in server['listen']:
-                identString += f"``{x['identifier']}``, "
-            await ctx.send(
-                f"Please supply me with an identifier for this server.\nThis server has the following identifiers:\n{identString[:-2]}")
-        else:
-            server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-            trackingChannels = []
-            for x in server['listen']:
-                trackingChannels.append(x['tracker'])
-            query = {"report_id": {"$regex": f"{identifier}"}, "trackerId": {"$in": trackingChannels},
-                     "severity": {"$ne": -1}}
-            reports = await GG.MDB.Reports.find(query,
-                                                {"_id": 0, "reporter": 0, "message": 0, "subscribers": 0, "jumpUrl": 0,
-                                                 "attachments": 0, "github_issue": 0, "github_repo": 0, "trackerId": 0,
-                                                 "assignee": 0, "milestone": 0}).to_list(length=None)
-            if len(reports) > 0:
-                f = io.StringIO()
-
-                csv.writer(f).writerow(
-                    ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug"])
-                for row in reports:
-                    csv.writer(f).writerow(
-                        [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"), row["verification"],
-                         row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"]])
-                f.seek(0)
-
-                buffer = io.BytesIO()
-                buffer.write(f.getvalue().encode())
-                buffer.seek(0)
-
-                file = discord.File(buffer, filename=f"Open Reports for {identifier}.csv")
-                await ctx.send(file=file)
+        if await GG.isManager(ctx):
+            if identifier is None:
+                server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+                identString = ""
+                for x in server['listen']:
+                    identString += f"``{x['identifier']}``, "
+                await ctx.send(
+                    f"Please supply me with an identifier for this server.\nThis server has the following identifiers:\n{identString[:-2]}")
             else:
-                await ctx.send(f"No (open) reports found with the {identifier} identifier.")
+                server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+                trackingChannels = []
+                for x in server['listen']:
+                    trackingChannels.append(x['tracker'])
+                query = {"report_id": {"$regex": f"{identifier}"}, "trackerId": {"$in": trackingChannels},
+                         "severity": {"$ne": -1}}
+                reports = await GG.MDB.Reports.find(query,
+                                                    {"_id": 0, "reporter": 0, "message": 0, "subscribers": 0, "jumpUrl": 0,
+                                                     "attachments": 0, "github_issue": 0, "github_repo": 0, "trackerId": 0,
+                                                     "assignee": 0, "milestone": 0}).to_list(length=None)
+                if len(reports) > 0:
+                    f = io.StringIO()
+
+                    csv.writer(f).writerow(
+                        ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug"])
+                    for row in reports:
+                        csv.writer(f).writerow(
+                            [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"), row["verification"],
+                             row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"]])
+                    f.seek(0)
+
+                    buffer = io.BytesIO()
+                    buffer.write(f.getvalue().encode())
+                    buffer.seek(0)
+
+                    file = discord.File(buffer, filename=f"Open Reports for {identifier}.csv")
+                    await ctx.send(file=file)
+                else:
+                    await ctx.send(f"No (open) reports found with the {identifier} identifier.")
 
 
 def setup(bot):
