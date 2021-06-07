@@ -17,7 +17,7 @@ log = logger.logger
 
 MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 
-version = "2.3.2"
+version = "2.3.3"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '('
@@ -125,6 +125,5 @@ if __name__ == "__main__":
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
     log.info("-------------------")
-    # bot.load_extension(GG.COGS+'.milestone')
     log.info("Finished Loading All Cogs...")
     bot.run(bot.token)
