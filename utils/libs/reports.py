@@ -765,7 +765,7 @@ async def reports_to_issues(text):
     #     # result = re.sub(r"(\w{1,}-\d{,3})", await report_sub, text)
     #     # return result
     if text is not None:
-        regex = re.findall(r"(\w{1,}-\d{,3})", text)
+        regex = re.findall(r"(\w{1,}-\d{1,})", text)
         for x in regex:
             report_id = x
             try:
