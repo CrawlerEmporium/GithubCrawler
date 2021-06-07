@@ -1,3 +1,5 @@
+import csv
+import io
 import typing
 
 import discord
@@ -7,7 +9,7 @@ import utils.globals as GG
 from models.server import Server, Listen
 from utils import logger
 from utils.functions import loadGithubServers, get_selection
-from utils.libs.reports import Report
+from utils.libs.reports import Report, PRIORITY
 
 log = logger.logger
 
@@ -23,7 +25,7 @@ async def findInReports(db, identifier, searchTerm):
     return results
 
 
-class Tracker(commands.Cog):
+class Issue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -282,63 +284,48 @@ class Tracker(commands.Cog):
         else:
             await ctx.send("No results found, please try with a different keyword.")
 
-    @issue.group(invoke_without_command=True)
+    @issue.command(name='open')
     @commands.guild_only()
-    async def manager(self, ctx):
-        prefix = await self.bot.get_server_prefix(ctx.message)
-        await ctx.send("**Valid options currently are:**\n"
-                       f"```{prefix}issue manager\n"
-                       f"{prefix}issue manager add [member]\n"
-                       f"{prefix}issue manager remove [member]\n"
-                       f"{prefix}issue manager list```")
-
-    @manager.command(name='add')
-    @commands.guild_only()
-    @commands.has_permissions(administrator=True)
-    async def managerAdd(self, ctx, member: typing.Optional[discord.Member]):
-        if member is None:
-            await ctx.send("Invalid member, please check the name/id and try again.")
-            return
-
-        manager = await GG.MDB.Managers.find_one({"user": member.id, "server": ctx.guild.id})
-        if manager is not None:
-            await ctx.send("Manager already found in the database.")
-            return
-
-        await GG.MDB.Managers.insert_one({"user": member.id, "server": ctx.guild.id})
-        await ctx.send(f"{member.mention} was added as an issue manager.")
-
-    @manager.command(name='remove')
-    @commands.guild_only()
-    @commands.has_permissions(administrator=True)
-    async def managerRemove(self, ctx, member: typing.Optional[discord.Member]):
-        if member is None:
-            await ctx.send("Invalid member, please check the name/id and try again.")
-
-        manager = await GG.MDB.Managers.find_one({"user": member.id, "server": ctx.guild.id})
-        if manager is None:
-            await ctx.send("Manager not found in the database, please check the name/id and try again.")
-
-        await GG.MDB.Managers.delete_one({"user": member.id, "server": ctx.guild.id})
-        await ctx.send(f"{member.mention} was removed as an issue manager.")
-
-    @manager.command(name='list')
-    @commands.guild_only()
-    async def managerList(self, ctx):
-        server = await GG.MDB.Managers.find({"server": ctx.guild.id}).to_list(length=None)
-        if server is None or len(server) <= 0:
-            await ctx.send("This server has no managers (Except the Server Owner).")
+    async def issueOpen(self, ctx, identifier=None):
+        if identifier is None:
+            server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+            identString = ""
+            for x in server['listen']:
+                identString += f"``{x['identifier']}``, "
+            await ctx.send(
+                f"Please supply me with an identifier for this server.\nThis server has the following identifiers:\n{identString[:-2]}")
         else:
-            channels = "This server has the following managers:\n\n"
-            for x in server:
-                user = await ctx.guild.fetch_member(x['user'])
-                if user is None:
-                    channels += f"{x['user']}\n"
-                else:
-                    channels += f"{user.mention}\n"
-            await ctx.send(channels)
+            server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+            trackingChannels = []
+            for x in server['listen']:
+                trackingChannels.append(x['tracker'])
+            query = {"report_id": {"$regex": f"{identifier}"}, "trackerId": {"$in": trackingChannels},
+                     "severity": {"$ne": -1}}
+            reports = await GG.MDB.Reports.find(query,
+                                                {"_id": 0, "reporter": 0, "message": 0, "subscribers": 0, "jumpUrl": 0,
+                                                 "attachments": 0, "github_issue": 0, "github_repo": 0, "trackerId": 0,
+                                                 "assignee": 0, "milestone": 0}).to_list(length=None)
+            if len(reports) > 0:
+                f = io.StringIO()
+
+                csv.writer(f).writerow(
+                    ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug"])
+                for row in reports:
+                    csv.writer(f).writerow(
+                        [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"), row["verification"],
+                         row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"]])
+                f.seek(0)
+
+                buffer = io.BytesIO()
+                buffer.write(f.getvalue().encode())
+                buffer.seek(0)
+
+                file = discord.File(buffer, filename=f"Open Reports for {identifier}.csv")
+                await ctx.send(file=file)
+            else:
+                await ctx.send(f"No (open) reports found with the {identifier} identifier.")
 
 
 def setup(bot):
-    log.info("[Cogs] Tracker...")
-    bot.add_cog(Tracker(bot))
+    log.info("[Cogs] Issue...")
+    bot.add_cog(Issue(bot))
