@@ -46,7 +46,7 @@ def getAllReports():
     return REPORTS
 
 
-class Report(commands.Cog):
+class ReportCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.userCache = set()
@@ -505,4 +505,4 @@ class Report(commands.Cog):
 
 def setup(bot):
     log.info("[Cogs] Report...")
-    bot.add_cog(Report(bot))
+    bot.add_cog(ReportCog(bot))
