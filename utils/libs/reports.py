@@ -15,7 +15,7 @@ log = logger.logger
 PRIORITY = {
     -2: "Patch Pending", -1: "Resolved",
     0: "P0: Critical", 1: "P1: Very High", 2: "P2: High", 3: "P3: Medium", 4: "P4: Low", 5: "P5: Trivial",
-    6: "Pending/Other"
+    6: "Pending/Other", 7: "In Review"
 }
 PRIORITY_LABELS = {
     0: "P0: Critical", 1: "P1: Very High", 2: "P2: High", 3: "P3: Medium", 4: "P4: Low", 5: "P5: Trivial"
