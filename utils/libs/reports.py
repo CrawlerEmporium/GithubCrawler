@@ -509,7 +509,10 @@ class Report:
         guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
         if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and (
                 self.repo is not None or self.repo != 'NoRepo'):
-            await self.setup_github(ctx, serverId)
+            try:
+                await self.setup_github(ctx, serverId)
+            except ReportException:
+                log.info(f"Report {self.report_id} is already on GitHub, so no need to add it.")
 
         if self.upvotes - self.downvotes in (15, 10) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
