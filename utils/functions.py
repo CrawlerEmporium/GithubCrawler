@@ -123,6 +123,13 @@ async def get_selection(ctx, choices, delete=True, pm=False, message=None, force
         return None
 
 
+async def try_delete(message):
+    try:
+        await message.delete()
+    except discord.HTTPException:
+        pass
+
+
 def get_positivity(string):
     if isinstance(string, bool):  # oi!
         return string
