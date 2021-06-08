@@ -3,9 +3,29 @@ from discord.ext import commands
 import utils.globals as GG
 from utils import logger
 from utils import checks
+from utils.embeds import EmbedWithAuthor
 from utils.functions import get_positivity
 
 log = logger.logger
+
+active = "(<:active:851743586583052329> Active)"
+inactive = "(<:inactive:851743586654748672> Inactive)"
+
+
+def getSettingsEmbed(settings, ctx):
+    embed = EmbedWithAuthor(ctx)
+    embed.title = "IssueCrawler settings for this server."
+
+    selfClose = active if settings.get('allow_selfClose', False) else inactive
+    milestoneAdding = active if settings.get('allow_milestoneAdding', False) else inactive
+
+    reportString = 'Allow people to close their own requests/bugs: {}\n'.format(str(selfClose))
+    milestoneString = 'Allow people to add requests/bugs directly to milestones: {}\n'.format(str(milestoneAdding))
+
+    embed.add_field(name="Report Settings", value=reportString, inline=False)
+    embed.add_field(name="Milestone Settings", value=milestoneString, inline=False)
+
+    return embed
 
 
 class Settings(commands.Cog):
@@ -70,10 +90,11 @@ class Settings(commands.Cog):
 
         if guild_settings:
             await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
-            out += 'Current Settings for this server:\n'
-            out += 'Allow people to close their own requests/bugs: {}\n'.format(str(guild_settings.get('allow_selfClose', 'False')))
-            out += 'Allow people to add requests/bugs directly to milestones: {}\n'.format(str(guild_settings.get('allow_milestoneAdding', 'False')))
-            await ctx.send("Settings for this server are:\n" + out)
+            if len(out) > 0:
+                await ctx.send(out)
+            else:
+                embed = getSettingsEmbed(guild_settings, ctx)
+                await ctx.send(embed=embed)
         else:
             await ctx.send("No settings found. Make sure your syntax is correct.")
             await ctx.send(
