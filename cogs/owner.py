@@ -68,24 +68,6 @@ class Owner(commands.Cog):
             return await ctx.send("```py\n{}: {}\n```".format(type(e).__name__, str(e)))
         await ctx.send("{} reloaded".format(extension_name))
 
-    @commands.command(hidden=True)
-    @commands.is_owner()
-    @commands.max_concurrency(1, BucketType.user)
-    async def multiline(self, ctx, *, cmds: str):
-        """Runs each line as a separate command, with a 1 second delay between commands.
-        Limited to 1 multiline every 20 seconds, with a max of 20 commands, due to abuse.
-        Usage:
-        "!multiline
-        !command1
-        !command2
-        !command3"
-        """
-        cmds = cmds.splitlines()
-        for c in cmds[:20]:
-            ctx.message.content = c
-            await self.bot.process_commands(ctx.message)
-            await asyncio.sleep(1)
-
 
 def setup(bot):
     log.info("[Cogs] Owner...")

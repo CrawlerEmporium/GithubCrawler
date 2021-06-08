@@ -3,6 +3,8 @@ import discord
 import time
 
 from discord.ext import commands
+from discord.ext.commands import BucketType
+
 from utils import logger
 from utils.embeds import EmbedWithAuthor
 
@@ -58,6 +60,23 @@ class Info(commands.Cog):
                          "=536977472)!\n\nSadly, all the requested permissions ARE required for the correct operation of the bot on your server. __No support is given for permission problems.__"
         await ctx.send(embed=em)
 
+    @commands.command(hidden=True)
+    @commands.cooldown(1, 60, BucketType.user)
+    @commands.max_concurrency(1, BucketType.user)
+    async def multiline(self, ctx, *, cmds: str):
+        """Runs each line as a separate command, with a 1 second delay between commands.
+        Limited to 1 multiline every 60 seconds, with a max of 10 commands, due to abuse.
+        Usage:
+        "!multiline
+        !command1
+        !command2
+        !command3"
+        """
+        cmds = cmds.splitlines()
+        for c in cmds[:10]:
+            ctx.message.content = c
+            await self.bot.process_commands(ctx.message)
+            await asyncio.sleep(1)
 
 def setup(bot):
     log.info("[Cogs] Info...")
