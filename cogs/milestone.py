@@ -62,9 +62,10 @@ class Milestones(commands.Cog):
 
     @milestone.command(name='subscribe')
     @commands.guild_only()
-    async def milestoneSubscribe(self, ctx, _id):
+    async def milestoneSubscribe(self, ctx, id):
+        print(id)
         try:
-            milestone = await Milestone.from_id(_id, ctx.guild.id)
+            milestone = await Milestone.from_id(id, ctx.guild.id)
             if ctx.message.author.id not in milestone.subscribers:
                 milestone.subscribe(ctx)
                 await ctx.send(f"{ctx.message.author.mention}, you just subscribed to `{milestone.milestone_id}` - {milestone.title}.")
@@ -75,7 +76,7 @@ class Milestones(commands.Cog):
 
     @milestone.command(name='unsubscribe')
     @commands.guild_only()
-    async def milestoneSubscribe(self, ctx, _id):
+    async def milestoneUnsubscribe(self, ctx, _id):
         try:
             milestone = await Milestone.from_id(_id, ctx.guild.id)
             if ctx.message.author.id in milestone.subscribers:
