@@ -1,5 +1,6 @@
 import discord
 
+from utils.functions import splitDiscordEmbedField
 from utils.libs.reports import Report
 import utils.globals as GG
 
@@ -128,10 +129,9 @@ class Milestone:
 
         reportString = f"{openReports} {open}\n\n{resolvedReports} {resolved}"
 
-        embed.add_field(name="Open Tickets", value=f"{open}")
-        embed.add_field(name="Resolved Tickets", value=f"{resolved}")
-
-        embed.add_field(name="** **", value=f"{reportString}")
+        await splitDiscordEmbedField(embed,open,"Open Tickets")
+        await splitDiscordEmbedField(embed, resolved, "Resolved Tickets")
+        await splitDiscordEmbedField(embed, reportString, "** **")
 
         embed.set_footer(text=f"Owner: {self.owner}")
 
