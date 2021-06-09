@@ -129,8 +129,8 @@ class Milestone:
 
         reportString = f"{openReports} {open}\n\n{resolvedReports} {resolved}"
 
-        await splitDiscordEmbedField(embed,open,"Open Tickets")
-        await splitDiscordEmbedField(embed, resolved, "Resolved Tickets")
+        embed.add_field(name="Open Tickets", value=f"{open}")
+        embed.add_field(name="Resolved Tickets", value=f"{resolved}")
         await splitDiscordEmbedField(embed, reportString, "** **")
 
         embed.set_footer(text=f"Owner: {self.owner}")
