@@ -12,6 +12,7 @@ from discord.ext import commands
 from discord_components import DiscordComponents
 
 from utils.functions import loadGithubServers
+from utils.help import Help
 
 log = logger.logger
 
@@ -20,7 +21,7 @@ MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 version = "2.3.3"
 SHARD_COUNT = 1
 TESTING = False
-defaultPrefix = GG.PREFIX if not TESTING else '('
+defaultPrefix = GG.PREFIX if not TESTING else '*'
 intents = discord.Intents().all()
 
 
@@ -67,7 +68,7 @@ class Crawler(commands.AutoShardedBot):
 bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
               activity=discord.Game(f"!help | Initializing..."),
-              help_command=commands.DefaultHelpCommand(command_attrs={"name": "oldhelp"}))
+              help_command=Help())
 
 
 @bot.event
