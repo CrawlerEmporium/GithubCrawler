@@ -58,7 +58,7 @@ class Milestone:
             return f"Report `{_id}` is already linked to milestone `{self.milestone_id}`."
         else:
             self.reports.append(_id)
-            report = await Report.from_id(_id)
+            report = await Report.from_id(_id, guild_id)
             if self.milestone_id not in report.milestone:
                 report.milestone.append(self.milestone_id)
                 await report.commit()
@@ -68,7 +68,7 @@ class Milestone:
     async def remove_report(self, _id, guild_id):
         if _id in self.reports:
             self.reports.remove(_id)
-            report = await Report.from_id(_id)
+            report = await Report.from_id(_id, guild_id)
             if self.milestone_id in report.milestone:
                 report.milestone.remove(self.milestone_id)
                 await report.commit()
@@ -119,7 +119,7 @@ class Milestone:
 
         embed.add_field(name="Total Tickets", value=f"{reports}")
         for report in self.reports:
-            report = await Report.from_id(report)
+            report = await Report.from_id(report, self.server)
             if report.severity == 6:
                 open += 1
                 openReports += f"`{report.report_id}`: {report.title}\n"

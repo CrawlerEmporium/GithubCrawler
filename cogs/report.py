@@ -165,14 +165,14 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def viewreport(self, ctx, _id):
         """Gets the detailed status of a report."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         await report.get_reportNotes(ctx)
 
     @commands.command(aliases=['cr'])
     @commands.guild_only()
     async def canrepro(self, ctx, _id, *, msg=''):
         """Adds reproduction to a report."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         await report.canrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
@@ -183,7 +183,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def upvote(self, ctx, _id, *, msg=''):
         """Adds an upvote to the selected feature request."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         await report.upvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
@@ -194,7 +194,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def cannotrepro(self, ctx, _id, *, msg=''):
         """Adds nonreproduction to a report."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         await report.cannotrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
@@ -205,7 +205,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def downvote(self, ctx, _id, *, msg=''):
         """Adds a downvote to the selected feature request."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         await report.downvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
@@ -216,7 +216,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def indifferent(self, ctx, _id, *, msg=''):
         """Adds a shrug to the selected feature request."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         await report.indifferent(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
@@ -227,7 +227,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def note(self, ctx, _id, *, msg=''):
         """Adds a note to a report."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         await report.addnote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
@@ -238,7 +238,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def subscribe(self, ctx, report_id):
         """Subscribes to a report."""
-        report = await Report.from_id(report_id)
+        report = await Report.from_id(report_id, ctx.guild.id)
         if ctx.message.author.id in report.subscribers:
             report.unsubscribe(ctx)
             await ctx.send(f"OK, unsubscribed from `{report.report_id}` - {report.title}.")
@@ -267,7 +267,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
-        report = await Report.from_id(_id)
+        report = await Report.from_id(_id, ctx.guild.id)
         if await GG.isManager(ctx) or GG.isAssignee(ctx, report) or await GG.isReporter(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -278,7 +278,7 @@ class ReportCog(commands.Cog):
     async def unresolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Unresolves a report."""
         if await GG.isManager(ctx):
-            report = await Report.from_id(_id)
+            report = await Report.from_id(_id, ctx.guild.id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.send(f"Unresolved `{report.report_id}`: {report.title}.")
@@ -291,7 +291,7 @@ class ReportCog(commands.Cog):
             identifier = identifier.upper()
             id_num = await get_next_report_num(identifier, ctx.guild.id)
 
-            report = await Report.from_id(report_id)
+            report = await Report.from_id(report_id, ctx.guild.id)
             new_report = copy.copy(report)
             await report.resolve(ctx, ctx.guild.id, f"Reassigned as `{identifier}-{id_num}`.", False)
             await report.commit()
@@ -311,7 +311,7 @@ class ReportCog(commands.Cog):
     async def rename(self, ctx, report_id, *, name):
         """Server Admins only - Changes the title of a report."""
         if await GG.isManager(ctx):
-            report = await Report.from_id(report_id)
+            report = await Report.from_id(report_id, ctx.guild.id)
             report.title = name
             if report.github_issue and report.repo is not None:
                 await report.edit_title(f"{report.title}", f"{report.report_id} ")
@@ -324,7 +324,7 @@ class ReportCog(commands.Cog):
     async def priority(self, ctx, _id, pri: int, *, msg=''):
         """Server Admins only - Changes the priority of a report."""
         if await GG.isManager(ctx):
-            report = await Report.from_id(_id)
+            report = await Report.from_id(_id, ctx.guild.id)
 
             report.severity = pri
             if msg:
@@ -342,7 +342,7 @@ class ReportCog(commands.Cog):
     async def assign(self, ctx, _id, member: typing.Optional[discord.Member]):
         """Server Admins only - Changes the priority of a report."""
         if await GG.isManager(ctx):
-            report = await Report.from_id(_id)
+            report = await Report.from_id(_id, ctx.guild.id)
 
             report.assignee = member.id
 
@@ -356,7 +356,7 @@ class ReportCog(commands.Cog):
     async def unassign(self, ctx, _id):
         """Server Admins only - Changes the priority of a report."""
         if await GG.isManager(ctx):
-            report = await Report.from_id(_id)
+            report = await Report.from_id(_id, ctx.guild.id)
 
             report.assignee = None
 
@@ -371,8 +371,8 @@ class ReportCog(commands.Cog):
     async def merge(self, ctx, duplicate, mergeTo):
         """Server Admins only - Merges duplicate into mergeTo."""
         if await GG.isManager(ctx):
-            dupe = await Report.from_id(duplicate)
-            merge = await Report.from_id(mergeTo)
+            dupe = await Report.from_id(duplicate, ctx.guild.id)
+            merge = await Report.from_id(mergeTo, ctx.guild.id)
 
             if dupe is not None and merge is not None:
                 for x in dupe.attachments:

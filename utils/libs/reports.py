@@ -82,6 +82,7 @@ class Report:
     message_cache = LRUCache(maxsize=100)
 
     collection = GG.MDB['Reports']
+    servers = GG.MDB['Github']
     cursor = collection.find()
     cursor.each(callback=each)
 
@@ -172,8 +173,12 @@ class Report:
         }
 
     @classmethod
-    async def from_id(cls, report_id):
-        report = await cls.collection.find_one({"report_id": report_id.upper()})
+    async def from_id(cls, report_id, guild_id):
+        guild = await cls.servers.find_one({"server": guild_id})
+        trackerChannels = []
+        for channel in guild['listen']:
+            trackerChannels.append(channel['tracker'])
+        report = await cls.collection.find_one({"report_id": report_id.upper(), "trackerId": {"$in": trackerChannels}})
         if report is not None:
             del report['_id']
             try:
@@ -448,21 +453,21 @@ class Report:
         self.attachments.append(attachment)
         if add_to_github and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
             if attachment.message:
-                msg = await self.get_attachment_message(ctx, attachment)
+                msg = await self.get_attachment_message(ctx, attachment, serverId)
                 await GitHubClient.get_instance().add_issue_comment(self.repo, self.github_issue, msg)
 
             if attachment.veri:
                 gitDesc = await self.get_github_desc(ctx, serverId)
                 await GitHubClient.get_instance().edit_issue_body(self.repo, self.github_issue, gitDesc)
 
-    async def get_attachment_message(self, ctx, attachment: Attachment):
+    async def get_attachment_message(self, ctx, attachment: Attachment, guild_id):
         if isinstance(attachment.author, int):
             username = str(next((m for m in ctx.bot.get_all_members() if m.id == attachment.author), attachment.author))
         else:
             username = attachment.author
 
         if attachment.message is not None:
-            reportIssue = await reports_to_issues(attachment.message)
+            reportIssue = await reports_to_issues(attachment.message, guild_id)
             msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n{reportIssue}"
         else:
             msg = f"{VERI_KEY.get(attachment.veri, '')} - {username}\n\n"
@@ -748,7 +753,7 @@ def formatNumber(num):
         return num
 
 
-async def reports_to_issues(text):
+async def reports_to_issues(text, guild_id):
     """
     Parses all XXX-### identifiers and adds a link to their GitHub Issue numbers.
     """
@@ -773,7 +778,7 @@ async def reports_to_issues(text):
         for x in regex:
             report_id = x
             try:
-                report = await Report.from_id(report_id)
+                report = await Report.from_id(report_id, guild_id)
                 con = True
                 if report.repo and con:
                     text = text.replace(x, f"{report_id} ({report.repo}#{report.github_issue})")

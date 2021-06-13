@@ -248,7 +248,7 @@ class Issue(commands.Cog):
             results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
             selection = await get_selection(ctx, results, force_select=True)
             if selection is not None:
-                report = await Report.from_id(selection['report_id'])
+                report = await Report.from_id(selection['report_id'], ctx.guild.id)
                 if report is not None:
                     await ctx.send(embed=await report.get_embed(True, ctx))
                 else:
@@ -274,7 +274,7 @@ class Issue(commands.Cog):
             results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
             selection = await get_selection(ctx, results, force_select=True)
             if selection is not None:
-                report = await Report.from_id(selection['report_id'])
+                report = await Report.from_id(selection['report_id'], ctx.guild.id)
                 if report is not None:
                     await ctx.send(embed=await report.get_embed(True, ctx))
                 else:
