@@ -426,9 +426,9 @@ class Report:
                     pass
                 i += attachment.veri // 2
                 msg = ''
-                attachMessage = await self.get_attachment_message(ctx, attachment)
+                attachMessage = await self.get_attachment_message(ctx, attachment, serverId)
                 for line in attachMessage.strip().splitlines():
-                    msg += f"> {line}\n"
+                    msg += f"> {line}\n"@Sz
                 desc += f"\n\n{msg}"
             desc += f"\nVotes: +{self.upvotes} / -{self.downvotes} / ±{self.shrugs}"
         else:
@@ -436,7 +436,7 @@ class Report:
                 if attachment.message:
                     continue
                 msg = ''
-                attachMessage = await self.get_attachment_message(ctx, attachment)
+                attachMessage = await self.get_attachment_message(ctx, attachment, serverId)
                 for line in attachMessage.strip().splitlines():
                     msg += f"> {line}\n"
                 desc += f"\n\n{msg}"
