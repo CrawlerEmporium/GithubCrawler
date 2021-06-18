@@ -4,7 +4,7 @@ from cachetools import LRUCache
 from disputils import BotEmbedPaginator
 
 import utils.globals as GG
-from discord_components import Button, ButtonStyle, InteractionType, FlagsType
+from discord_components import Button, ButtonStyle
 from models.attachment import Attachment
 from utils.functions import paginate, splitDiscordEmbedField
 from utils.libs.github import GitHubClient
@@ -428,7 +428,7 @@ class Report:
                 msg = ''
                 attachMessage = await self.get_attachment_message(ctx, attachment, serverId)
                 for line in attachMessage.strip().splitlines():
-                    msg += f"> {line}\n"@Sz
+                    msg += f"> {line}\n"
                 desc += f"\n\n{msg}"
             desc += f"\nVotes: +{self.upvotes} / -{self.downvotes} / ±{self.shrugs}"
         else:
