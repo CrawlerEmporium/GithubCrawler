@@ -265,12 +265,12 @@ class Report:
         else:
             embed.add_field(name="Assigned to", value=f"<@{self.assignee}>")
         if self.is_bug:
-            embed.colour = 0xff0000
+            embed.colour = 0xed4245
             embed.add_field(name="Verification", value=str(self.verification))
             embed.set_footer(
                 text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
         else:
-            embed.colour = 0x00ff00
+            embed.colour = 0x3ba55d
             embed.add_field(name="Votes", value="\u2b06 " + str(self.upvotes) + " **|** \u2b07 " + str(
                 self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
             vote_msg = "Vote by reacting"
