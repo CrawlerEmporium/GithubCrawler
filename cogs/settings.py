@@ -1,31 +1,66 @@
 from discord.ext import commands
+from discord_components import Button, ButtonStyle
 
 import utils.globals as GG
 from utils import logger
 from utils import checks
-from utils.embeds import EmbedWithAuthor
+from utils.embeds import EmbedWithAuthorWithoutContext
 from utils.functions import get_positivity
 
 log = logger.logger
 
 active = "(<:active:851743586583052329> Active)"
 inactive = "(<:inactive:851743586654748672> Inactive)"
+settingsTrue = ['-allow_selfClose True', '-allow_milestoneAdding True']
+settingsFalse = ['-allow_selfClose False', '-allow_milestoneAdding False']
 
 
-def getSettingsEmbed(settings, ctx):
-    embed = EmbedWithAuthor(ctx)
+def getSettingsEmbed(settings, author):
+    embed = EmbedWithAuthorWithoutContext(author)
     embed.title = "IssueCrawler settings for this server."
 
     selfClose = active if settings.get('allow_selfClose', False) else inactive
     milestoneAdding = active if settings.get('allow_milestoneAdding', False) else inactive
 
-    reportString = 'Allow people to close their own requests/bugs: {}\n'.format(str(selfClose))
-    milestoneString = 'Allow people to add requests/bugs directly to milestones: {}\n'.format(str(milestoneAdding))
+    reportString = '🔒 Allow people to close their own requests/bugs: {}\n'.format(str(selfClose))
+    milestoneString = '🐛 Allow people to add requests/bugs directly to milestones: {}\n'.format(str(milestoneAdding))
 
     embed.add_field(name="Report Settings", value=reportString, inline=False)
     embed.add_field(name="Milestone Settings", value=milestoneString, inline=False)
 
+    embed.set_footer(text="Click the buttons below to change the status from active to inactive, or vice versa")
+
     return embed
+
+
+def getSettingsButtons(settings):
+    close = Button(style=ButtonStyle.green, custom_id="-allow_selfClose False") if settings.get('allow_selfClose', True) else Button(style=ButtonStyle.red, custom_id="-allow_selfClose True")
+    milestone = Button(style=ButtonStyle.green, custom_id="-allow_milestoneAdding False") if settings.get('allow_milestoneAdding', False) else Button(style=ButtonStyle.red, custom_id="-allow_milestoneAdding True")
+
+    close.label = "Self Close"
+    close.emoji = "🔒"
+
+    milestone.label = "Add to Milestone"
+    milestone.emoji = "🐛"
+
+    return [[close], [milestone]]
+
+def loopThroughSettings(guild_settings, args):
+    if '-allow_selfClose' in args:
+        try:
+            setting = args[args.index('-allow_selfClose') + 1]
+        except IndexError:
+            setting = 'True'
+        setting = get_positivity(setting)
+        guild_settings['allow_selfClose'] = setting if setting is not None else True
+    if '-allow_milestoneAdding' in args:
+        try:
+            setting = args[args.index('-allow_milestoneAdding') + 1]
+        except IndexError:
+            setting = 'True'
+        setting = get_positivity(setting)
+        guild_settings['allow_milestoneAdding'] = setting if setting is not None else True
+    return guild_settings
 
 
 class Settings(commands.Cog):
@@ -70,37 +105,46 @@ class Settings(commands.Cog):
         guild_settings = await self.bot.mdb.issuesettings.find_one({"server": guild_id})
         if guild_settings is None:
             guild_settings = {}
+
+        loopedSettings = loopThroughSettings(guild_settings, args)
+
         out = ""
         if '-allow_selfClose' in args:
-            try:
-                setting = args[args.index('-allow_selfClose') + 1]
-            except IndexError:
-                setting = 'True'
-            setting = get_positivity(setting)
-            guild_settings['allow_selfClose'] = setting if setting is not None else True
             out += 'allow_selfClose set to {}!\n\n'.format(str(guild_settings['allow_selfClose']))
         if '-allow_milestoneAdding' in args:
-            try:
-                setting = args[args.index('-allow_milestoneAdding') + 1]
-            except IndexError:
-                setting = 'True'
-            setting = get_positivity(setting)
-            guild_settings['allow_milestoneAdding'] = setting if setting is not None else True
             out += 'allow_milestoneAdding set to {}!\n\n'.format(str(guild_settings['allow_milestoneAdding']))
 
-        if guild_settings:
-            await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
-            if len(out) > 0:
-                await ctx.send(out)
-            else:
-                embed = getSettingsEmbed(guild_settings, ctx)
-                await ctx.send(embed=embed)
+        await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
+        if len(out) > 0:
+            await ctx.send(out)
         else:
-            await ctx.send("No settings found. Make sure your syntax is correct.")
-            await ctx.send(
-                "> __Valid Settings__\n"
-                "> **-allow_selfClose [True/False]** - Allow people to close their own requests/bugs.\n"
-                "> **-allow_milestoneAdding [True/False]** - Allow people to add requests/bugs directly to milestones.")
+            embed = getSettingsEmbed(loopedSettings, ctx.author)
+            buttons = getSettingsButtons(loopedSettings)
+            await ctx.send(embed=embed, components=buttons)
+
+
+    @commands.Cog.listener()
+    async def on_button_click(self, res):
+        member = await res.guild.fetch_member(res.user.id)
+        if member is not None and (res.custom_id in settingsTrue or res.custom_id in settingsFalse) and member.guild_permissions.administrator:
+            guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": res.guild.id})
+            if guild_settings is None:
+                guild_settings = {}
+
+            splitCustomId = res.custom_id.split(" ")
+            splitArg = (splitCustomId[0], splitCustomId[1])
+
+            loopedSettings = loopThroughSettings(guild_settings, splitArg)
+            await self.bot.mdb.lookupsettings.update_one({"server": str(res.guild.id)}, {"$set": loopedSettings}, upsert=True)
+
+            guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": str(res.guild.id)})
+
+            embed = getSettingsEmbed(guild_settings, res.author)
+            buttons = getSettingsButtons(guild_settings)
+            await res.message.edit(embed=embed, components=buttons)
+            await res.respond(type=6)
+        else:
+            await res.respond(content="You need 'Administrator' permissions to change settings on this server.")
 
 
 def setup(bot):

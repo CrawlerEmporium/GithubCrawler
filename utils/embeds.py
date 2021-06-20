@@ -12,6 +12,15 @@ class EmbedWithAuthor(discord.Embed):
         self.colour = random.randint(0, 0xffffff)
 
 
+class EmbedWithAuthorWithoutContext(discord.Embed):
+    """An embed with author image and nickname set."""
+
+    def __init__(self, author, **kwargs):
+        super(EmbedWithAuthorWithoutContext, self).__init__(**kwargs)
+        self.set_author(name=author.display_name, icon_url=author.avatar_url)
+        self.colour = random.randint(0, 0xffffff)
+
+
 class HomebrewEmbedWithAuthor(EmbedWithAuthor):
     """An embed with author image, nickname, and homebrew footer set."""
 
