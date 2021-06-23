@@ -122,29 +122,29 @@ class Settings(commands.Cog):
             buttons = getSettingsButtons(loopedSettings)
             await ctx.send(embed=embed, components=buttons)
 
-
     @commands.Cog.listener()
     async def on_button_click(self, res):
         member = await res.guild.fetch_member(res.user.id)
-        if member is not None and (res.custom_id in settingsTrue or res.custom_id in settingsFalse) and member.guild_permissions.administrator:
-            guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": res.guild.id})
-            if guild_settings is None:
-                guild_settings = {}
+        if member is not None and (res.custom_id in settingsTrue or res.custom_id in settingsFalse):
+            if member.guild_permissions.administrator:
+                guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": res.guild.id})
+                if guild_settings is None:
+                    guild_settings = {}
 
-            splitCustomId = res.custom_id.split(" ")
-            splitArg = (splitCustomId[0], splitCustomId[1])
+                splitCustomId = res.custom_id.split(" ")
+                splitArg = (splitCustomId[0], splitCustomId[1])
 
-            loopedSettings = loopThroughSettings(guild_settings, splitArg)
-            await self.bot.mdb.lookupsettings.update_one({"server": str(res.guild.id)}, {"$set": loopedSettings}, upsert=True)
+                loopedSettings = loopThroughSettings(guild_settings, splitArg)
+                await self.bot.mdb.lookupsettings.update_one({"server": str(res.guild.id)}, {"$set": loopedSettings}, upsert=True)
 
-            guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": str(res.guild.id)})
+                guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": str(res.guild.id)})
 
-            embed = getSettingsEmbed(guild_settings, res.author)
-            buttons = getSettingsButtons(guild_settings)
-            await res.message.edit(embed=embed, components=buttons)
-            await res.respond(type=6)
-        else:
-            await res.respond(content="You need 'Administrator' permissions to change settings on this server.")
+                embed = getSettingsEmbed(guild_settings, res.author)
+                buttons = getSettingsButtons(guild_settings)
+                await res.message.edit(embed=embed, components=buttons)
+                await res.respond(type=6)
+            else:
+                await res.respond(content="You need 'Administrator' permissions to change settings on this server.")
 
 
 def setup(bot):
