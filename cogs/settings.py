@@ -110,12 +110,12 @@ class Settings(commands.Cog):
 
         out = ""
         if '-allow_selfClose' in args:
-            out += 'allow_selfClose set to {}!\n\n'.format(str(guild_settings['allow_selfClose']))
+            out += 'allow_selfClose set to {}!\n\n'.format(str(loopedSettings['allow_selfClose']))
         if '-allow_milestoneAdding' in args:
-            out += 'allow_milestoneAdding set to {}!\n\n'.format(str(guild_settings['allow_milestoneAdding']))
+            out += 'allow_milestoneAdding set to {}!\n\n'.format(str(loopedSettings['allow_milestoneAdding']))
 
         if bool(loopedSettings):
-            await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
+            await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": loopedSettings}, upsert=True)
 
         if len(out) > 0:
             await ctx.send(out)
