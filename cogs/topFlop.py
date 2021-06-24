@@ -4,7 +4,7 @@ import time
 from discord.ext import commands
 from discord import NotFound
 
-from utils import logger
+from crawler_utilities.handlers import logger
 import utils.globals as GG
 
 log = logger.logger

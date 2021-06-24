@@ -1,11 +1,11 @@
 import discord
-from disputils import BotEmbedPaginator
+from crawler_utilities.utils.pagination import BotEmbedPaginator
 
 import utils.globals as GG
 
 from discord.ext import commands
 from models.milestone import Milestone, STATUS, MilestoneException
-from utils import logger
+from crawler_utilities.handlers import logger
 from utils.libs.reports import Report
 
 log = logger.logger
@@ -63,7 +63,6 @@ class Milestones(commands.Cog):
     @milestone.command(name='subscribe')
     @commands.guild_only()
     async def milestoneSubscribe(self, ctx, id):
-        print(id)
         try:
             milestone = await Milestone.from_id(id, ctx.guild.id)
             if ctx.message.author.id not in milestone.subscribers:

@@ -2,7 +2,7 @@ import asyncio
 
 from github import Github
 from github.Repository import Repository
-from utils import logger
+from crawler_utilities.handlers import logger
 
 log = logger.logger
 

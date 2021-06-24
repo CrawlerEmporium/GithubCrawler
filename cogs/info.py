@@ -7,8 +7,8 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 from discord_components import Button, ButtonStyle
 
-from utils import logger
-from utils.embeds import EmbedWithAuthor
+from crawler_utilities.handlers import logger
+from crawler_utilities.utils.embeds import EmbedWithAuthor
 
 log = logger.logger
 

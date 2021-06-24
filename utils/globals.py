@@ -4,11 +4,9 @@ from discord.ext import commands
 from environs import Env
 import motor.motor_asyncio
 
-from models.server import Server
 from utils.functions import get_settings
-from utils.libs.github import GitHubClient
 
-from utils import logger
+from crawler_utilities.handlers import logger
 
 log = logger.logger
 
@@ -128,12 +126,3 @@ def checkUserVsAdmin(server, member):
         if User == Server:
             return True
     return False
-
-
-class EmbedWithAuthor(discord.Embed):
-    """An embed with author image and nickname set."""
-
-    def __init__(self, ctx, **kwargs):
-        super(EmbedWithAuthor, self).__init__(**kwargs)
-        self.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
-        self.colour = random.randint(0, 0xffffff)

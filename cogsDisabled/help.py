@@ -3,8 +3,8 @@ import discord
 from discord.ext import commands
 
 from utils import globals as GG
-from utils import logger
-from utils.embeds import EmbedWithAuthor
+from crawler_utilities.handlers import logger
+from crawler_utilities.utils.embeds import EmbedWithAuthor
 
 log = logger.logger
 

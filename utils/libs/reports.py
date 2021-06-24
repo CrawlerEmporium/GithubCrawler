@@ -1,14 +1,15 @@
 import discord
 import re
 from cachetools import LRUCache
-from disputils import BotEmbedPaginator
+from crawler_utilities.utils.pagination import BotEmbedPaginator
 
 import utils.globals as GG
 from discord_components import Button, ButtonStyle
 from models.attachment import Attachment
-from utils.functions import paginate, splitDiscordEmbedField
+from utils.functions import paginate
+from crawler_utilities.utils.functions import splitDiscordEmbedField
 from utils.libs.github import GitHubClient
-from utils import logger
+from crawler_utilities.handlers import logger
 
 log = logger.logger
 

@@ -12,7 +12,7 @@ from discord_components import InteractionType
 import utils.globals as GG
 from models.milestone import Milestone, MilestoneException
 from models.server import Server
-from utils import logger, checks
+from crawler_utilities.handlers import logger
 from utils.functions import get_settings
 from utils.libs.misc import ContextProxy
 from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \

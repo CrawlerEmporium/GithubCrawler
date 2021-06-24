@@ -2,10 +2,10 @@ from discord.ext import commands
 from discord_components import Button, ButtonStyle
 
 import utils.globals as GG
-from utils import logger
+from crawler_utilities.handlers import logger
 from utils import checks
-from utils.embeds import EmbedWithAuthorWithoutContext
-from utils.functions import get_positivity
+from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
+from crawler_utilities.utils.functions import get_positivity
 
 log = logger.logger
 

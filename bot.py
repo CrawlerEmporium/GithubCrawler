@@ -2,6 +2,7 @@ import asyncio
 
 import discord
 import motor.motor_asyncio
+from crawler_utilities.handlers import Help
 
 import utils.globals as GG
 
@@ -12,7 +13,6 @@ from discord.ext import commands
 from discord_components import DiscordComponents
 
 from utils.functions import loadGithubServers
-from utils.help import Help
 
 log = logger.logger
 
@@ -68,7 +68,7 @@ class Crawler(commands.AutoShardedBot):
 bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
               activity=discord.Game(f"!help | Initializing..."),
-              help_command=Help())
+              help_command=Help("issue"))
 
 
 @bot.event
@@ -118,6 +118,7 @@ if __name__ == "__main__":
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
+            print(e)
     log.info("-------------------")
     log.info("Loading Event Cogs...")
     for extension in [f.replace('.py', '') for f in listdir("cogsEvents") if isfile(join("cogsEvents", f))]:
@@ -125,6 +126,11 @@ if __name__ == "__main__":
             bot.load_extension("cogsEvents" + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
+            print(e)
+    try:
+        bot.load_extension("crawler_utilities.events.cmdLog", package=".crawler_utilities.events")
+    except Exception as e:
+        log.error(f'Failed to load extension cmdLog')
     log.info("-------------------")
     log.info("Finished Loading All Cogs...")
     bot.run(bot.token)

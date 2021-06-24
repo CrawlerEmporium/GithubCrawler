@@ -1,6 +1,6 @@
 import discord
 
-from utils.functions import splitDiscordEmbedField
+from crawler_utilities.utils.functions import splitDiscordEmbedField
 from utils.libs.reports import Report
 import utils.globals as GG
 

@@ -7,7 +7,7 @@ import discord
 
 import utils.globals as GG
 from models.server import Server
-from disputils import BotEmbedPaginator
+from crawler_utilities.utils.pagination import BotEmbedPaginator
 from models.errors import NoResultsFound, NoSelectionElements
 from utils.libs.github import GitHubClient
 
@@ -36,18 +36,6 @@ def gen_error_message():
     verb = random.choice(['must be', 'should be', 'has been', 'will be', 'is being', 'was being'])
     thing_to_do = random.choice(['stopped', 'killed', 'talked to', 'found', 'destroyed', 'fought'])
     return f"{subject} {verb} {thing_to_do}"
-
-
-def a_or_an(string, upper=False):
-    if string.startswith('^') or string.endswith('^'):
-        return string.strip('^')
-    if re.match('[AEIOUaeiou].*', string):
-        return 'an {0}'.format(string) if not upper else f'An {string}'
-    return 'a {0}'.format(string) if not upper else f'A {string}'
-
-
-def camel_to_title(string):
-    return re.sub(r'((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))', r' \1', string).title()
 
 
 async def loadGithubServers():
@@ -125,25 +113,6 @@ async def get_selection(ctx, choices, delete=True, pm=False, message=None, force
         return None
 
 
-async def try_delete(message):
-    try:
-        await message.delete()
-    except discord.HTTPException:
-        pass
-
-
-def get_positivity(string):
-    if isinstance(string, bool):  # oi!
-        return string
-    lowered = string.lower()
-    if lowered in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
-        return True
-    elif lowered in ('no', 'n', 'false', 'f', '0', 'disable', 'off'):
-        return False
-    else:
-        return None
-
-
 async def get_settings(bot, guildId):
     settings = {}  # default PM settings
     if guildId is not None:
@@ -154,17 +123,3 @@ async def get_settings(bot, guildId):
 def paginate(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return [i for i in zip_longest(*args, fillvalue=fillvalue) if i is not None]
-
-
-async def splitDiscordEmbedField(embed, input, embed_field_name):
-    texts = []
-    while len(input) > 1024:
-        next_text = input[:1024]
-        last_space = next_text.rfind(" ")
-        input = "…" + input[last_space + 1:]
-        next_text = next_text[:last_space] + "…"
-        texts.append(next_text)
-    texts.append(input)
-    embed.add_field(name=embed_field_name, value=texts[0], inline=False)
-    for piece in texts[1:]:
-        embed.add_field(name="** **", value=piece, inline=False)

@@ -9,7 +9,7 @@ from discord.ext.commands import CommandInvokeError, UnexpectedQuoteError, Expec
 
 import utils.globals as GG
 from models.errors import CrawlerException, InvalidArgument, EvaluationError
-from utils import logger
+from crawler_utilities.handlers import logger
 from utils.functions import discord_trim, SearchException
 from utils.libs.reports import ReportException
 

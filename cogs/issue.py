@@ -7,7 +7,7 @@ from discord.ext import commands
 
 import utils.globals as GG
 from models.server import Server, Listen
-from utils import logger
+from crawler_utilities.handlers import logger
 from utils.functions import loadGithubServers, get_selection
 from utils.libs.reports import Report, PRIORITY
 
