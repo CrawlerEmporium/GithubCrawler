@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import discord
 import time
@@ -64,8 +65,15 @@ class Info(commands.Cog):
         em = EmbedWithAuthor(ctx)
         em.title = 'Invite Me!'
         em.description = "Hi, you can easily invite me to your own server by following [this link](" \
-                         "https://discord.com/oauth2/authorize?client_id=602779023151595546&scope=bot&permissions=388176" \
-                         "=536977472)!\n\nSadly, all the requested permissions ARE required for the correct operation of the bot on your server. __No support is given for permission problems.__"
+                         "https://discord.com/oauth2/authorize?client_id=602779023151595546&scope=bot&permissions=2147543120" \
+                         "=536977472)!\n\n" \
+                         "**Mandatory:**\n__Manage Messages__ - this allows the " \
+                         "bot to remove messages from other users.\n\n" \
+                         "__Attach Files__ - Some commands or replies will let the bot attach images/files, " \
+                         "without this permission it will not be able too.\n\n" \
+                         "__Add Reactions__ - For the Anon/Delivery the bot requires to be able to add reactions to " \
+                         "messages that are send.\n\n" \
+                         "Sadly, all the requested permissions ARE required for the correct operation of the bot on your server. __No support is given for permission problems.__"
         await ctx.send(embed=em)
 
     @commands.command(hidden=True)
