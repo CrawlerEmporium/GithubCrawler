@@ -114,7 +114,9 @@ class Settings(commands.Cog):
         if '-allow_milestoneAdding' in args:
             out += 'allow_milestoneAdding set to {}!\n\n'.format(str(guild_settings['allow_milestoneAdding']))
 
-        await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
+        if bool(loopedSettings):
+            await self.bot.mdb.issuesettings.update_one({"server": guild_id}, {"$set": guild_settings}, upsert=True)
+
         if len(out) > 0:
             await ctx.send(out)
         else:
