@@ -6,7 +6,7 @@ from crawler_utilities.handlers import Help
 
 import utils.globals as GG
 
-from utils import logger
+from crawler_utilities.handlers import logger
 from os import listdir
 from os.path import isfile, join
 from discord.ext import commands
