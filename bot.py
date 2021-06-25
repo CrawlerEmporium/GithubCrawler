@@ -110,15 +110,15 @@ async def on_guild_join(guild):
                                   afk=True)
 
 
-if __name__ == "__main__":
-    bot.state = "run"
+def loadCogs():
+    i = 0
     log.info("Loading Cogs...")
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
-            print(e)
+            i += 1
     log.info("-------------------")
     log.info("Loading Event Cogs...")
     for extension in [f.replace('.py', '') for f in listdir("cogsEvents") if isfile(join("cogsEvents", f))]:
@@ -126,11 +126,22 @@ if __name__ == "__main__":
             bot.load_extension("cogsEvents" + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
-            print(e)
+            i += 1
     try:
         bot.load_extension("crawler_utilities.events.cmdLog", package=".crawler_utilities.events")
     except Exception as e:
         log.error(f'Failed to load extension cmdLog')
+        i += 1
+    try:
+        bot.load_extension("crawler_utilities.events.errors", package=".crawler_utilities.events")
+    except Exception as e:
+        log.error(f'Failed to load extension errors')
+        i += 1
     log.info("-------------------")
     log.info("Finished Loading All Cogs...")
+
+
+if __name__ == "__main__":
+    bot.state = "run"
+    loadCogs()
     bot.run(bot.token)
