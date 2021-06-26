@@ -14,10 +14,6 @@ from utils.libs.github import GitHubClient
 log = logging.getLogger(__name__)
 
 
-class SearchException(Exception):
-    pass
-
-
 def discord_trim(string):
     result = []
     trimLen = 0
@@ -27,15 +23,6 @@ def discord_trim(string):
         result.append(string[lastLen:trimLen])
         lastLen += 1999
     return result
-
-
-def gen_error_message():
-    subject = random.choice(['A kobold', 'The green dragon', 'The Frost Mage', 'GithubCrawler', 'The wizard',
-                             'An iron golem', 'Giddy', 'Your mom', 'This bot', 'You', 'Me', 'The president',
-                             'The Queen', 'Xanathar', 'Volo', 'This world'])
-    verb = random.choice(['must be', 'should be', 'has been', 'will be', 'is being', 'was being'])
-    thing_to_do = random.choice(['stopped', 'killed', 'talked to', 'found', 'destroyed', 'fought'])
-    return f"{subject} {verb} {thing_to_do}"
 
 
 async def loadGithubServers():

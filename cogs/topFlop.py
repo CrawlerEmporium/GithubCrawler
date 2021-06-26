@@ -1,6 +1,7 @@
 import decimal
 import time
 
+from crawler_utilities.utils.embeds import EmbedWithAuthor
 from discord.ext import commands
 from discord import NotFound
 
@@ -118,7 +119,7 @@ class TopFlop(commands.Cog):
                         serverReports.append(rep)
 
         sortedList = sorted(serverReports, key=lambda k: k[f'{type}s'], reverse=True)
-        embed = GG.EmbedWithAuthor(ctx)
+        embed = EmbedWithAuthor(ctx)
         if top <= 0:
             top = 10
         if top >= 25:
@@ -183,7 +184,7 @@ class TopFlop(commands.Cog):
                 sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=False)
             else:
                 sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=True)
-            embed = GG.EmbedWithAuthor(ctx)
+            embed = EmbedWithAuthor(ctx)
             if top <= 0:
                 top = 10
             if top >= 25:
