@@ -70,7 +70,7 @@ class Crawler(commands.AutoShardedBot):
 
 bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"!help | Initializing..."),
+              activity=discord.Game(f"{GG.PREFIX}help | Initializing..."),
               help_command=Help("issue"))
 
 
@@ -78,7 +78,7 @@ bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=
 async def on_ready():
     await loadGithubServers()
     DiscordComponents(bot)
-    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | !help | v{version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | {bot.defaultPrefix}help | v{version}"), afk=True)
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -91,26 +91,6 @@ async def on_connect():
 @bot.event
 async def on_resumed():
     log.info('resumed.')
-
-
-@bot.event
-async def on_guild_join(guild):
-    bots = sum(1 for m in guild.members if m.bot)
-    members = len(guild.members)
-    ratio = bots / members
-    if ratio >= 0.6 and members >= 20:
-        log.info("Detected bot collection server ({}), ratio {}. Leaving.".format(guild.id, ratio))
-        try:
-            await guild.owner.send("Please do not add me to bot collection servers. "
-                                   "Your server was flagged for having over 60% bots. "
-                                   "If you believe this is an error, please PM the bot author.")
-        except:
-            pass
-        await asyncio.sleep(members / 200)
-        await guild.leave()
-    else:
-        await bot.change_presence(activity=discord.Game(f"with Github | {defaultPrefix}github | {version}"),
-                                  afk=True)
 
 
 def loadCogs():
