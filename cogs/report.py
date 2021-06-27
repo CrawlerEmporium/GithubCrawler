@@ -176,7 +176,7 @@ class ReportCog(commands.Cog):
         await report.canrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await ctx.reply(f"Added a note that you can reproduce this issue to `{report.report_id}` - {report.title}.", hidden=True)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['up'])
@@ -187,7 +187,7 @@ class ReportCog(commands.Cog):
         await report.upvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await ctx.reply(f"Added your upvote to `{report.report_id}` - {report.title}.", hidden=True)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['cnr'])
@@ -198,7 +198,7 @@ class ReportCog(commands.Cog):
         await report.cannotrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await ctx.reply(f"Added a note that you cannot reproduce this issue to `{report.report_id}` - {report.title}.", hidden=True)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['down'])
@@ -209,7 +209,7 @@ class ReportCog(commands.Cog):
         await report.downvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await ctx.reply(f"Added your downvote to `{report.report_id}` - {report.title}.", hidden=True)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['shrug'])
@@ -220,7 +220,7 @@ class ReportCog(commands.Cog):
         await report.indifferent(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await ctx.reply(f"Added your indifference to `{report.report_id}` - {report.title}.", hidden=True)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command()
@@ -231,7 +231,7 @@ class ReportCog(commands.Cog):
         await report.addnote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.send(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await ctx.reply(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['sub'])
@@ -241,10 +241,10 @@ class ReportCog(commands.Cog):
         report = await Report.from_id(report_id, ctx.guild.id)
         if ctx.message.author.id in report.subscribers:
             report.unsubscribe(ctx)
-            await ctx.send(f"OK, unsubscribed from `{report.report_id}` - {report.title}.")
+            await ctx.reply(f"OK, unsubscribed from `{report.report_id}` - {report.title}.", hidden=True)
         else:
             report.subscribe(ctx)
-            await ctx.send(f"OK, subscribed to `{report.report_id}` - {report.title}.")
+            await ctx.reply(f"OK, subscribed to `{report.report_id}` - {report.title}.", hidden=True)
         await report.commit()
 
     @commands.command()
@@ -260,7 +260,7 @@ class ReportCog(commands.Cog):
                 num_unsubbed += 1
                 await collection.replace_one({"report_id": report['report_id']}, report)
 
-        await ctx.send(f"OK, unsubscribed from {num_unsubbed} reports.")
+        await ctx.reply(f"OK, unsubscribed from {num_unsubbed} reports.", hidden=True)
 
     # Server Admins METHODS
     @commands.command(aliases=['close'])
@@ -271,7 +271,7 @@ class ReportCog(commands.Cog):
         if await GG.isManager(ctx) or GG.isAssignee(ctx, report) or await GG.isReporter(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
-            await ctx.send(f"Resolved `{report.report_id}`: {report.title}.")
+            await ctx.reply(f"Resolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['open'])
     @commands.guild_only()
@@ -281,7 +281,7 @@ class ReportCog(commands.Cog):
             report = await Report.from_id(_id, ctx.guild.id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
-            await ctx.send(f"Unresolved `{report.report_id}`: {report.title}.")
+            await ctx.reply(f"Unresolved `{report.report_id}`: {report.title}.")
 
     @commands.command(aliases=['reassign'])
     @commands.guild_only()
@@ -304,7 +304,7 @@ class ReportCog(commands.Cog):
                 await new_report.update_labels()
                 await new_report.edit_title(f"{new_report.report_id} {new_report.title}")
             await new_report.commit()
-            await ctx.send(f"Reassigned {report.report_id} as {new_report.report_id}.")
+            await ctx.reply(f"Reassigned {report.report_id} as {new_report.report_id}.")
 
     @commands.command()
     @commands.guild_only()
@@ -317,7 +317,7 @@ class ReportCog(commands.Cog):
                 await report.edit_title(f"{report.title}", f"{report.report_id} ")
             await report.commit()
             await report.update(ctx, ctx.guild.id)
-            await ctx.send(f"Renamed {report.report_id} as {report.title}.")
+            await ctx.reply(f"Renamed {report.report_id} as {report.title}.")
 
     @commands.command(aliases=['pri'])
     @commands.guild_only()
@@ -335,7 +335,7 @@ class ReportCog(commands.Cog):
 
             await report.commit()
             await report.update(ctx, ctx.guild.id)
-            await ctx.send(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
+            await ctx.reply(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
 
     @commands.command()
     @commands.guild_only()
@@ -349,7 +349,7 @@ class ReportCog(commands.Cog):
             await report.addnote(member.id, f"Assigned {report.report_id} to {member.mention}", ctx, ctx.guild.id)
             await report.commit()
             await report.update(ctx, ctx.guild.id)
-            await ctx.send(f"Assigned {report.report_id} to {member.mention}")
+            await ctx.reply(f"Assigned {report.report_id} to {member.mention}")
 
     @commands.command()
     @commands.guild_only()
@@ -364,7 +364,7 @@ class ReportCog(commands.Cog):
                                  ctx.guild.id)
             await report.commit()
             await report.update(ctx, ctx.guild.id)
-            await ctx.send(f"Cleared assigned user of {report.report_id}.")
+            await ctx.reply(f"Cleared assigned user of {report.report_id}.")
 
     @commands.command()
     @commands.guild_only()
@@ -385,7 +385,7 @@ class ReportCog(commands.Cog):
                                     ctx.guild.id, True)
                 await merge.commit()
                 await merge.update(ctx, ctx.guild.id)
-                await ctx.send(f"Merged `{dupe.report_id}` into `{merge.report_id}`")
+                await ctx.reply(f"Merged `{dupe.report_id}` into `{merge.report_id}`")
 
     async def handle_reaction(self, msg_id, member, emoji, server):
         if emoji.name not in (UPVOTE_REACTION, DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION):
