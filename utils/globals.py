@@ -38,6 +38,8 @@ REPO_ID_MAP = {
     "CrawlerEmporium/PokemonCrawler": "PBUG",
     "CrawlerEmporium/DiscordCrawler": "DBUG",
     "CrawlerEmporium/GithubCrawler": "GBUG",
+    "CrawlerEmporium/ScheduleCrawler": "SBUG",
+    "CrawlerEmporium/CrawlerEmporium": "WBUG",
     "flapkan/mpmb-tracker": "MBUG",
     "5etools/tracker": "5ET",
     "FantasyModuleParser/FantasyModuleParser": "FMPBUG"
@@ -116,13 +118,3 @@ async def isReporter(ctx, report):
             return False
     else:
         return False
-
-
-def checkUserVsAdmin(server, member):
-    User = {"guild": server, "user": member}
-    wanted = next((item for item in GITHUBSERVERS if item.server == server), None)
-    if wanted is not None:
-        Server = {"guild": wanted.server, "user": wanted.admin}
-        if User == Server:
-            return True
-    return False
