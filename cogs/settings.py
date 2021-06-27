@@ -129,7 +129,7 @@ class Settings(commands.Cog):
         member = await res.guild.fetch_member(res.user.id)
         if member is not None and (res.custom_id in settingsTrue or res.custom_id in settingsFalse):
             if member.guild_permissions.administrator:
-                guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": res.guild.id})
+                guild_settings = await self.bot.mdb.issuesettings.find_one({"server": res.guild.id})
                 if guild_settings is None:
                     guild_settings = {}
 
@@ -137,9 +137,9 @@ class Settings(commands.Cog):
                 splitArg = (splitCustomId[0], splitCustomId[1])
 
                 loopedSettings = loopThroughSettings(guild_settings, splitArg)
-                await self.bot.mdb.lookupsettings.update_one({"server": str(res.guild.id)}, {"$set": loopedSettings}, upsert=True)
+                await self.bot.mdb.issuesettings.update_one({"server": str(res.guild.id)}, {"$set": loopedSettings}, upsert=True)
 
-                guild_settings = await self.bot.mdb.lookupsettings.find_one({"server": str(res.guild.id)})
+                guild_settings = await self.bot.mdb.issuesettings.find_one({"server": str(res.guild.id)})
 
                 embed = getSettingsEmbed(guild_settings, res.author)
                 buttons = getSettingsButtons(guild_settings)
