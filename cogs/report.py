@@ -461,19 +461,21 @@ class ReportCog(commands.Cog):
         if member.bot:
             return
 
-        if GG.checkUserVsAdmin(server.id, member.id):
+        if server.owner.id == member.id:
             if label == UPVOTE:
                 await report.force_accept(ContextProxy(self.bot), server.id)
+                await response.respond(type=6)
             elif label == INFORMATION:
                 em = await report.get_embed(True)
                 await response.respond(embed=em)
+                await response.respond(type=6)
             elif label == SHRUG:
-                return
+                await response.respond(type=6)
             else:
                 log.info(f"Force denying {report.title}")
                 await report.force_deny(ContextProxy(self.bot), server.id)
                 await report.commit()
-                return
+                await response.respond(type=6)
         else:
             try:
                 if label == UPVOTE:
@@ -497,6 +499,7 @@ class ReportCog(commands.Cog):
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=str(e))
                 else:
                     await member.send(str(e))
+                    await response.respond(type=6)
 
         await report.commit()
         await report.update(ContextProxy(self.bot), server.id)
