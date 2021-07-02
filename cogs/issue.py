@@ -1,6 +1,5 @@
 import csv
 import io
-import typing
 
 import discord
 from discord.ext import commands
@@ -9,7 +8,7 @@ import utils.globals as GG
 from models.server import Server, Listen
 from crawler_utilities.handlers import logger
 from utils.functions import loadGithubServers, get_selection
-from utils.libs.reports import Report, PRIORITY
+from models.reports import Report, PRIORITY
 
 log = logger.logger
 

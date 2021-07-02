@@ -1,15 +1,14 @@
 import logging
 import random
-import re
 from itertools import zip_longest
 
 import discord
 
 import utils.globals as GG
+from crawler_utilities.handlers.errors import NoSelectionElements
 from models.server import Server
 from crawler_utilities.utils.pagination import BotEmbedPaginator
-from models.errors import NoResultsFound, NoSelectionElements
-from utils.libs.github import GitHubClient
+from models.githubClient import GitHubClient
 
 log = logging.getLogger(__name__)
 

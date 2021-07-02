@@ -1,5 +1,3 @@
-import random
-import discord
 from discord.ext import commands
 from environs import Env
 import motor.motor_asyncio
@@ -118,3 +116,10 @@ async def isReporter(ctx, report):
             return False
     else:
         return False
+
+
+class ContextProxy:  # just to pass the bot on to functions that need it
+    def __init__(self, bot, **kwargs):
+        self.bot = bot
+        for k, v in kwargs.items():
+            self.__setattr__(k, v)

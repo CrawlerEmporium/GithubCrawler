@@ -1,6 +1,8 @@
 import discord
 import re
 from cachetools import LRUCache
+
+from crawler_utilities.handlers.errors import CrawlerException
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 
 import utils.globals as GG
@@ -8,7 +10,7 @@ from discord_components import Button, ButtonStyle
 from models.attachment import Attachment
 from utils.functions import paginate
 from crawler_utilities.utils.functions import splitDiscordEmbedField
-from utils.libs.github import GitHubClient
+from models.githubClient import GitHubClient
 from crawler_utilities.handlers import logger
 
 log = logger.logger
@@ -237,13 +239,13 @@ class Report:
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(),
                                                                         components=
                                                                         [[Button(label=UPVOTE, style=ButtonStyle.green,
-                                                                                emoji="⬆️"),
-                                                                         Button(label=DOWNVOTE, style=ButtonStyle.red,
-                                                                                emoji="⬇️"),
-                                                                         Button(label=SHRUG, style=ButtonStyle.gray,
-                                                                                emoji="🤷"),
-                                                                         Button(label=INFORMATION,
-                                                                                style=ButtonStyle.blue, emoji="ℹ️")]]
+                                                                                 emoji="⬆️"),
+                                                                          Button(label=DOWNVOTE, style=ButtonStyle.red,
+                                                                                 emoji="⬇️"),
+                                                                          Button(label=SHRUG, style=ButtonStyle.gray,
+                                                                                 emoji="🤷"),
+                                                                          Button(label=INFORMATION,
+                                                                                 style=ButtonStyle.blue, emoji="ℹ️")]]
                                                                         )
         else:
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed())
@@ -635,15 +637,15 @@ class Report:
             await msg.clear_reactions()
             if not self.is_bug:
                 await msg.edit(embed=await self.get_embed(), components=
-                                                                        [[Button(label=UPVOTE, style=ButtonStyle.green,
-                                                                                emoji="⬆️"),
-                                                                         Button(label=DOWNVOTE, style=ButtonStyle.red,
-                                                                                emoji="⬇️"),
-                                                                         Button(label=SHRUG, style=ButtonStyle.gray,
-                                                                                emoji="🤷"),
-                                                                         Button(label=INFORMATION,
-                                                                                style=ButtonStyle.blue, emoji="ℹ️")]]
-                                                                        )
+                [[Button(label=UPVOTE, style=ButtonStyle.green,
+                         emoji="⬆️"),
+                  Button(label=DOWNVOTE, style=ButtonStyle.red,
+                         emoji="⬇️"),
+                  Button(label=SHRUG, style=ButtonStyle.gray,
+                         emoji="🤷"),
+                  Button(label=INFORMATION,
+                         style=ButtonStyle.blue, emoji="ℹ️")]]
+                               )
             else:
                 await msg.edit(embed=await self.get_embed(), components=[])
 
@@ -758,24 +760,8 @@ async def reports_to_issues(text, guild_id):
     """
     Parses all XXX-### identifiers and adds a link to their GitHub Issue numbers.
     """
-
-    # async def report_sub(match):
-    #     #     report_id = match.group(1)
-    #     #     try:
-    #     #         report = await Report.from_id(report_id)
-    #     #     except ReportException:
-    #     #         return report_id
-    #     #
-    #     #     if report.github_issue:
-    #     #         if report.repo:
-    #     #             return f"{report_id} ({report.repo}#{report.github_issue})"
-    #     #         return f"{report_id} (#{report.github_issue})"
-    #     #     return report_id
-    #     #
-    #     # result = re.sub(r"(\w{1,}-\d{,3})", await report_sub, text)
-    #     # return result
     if text is not None:
-        regex = re.findall(r"(\w{1,}-\d{1,})", text)
+        regex = re.findall(r"(\w+-\d+)", text)
         for x in regex:
             report_id = x
             try:
@@ -795,5 +781,5 @@ def identifier_from_repo(repo_name):
     return GG.REPO_ID_MAP.get(repo_name, 'BUG')
 
 
-class ReportException(Exception):
+class ReportException(CrawlerException):
     pass

@@ -45,6 +45,7 @@ def getSettingsButtons(settings):
 
     return [[close], [milestone]]
 
+
 def loopThroughSettings(guild_settings, args):
     if '-allow_selfClose' in args:
         try:

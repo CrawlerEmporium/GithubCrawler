@@ -12,9 +12,9 @@ from crawler_utilities.handlers import logger
 
 log = logger.logger
 
-
 extensions = [x.replace('.py', '') for x in os.listdir(GG.COGS) if x.endswith('.py')]
 path = GG.COGS + '.'
+
 
 class Owner(commands.Cog):
     def __init__(self, bot):

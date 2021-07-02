@@ -6,7 +6,6 @@ import utils.globals as GG
 from discord.ext import commands
 from models.milestone import Milestone, STATUS, MilestoneException
 from crawler_utilities.handlers import logger
-from utils.libs.reports import Report
 
 log = logger.logger
 

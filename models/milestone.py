@@ -1,12 +1,14 @@
 import discord
 
+from crawler_utilities.handlers.errors import CrawlerException
 from crawler_utilities.utils.functions import splitDiscordEmbedField
-from utils.libs.reports import Report
+from models.reports import Report
 import utils.globals as GG
 
 STATUS = {
     -1: "Outdated", 0: "New", 1: "Closed", 2: "Resolved", 3: "Released"
 }
+
 
 class Milestone:
     collection = GG.MDB['Milestone']
@@ -138,5 +140,5 @@ class Milestone:
         return embed
 
 
-class MilestoneException(Exception):
+class MilestoneException(CrawlerException):
     pass

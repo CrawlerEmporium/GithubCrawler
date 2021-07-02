@@ -2,20 +2,15 @@ import copy
 import typing
 import re
 
-import bson
 import discord
-from discord import NotFound
 from discord.ext import commands
-from discord.ext.commands import CommandInvokeError
 from discord_components import InteractionType
 
 import utils.globals as GG
 from models.milestone import Milestone, MilestoneException
-from models.server import Server
 from crawler_utilities.handlers import logger
 from utils.functions import get_settings
-from utils.libs.misc import ContextProxy
-from utils.libs.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
+from models.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
     DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION
 
 log = logger.logger
@@ -30,6 +25,7 @@ UPVOTE = "Upvote"
 DOWNVOTE = "Downvote"
 SHRUG = "Shrug"
 INFORMATION = "Info"
+
 
 def loop(result, error):
     if error:
@@ -121,7 +117,6 @@ class ReportCog(commands.Cog):
                     await report.commit()
             else:
                 await report.commit()
-
 
             prefix = await self.bot.get_server_prefix(message)
 
@@ -403,7 +398,7 @@ class ReportCog(commands.Cog):
 
         if GG.checkUserVsAdmin(server.id, member.id):
             if emoji.name == UPVOTE_REACTION:
-                await report.force_accept(ContextProxy(self.bot), server.id)
+                await report.force_accept(GG.ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:
                 em = await report.get_embed(True)
                 if member.dm_channel is not None:
@@ -416,14 +411,14 @@ class ReportCog(commands.Cog):
                     pass
             else:
                 log.info(f"Force denying {report.title}")
-                await report.force_deny(ContextProxy(self.bot), server.id)
+                await report.force_deny(GG.ContextProxy(self.bot), server.id)
                 await report.commit()
                 return
         else:
             try:
                 if emoji.name == UPVOTE_REACTION:
                     print(f"Upvote: {member} - {report.report_id}")
-                    await report.upvote(member.id, '', ContextProxy(self.bot), server.id)
+                    await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
                 elif emoji.name == INFORMATION_REACTION:
                     print(f"Information: {member} - {report.report_id}")
                     em = await report.get_embed(True)
@@ -437,15 +432,15 @@ class ReportCog(commands.Cog):
                         pass
                 elif emoji.name == SHRUG_REACTION:
                     print(f"Shrugged: {member} - {report.report_id}")
-                    await report.indifferent(member.id, '', ContextProxy(self.bot), server.id)
+                    await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
                 else:
                     print(f"Downvote: {member} - {report.report_id}")
-                    await report.downvote(member.id, '', ContextProxy(self.bot), server.id)
+                    await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
             except ReportException as e:
                 await member.send(str(e))
 
         await report.commit()
-        await report.update(ContextProxy(self.bot), server.id)
+        await report.update(GG.ContextProxy(self.bot), server.id)
 
     async def handle_button(self, message, member, label, server, response):
         if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG):
@@ -463,7 +458,7 @@ class ReportCog(commands.Cog):
 
         if server.owner.id == member.id:
             if label == UPVOTE:
-                await report.force_accept(ContextProxy(self.bot), server.id)
+                await report.force_accept(GG.ContextProxy(self.bot), server.id)
             elif label == INFORMATION:
                 em = await report.get_embed(True)
                 await response.respond(embed=em)
@@ -471,13 +466,13 @@ class ReportCog(commands.Cog):
                 pass
             else:
                 log.info(f"Force denying {report.title}")
-                await report.force_deny(ContextProxy(self.bot), server.id)
+                await report.force_deny(GG.ContextProxy(self.bot), server.id)
                 await report.commit()
         else:
             try:
                 if label == UPVOTE:
                     print(f"Upvote: {member} - {report.report_id}")
-                    await report.upvote(member.id, '', ContextProxy(self.bot), server.id)
+                    await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have upvoted {report.report_id}")
                 elif label == INFORMATION:
                     print(f"Information: {member} - {report.report_id}")
@@ -485,11 +480,11 @@ class ReportCog(commands.Cog):
                     await response.respond(embed=em)
                 elif label == SHRUG:
                     print(f"Shrugged: {member} - {report.report_id}")
-                    await report.indifferent(member.id, '', ContextProxy(self.bot), server.id)
+                    await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have shown indifference for {report.report_id}")
                 else:
                     print(f"Downvote: {member} - {report.report_id}")
-                    await report.downvote(member.id, '', ContextProxy(self.bot), server.id)
+                    await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have downvoted {report.report_id}")
             except ReportException as e:
                 if response.channel == message.channel:
@@ -502,8 +497,7 @@ class ReportCog(commands.Cog):
             await response.respond(type=6)
 
         await report.commit()
-        await report.update(ContextProxy(self.bot), server.id)
-
+        await report.update(GG.ContextProxy(self.bot), server.id)
 
 
 def setup(bot):

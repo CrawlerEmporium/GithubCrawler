@@ -5,9 +5,8 @@ from discord.ext import commands
 
 import utils.globals as GG
 from crawler_utilities.handlers import logger
-from utils.libs.github import GitHubClient
-from utils.libs.misc import ContextProxy
-from utils.libs.reports import Report, ReportException
+from models.githubClient import GitHubClient
+from models.reports import Report, ReportException
 
 log = logger.logger
 
@@ -66,7 +65,7 @@ class Web(commands.Cog):
 
         pend = data['sender']['login'] == "lorddusk"
 
-        await report.resolve(ContextProxy(self.bot), report.repo, close_github_issue=False, pend=pend)
+        await report.resolve(GG.ContextProxy(self.bot), report.repo, close_github_issue=False, pend=pend)
         await report.commit()
 
     async def report_opened(self, data):
@@ -91,7 +90,7 @@ class Web(commands.Cog):
                                                                 f"Tracked as `{report.report_id}`.")
             await report.update_labels()
 
-        await report.unresolve(ContextProxy(self.bot), report.repo, open_github_issue=False)
+        await report.unresolve(GG.ContextProxy(self.bot), report.repo, open_github_issue=False)
         await report.commit()
 
         return report
@@ -115,7 +114,7 @@ class Web(commands.Cog):
         if report is None:  # this only happens if we try to create a report off an enhancement label
             return  # we don't want to track it anyway
 
-        ctx = ContextProxy(self.bot)
+        ctx = GG.ContextProxy(self.bot)
 
         if EXEMPT_LABEL in label_names:  # issue changed from bug/fr to enhancement
             await report.untrack(ctx, report.repo)
@@ -149,9 +148,9 @@ class Web(commands.Cog):
             except ReportException:
                 return  # oh well
 
-            await report.addnote(f"GitHub - {username}", comment['body'], ContextProxy(self.bot), report.repo, add_to_github=False)
+            await report.addnote(f"GitHub - {username}", comment['body'], GG.ContextProxy(self.bot), report.repo, add_to_github=False)
             await report.commit()
-            await report.update(ContextProxy(self.bot))
+            await report.update(GG.ContextProxy(self.bot))
 
     def run_app(self, app, *, host='0.0.0.0', port=None, ssl_context=None, backlog=128):
         """Run an app"""
