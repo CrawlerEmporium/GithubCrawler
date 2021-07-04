@@ -53,6 +53,7 @@ class Crawler(commands.AutoShardedBot):
         self.tracking = 737222642666307684
         self.error = 858336390277627904
         self.defaultPrefix = GG.PREFIX
+        self.settings = self.mdb.issuesettings
 
     async def get_server_prefix(self, msg):
         return (await get_prefix(self, msg))[-1]
@@ -95,6 +96,10 @@ async def on_resumed():
 
 def loadCogs():
     i = 0
+
+    crawler_utilities_events = ["cmdLog", "errors", "joinLeave", "settings"]
+    events = "crawler_utilities.events"
+
     log.info("Loading Cogs...")
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
@@ -110,21 +115,12 @@ def loadCogs():
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
             i += 1
-    try:
-        bot.load_extension("crawler_utilities.events.cmdLog", package=".crawler_utilities.events")
-    except Exception as e:
-        log.error(f'Failed to load extension cmdLog')
-        i += 1
-    try:
-        bot.load_extension("crawler_utilities.events.errors", package=".crawler_utilities.events")
-    except Exception as e:
-        log.error(f'Failed to load extension errors')
-        i += 1
-    try:
-        bot.load_extension("crawler_utilities.events.joinLeave", package=".crawler_utilities.events")
-    except Exception as e:
-        log.error(f'Failed to load extension joinLeave')
-        i += 1
+    for extension in crawler_utilities_events:
+        try:
+            bot.load_extension(f"{events}.{extension}", package=f".{events}")
+        except Exception as e:
+            log.error(f'Failed to load extension {extension}')
+            i += 1
     log.info("-------------------")
     log.info("Finished Loading All Cogs...")
 
