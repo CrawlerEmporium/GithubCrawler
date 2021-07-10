@@ -9,6 +9,7 @@ from discord_components import InteractionType
 import utils.globals as GG
 from models.milestone import Milestone, MilestoneException
 from crawler_utilities.handlers import logger
+from utils.checks import isManager, isAssignee, isReporter
 from utils.functions import get_settings
 from models.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
     DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION
@@ -263,7 +264,7 @@ class ReportCog(commands.Cog):
     async def resolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Resolves a report."""
         report = await Report.from_id(_id, ctx.guild.id)
-        if await GG.isManager(ctx) or GG.isAssignee(ctx, report) or await GG.isReporter(ctx, report):
+        if await isManager(ctx) or isAssignee(ctx, report) or await isReporter(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.reply(f"Resolved `{report.report_id}`: {report.title}.")
@@ -272,7 +273,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def unresolve(self, ctx, _id, *, msg=''):
         """Server Admins only - Unresolves a report."""
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             report = await Report.from_id(_id, ctx.guild.id)
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
@@ -282,7 +283,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def reidentify(self, ctx, report_id, identifier):
         """Server Admins only - Changes the identifier of a report."""
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             identifier = identifier.upper()
             id_num = await get_next_report_num(identifier, ctx.guild.id)
 
@@ -305,7 +306,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def rename(self, ctx, report_id, *, name):
         """Server Admins only - Changes the title of a report."""
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             report = await Report.from_id(report_id, ctx.guild.id)
             report.title = name
             if report.github_issue and report.repo is not None:
@@ -318,7 +319,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def priority(self, ctx, _id, pri: int, *, msg=''):
         """Server Admins only - Changes the priority of a report."""
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             report = await Report.from_id(_id, ctx.guild.id)
 
             report.severity = pri
@@ -336,7 +337,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def assign(self, ctx, _id, member: typing.Optional[discord.Member]):
         """Server Admins only - Changes the priority of a report."""
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             report = await Report.from_id(_id, ctx.guild.id)
 
             report.assignee = member.id
@@ -350,7 +351,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def unassign(self, ctx, _id):
         """Server Admins only - Changes the priority of a report."""
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             report = await Report.from_id(_id, ctx.guild.id)
 
             report.assignee = None
@@ -365,7 +366,7 @@ class ReportCog(commands.Cog):
     @commands.guild_only()
     async def merge(self, ctx, duplicate, mergeTo):
         """Server Admins only - Merges duplicate into mergeTo."""
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             dupe = await Report.from_id(duplicate, ctx.guild.id)
             merge = await Report.from_id(mergeTo, ctx.guild.id)
 

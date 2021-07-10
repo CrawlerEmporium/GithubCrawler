@@ -87,37 +87,6 @@ def checkPermission(ctx, permission):
         return False
 
 
-async def isManager(ctx):
-    manager = await MDB.Managers.find_one({"user": ctx.message.author.id, "server": ctx.guild.id})
-    if manager is None:
-        manager = False
-        server = await MDB.Github.find_one({"server": ctx.guild.id})
-        if ctx.message.author.id == server['admin']:
-            manager = True
-    else:
-        manager = True
-    return manager
-
-
-def isAssignee(ctx, report):
-    if ctx.message.author.id == report.assignee:
-        return True
-    else:
-        return False
-
-
-async def isReporter(ctx, report):
-    if ctx.message.author.id == report.reporter:
-        guild_settings = await get_settings(ctx.bot, ctx.guild.id)
-        allow_selfClose = guild_settings.get("allow_selfClose", False)
-        if allow_selfClose:
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
 class ContextProxy:  # just to pass the bot on to functions that need it
     def __init__(self, bot, **kwargs):
         self.bot = bot
