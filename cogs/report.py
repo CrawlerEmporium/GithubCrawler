@@ -26,6 +26,7 @@ UPVOTE = "Upvote"
 DOWNVOTE = "Downvote"
 SHRUG = "Shrug"
 INFORMATION = "Info"
+SUBSCRIBE = "Subscribe"
 
 
 def loop(result, error):
@@ -236,10 +237,10 @@ class ReportCog(commands.Cog):
         """Subscribes to a report."""
         report = await Report.from_id(report_id, ctx.guild.id)
         if ctx.message.author.id in report.subscribers:
-            report.unsubscribe(ctx)
+            report.unsubscribe(ctx.message.author.id)
             await ctx.reply(f"OK, unsubscribed from `{report.report_id}` - {report.title}.", hidden=True)
         else:
-            report.subscribe(ctx)
+            report.subscribe(ctx.message.author.id)
             await ctx.reply(f"OK, subscribed to `{report.report_id}` - {report.title}.", hidden=True)
         await report.commit()
 
@@ -444,7 +445,7 @@ class ReportCog(commands.Cog):
         await report.update(GG.ContextProxy(self.bot), server.id)
 
     async def handle_button(self, message, member, label, server, response):
-        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG):
+        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE):
             return
 
         try:
@@ -460,10 +461,13 @@ class ReportCog(commands.Cog):
         if server.owner.id == member.id:
             if label == UPVOTE:
                 await report.force_accept(GG.ContextProxy(self.bot), server.id)
+                await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have accepted {report.report_id}")
             elif label == INFORMATION:
                 em = await report.get_embed(True)
                 await response.respond(embed=em)
             elif label == SHRUG:
+                pass
+            elif label == SUBSCRIBE:
                 pass
             else:
                 log.info(f"Force denying {report.title}")
@@ -483,6 +487,13 @@ class ReportCog(commands.Cog):
                     print(f"Shrugged: {member} - {report.report_id}")
                     await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have shown indifference for {report.report_id}")
+                elif label == SUBSCRIBE:
+                    if member.id in report.subscribers:
+                        await report.unsubscribe(member.id)
+                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have unsubscribed from {report.report_id}")
+                    else:
+                        await report.subscribe(member.id)
+                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
                 else:
                     print(f"Downvote: {member} - {report.report_id}")
                     await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)

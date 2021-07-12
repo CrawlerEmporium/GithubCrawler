@@ -54,6 +54,7 @@ UPVOTE = "Upvote"
 DOWNVOTE = "Downvote"
 SHRUG = "Shrug"
 INFORMATION = "Info"
+SUBSCRIBE = "Subscribe"
 GITHUB_THRESHOLD = 5
 GITHUB_THRESHOLD_5ET = 5
 
@@ -236,19 +237,18 @@ class Report:
 
     async def setup_message(self, bot, guildID, trackerChannel):
         if not self.is_bug:
-            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(),
-                                                                        components=
-                                                                        [[Button(label=UPVOTE, style=ButtonStyle.green,
-                                                                                 emoji="⬆️"),
-                                                                          Button(label=DOWNVOTE, style=ButtonStyle.red,
-                                                                                 emoji="⬇️"),
-                                                                          Button(label=SHRUG, style=ButtonStyle.gray,
-                                                                                 emoji="🤷"),
-                                                                          Button(label=INFORMATION,
-                                                                                 style=ButtonStyle.blue, emoji="ℹ️")]]
+            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
+                                                                        [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
+                                                                          Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
+                                                                          Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷"),
+                                                                          Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+                                                                          Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
                                                                         )
         else:
-            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed())
+            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
+                                                                        [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+                                                                          Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
+                                                                        )
 
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
@@ -591,15 +591,15 @@ class Report:
         if self.github_issue:
             await GitHubClient.get_instance().close_issue(self.repo, self.github_issue)
 
-    def subscribe(self, ctx):
+    def subscribe(self, userId):
         """Ensures a user is subscribed to this report."""
-        if ctx.message.author.id not in self.subscribers:
-            self.subscribers.append(ctx.message.author.id)
+        if userId not in self.subscribers:
+            self.subscribers.append(userId)
 
-    def unsubscribe(self, ctx):
+    def unsubscribe(self, userId):
         """Ensures a user is not subscribed to this report."""
-        if ctx.message.author.id in self.subscribers:
-            self.subscribers.remove(ctx.message.author.id)
+        if userId in self.subscribers:
+            self.subscribers.remove(userId)
 
     async def get_message(self, ctx, serverId):
         if self.message is None:
@@ -637,17 +637,17 @@ class Report:
             await msg.clear_reactions()
             if not self.is_bug:
                 await msg.edit(embed=await self.get_embed(), components=
-                [[Button(label=UPVOTE, style=ButtonStyle.green,
-                         emoji="⬆️"),
-                  Button(label=DOWNVOTE, style=ButtonStyle.red,
-                         emoji="⬇️"),
-                  Button(label=SHRUG, style=ButtonStyle.gray,
-                         emoji="🤷"),
-                  Button(label=INFORMATION,
-                         style=ButtonStyle.blue, emoji="ℹ️")]]
-                               )
+                [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
+                  Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
+                  Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷"),
+                  Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
+                )
             else:
-                await msg.edit(embed=await self.get_embed(), components=[])
+                await msg.edit(embed=await self.get_embed(), components=
+                [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
+                )
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:

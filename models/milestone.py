@@ -79,15 +79,15 @@ class Milestone:
         else:
             return f"Report `{_id}` was not found in the linked reports for milestone `{self.milestone_id}`."
 
-    def subscribe(self, ctx):
+    def subscribe(self, userId):
         """Ensures a user is subscribed to this report."""
-        if ctx.message.author.id not in self.subscribers:
-            self.subscribers.append(ctx.message.author.id)
+        if userId not in self.subscribers:
+            self.subscribers.append(userId)
 
-    def unsubscribe(self, ctx):
+    def unsubscribe(self, userId):
         """Ensures a user is not subscribed to this report."""
-        if ctx.message.author.id in self.subscribers:
-            self.subscribers.remove(ctx.message.author.id)
+        if userId in self.subscribers:
+            self.subscribers.remove(userId)
 
     async def notify_subscribers(self, bot, msg):
         msg = f"`{self.milestone_id}` - {self.title}: {msg}"

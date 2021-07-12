@@ -65,7 +65,7 @@ class Milestones(commands.Cog):
         try:
             milestone = await Milestone.from_id(id, ctx.guild.id)
             if ctx.message.author.id not in milestone.subscribers:
-                milestone.subscribe(ctx)
+                milestone.subscribe(ctx.message.author.id)
                 await ctx.send(f"{ctx.message.author.mention}, you just subscribed to `{milestone.milestone_id}` - {milestone.title}.")
             else:
                 await ctx.send(f"{ctx.message.author.mention}, you are already subscribed `{milestone.milestone_id}` - {milestone.title}.")
@@ -78,7 +78,7 @@ class Milestones(commands.Cog):
         try:
             milestone = await Milestone.from_id(_id, ctx.guild.id)
             if ctx.message.author.id in milestone.subscribers:
-                milestone.unsubscribe(ctx)
+                milestone.unsubscribe(ctx.message.author.id)
                 await ctx.send(f"{ctx.message.author.mention}, you just unsubscribed to `{milestone.milestone_id}` - {milestone.title}.")
             else:
                 await ctx.send(f"{ctx.message.author.mention}, you are not subscribed to `{milestone.milestone_id}` - {milestone.title}.")
