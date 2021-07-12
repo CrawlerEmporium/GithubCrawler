@@ -458,7 +458,7 @@ class ReportCog(commands.Cog):
         await report.update(GG.ContextProxy(self.bot), server.id)
 
     async def handle_button(self, message, member, label, server, response):
-        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE):
+        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE, RESOLVE):
             return
 
         try:
@@ -482,8 +482,9 @@ class ReportCog(commands.Cog):
                     report.subscribe(member.id)
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
             elif label == RESOLVE:
-                if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
-                    await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                if await isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                    await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
+                    await report.commit()
                 else:
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
             else:
@@ -502,7 +503,8 @@ class ReportCog(commands.Cog):
                 elif label == SUBSCRIBE:
                     pass
                 elif label == RESOLVE:
-                    await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                    await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
+                    await report.commit()
                 else:
                     log.info(f"Force denying {report.title}")
                     await report.force_deny(GG.ContextProxy(self.bot), server.id)
@@ -529,8 +531,9 @@ class ReportCog(commands.Cog):
                             report.subscribe(member.id)
                             await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
                     elif label == RESOLVE:
-                        if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
-                            await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                        if await isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                            await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
+                            await report.commit()
                         else:
                             await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
                     else:
