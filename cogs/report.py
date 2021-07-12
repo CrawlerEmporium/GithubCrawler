@@ -489,10 +489,10 @@ class ReportCog(commands.Cog):
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have shown indifference for {report.report_id}")
                 elif label == SUBSCRIBE:
                     if member.id in report.subscribers:
-                        await report.unsubscribe(member.id)
+                        report.unsubscribe(member.id)
                         await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have unsubscribed from {report.report_id}")
                     else:
-                        await report.subscribe(member.id)
+                        report.subscribe(member.id)
                         await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
                 else:
                     print(f"Downvote: {member} - {report.report_id}")
