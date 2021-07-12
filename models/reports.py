@@ -241,16 +241,16 @@ class Report:
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
             [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
               Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
-              Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷"),
-              Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
-             [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
+              Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷")],
+             [Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
+              Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
                                                                         )
         else:
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
             [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
-             [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
+              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
+              Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
                                                                         )
 
         self.message = report_message.id
@@ -642,16 +642,16 @@ class Report:
                 await msg.edit(embed=await self.get_embed(), components=
                 [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
                   Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
-                  Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷"),
-                  Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
-                 [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
+                  Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷")],
+                 [Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
+                  Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
                                )
             else:
                 await msg.edit(embed=await self.get_embed(), components=
                 [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
-                 [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
+                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
+                  Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
                                )
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
