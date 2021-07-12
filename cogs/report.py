@@ -468,6 +468,7 @@ class ReportCog(commands.Cog):
 
         if member.bot:
             return
+
         if report.is_bug:
             if label == INFORMATION:
                 print(f"Information: {member} - {report.report_id}")
@@ -488,62 +489,60 @@ class ReportCog(commands.Cog):
             else:
                 return
 
-        if server.owner.id == member.id:
-            if label == UPVOTE:
-                await report.force_accept(GG.ContextProxy(self.bot), server.id)
-                await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have accepted {report.report_id}")
-            elif label == INFORMATION:
-                em = await report.get_embed(True)
-                await response.respond(embed=em)
-            elif label == SHRUG:
-                pass
-            elif label == SUBSCRIBE:
-                pass
-            elif label == RESOLVE:
-                if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
-                    await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
-                else:
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
-            else:
-                log.info(f"Force denying {report.title}")
-                await report.force_deny(GG.ContextProxy(self.bot), server.id)
-                await report.commit()
-        else:
-            try:
+        if not report.is_bug:
+            if server.owner.id == member.id:
                 if label == UPVOTE:
-                    print(f"Upvote: {member} - {report.report_id}")
-                    await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have upvoted {report.report_id}")
+                    await report.force_accept(GG.ContextProxy(self.bot), server.id)
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have accepted {report.report_id}")
                 elif label == INFORMATION:
-                    print(f"Information: {member} - {report.report_id}")
                     em = await report.get_embed(True)
                     await response.respond(embed=em)
                 elif label == SHRUG:
-                    print(f"Shrugged: {member} - {report.report_id}")
-                    await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have shown indifference for {report.report_id}")
+                    pass
                 elif label == SUBSCRIBE:
-                    if member.id in report.subscribers:
-                        report.unsubscribe(member.id)
-                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have unsubscribed from {report.report_id}")
-                    else:
-                        report.subscribe(member.id)
-                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
+                    pass
                 elif label == RESOLVE:
-                    if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
-                        await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                    await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                else:
+                    log.info(f"Force denying {report.title}")
+                    await report.force_deny(GG.ContextProxy(self.bot), server.id)
+                    await report.commit()
+            else:
+                try:
+                    if label == UPVOTE:
+                        print(f"Upvote: {member} - {report.report_id}")
+                        await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
+                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have upvoted {report.report_id}")
+                    elif label == INFORMATION:
+                        print(f"Information: {member} - {report.report_id}")
+                        em = await report.get_embed(True)
+                        await response.respond(embed=em)
+                    elif label == SHRUG:
+                        print(f"Shrugged: {member} - {report.report_id}")
+                        await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
+                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have shown indifference for {report.report_id}")
+                    elif label == SUBSCRIBE:
+                        if member.id in report.subscribers:
+                            report.unsubscribe(member.id)
+                            await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have unsubscribed from {report.report_id}")
+                        else:
+                            report.subscribe(member.id)
+                            await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
+                    elif label == RESOLVE:
+                        if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                            await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                        else:
+                            await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
                     else:
-                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
-                else:
-                    print(f"Downvote: {member} - {report.report_id}")
-                    await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have downvoted {report.report_id}")
-            except ReportException as e:
-                if response.channel == message.channel:
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=str(e))
-                else:
-                    await member.send(str(e))
-                    await response.respond(type=6)
+                        print(f"Downvote: {member} - {report.report_id}")
+                        await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
+                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have downvoted {report.report_id}")
+                except ReportException as e:
+                    if response.channel == message.channel:
+                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=str(e))
+                    else:
+                        await member.send(str(e))
+                        await response.respond(type=6)
 
         if not response.responded:
             await response.respond(type=6)
