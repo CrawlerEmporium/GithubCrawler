@@ -9,7 +9,7 @@ from discord_components import InteractionType
 import utils.globals as GG
 from models.milestone import Milestone, MilestoneException
 from crawler_utilities.handlers import logger
-from utils.checks import isManager, isAssignee, isReporter
+from utils.checks import isManager, isAssignee, isReporter, isManagerAssigneeOrReporterButton
 from utils.functions import get_settings
 from models.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
     DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION
@@ -27,6 +27,7 @@ DOWNVOTE = "Downvote"
 SHRUG = "Shrug"
 INFORMATION = "Info"
 SUBSCRIBE = "Subscribe"
+RESOLVE = "Resolve"
 
 
 def loop(result, error):
@@ -479,6 +480,11 @@ class ReportCog(commands.Cog):
                 else:
                     report.subscribe(member.id)
                     await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
+            elif label == RESOLVE:
+                if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                    await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                else:
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
             else:
                 return
 
@@ -493,6 +499,11 @@ class ReportCog(commands.Cog):
                 pass
             elif label == SUBSCRIBE:
                 pass
+            elif label == RESOLVE:
+                if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                    await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                else:
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
             else:
                 log.info(f"Force denying {report.title}")
                 await report.force_deny(GG.ContextProxy(self.bot), server.id)
@@ -518,6 +529,11 @@ class ReportCog(commands.Cog):
                     else:
                         report.subscribe(member.id)
                         await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
+                elif label == RESOLVE:
+                    if isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                        await report.resolve(GG.ContextProxy(self.bot), server.id, "Report closed.")
+                    else:
+                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
                 else:
                     print(f"Downvote: {member} - {report.report_id}")
                     await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)

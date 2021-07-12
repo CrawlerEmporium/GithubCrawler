@@ -55,6 +55,7 @@ DOWNVOTE = "Downvote"
 SHRUG = "Shrug"
 INFORMATION = "Info"
 SUBSCRIBE = "Subscribe"
+RESOLVE = "Resolve"
 GITHUB_THRESHOLD = 5
 GITHUB_THRESHOLD_5ET = 5
 
@@ -238,16 +239,18 @@ class Report:
     async def setup_message(self, bot, guildID, trackerChannel):
         if not self.is_bug:
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
-                                                                        [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
-                                                                          Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
-                                                                          Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷"),
-                                                                          Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                                                                          Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
+            [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
+              Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
+              Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷"),
+              Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
+             [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
                                                                         )
         else:
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
-                                                                        [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                                                                          Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
+            [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
+              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
+             [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
                                                                         )
 
         self.message = report_message.id
@@ -484,7 +487,7 @@ class Report:
         attachment = Attachment.cr(author, msg)
         self.verification += 1
         await self.add_attachment(ctx, serverId, attachment)
-        await self.notify_subscribers(ctx, f"New CR by <@{author}>: {msg}")
+        await self.notify_subscribers(ctx.bot, f"New CR by <@{author}>: {msg}")
 
     async def cannotrepro(self, author, msg, ctx, serverId):
         if [a for a in self.attachments if a.author == author and a.veri == -1]:
@@ -494,7 +497,7 @@ class Report:
         attachment = Attachment.cnr(author, msg)
         self.verification -= 1
         await self.add_attachment(ctx, serverId, attachment)
-        await self.notify_subscribers(ctx, f"New CNR by <@{author}>: {msg}")
+        await self.notify_subscribers(ctx.bot, f"New CNR by <@{author}>: {msg}")
 
     async def upvote(self, author, msg, ctx, serverId):
         for attachment in self.attachments:
@@ -513,7 +516,7 @@ class Report:
         self.upvotes += 1
         await self.add_attachment(ctx, serverId, attachment)
         if msg:
-            await self.notify_subscribers(ctx, f"New Upvote by <@{author}>: {msg}")
+            await self.notify_subscribers(ctx.bot, f"New Upvote by <@{author}>: {msg}")
 
         guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
         if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and (
@@ -543,7 +546,7 @@ class Report:
         self.downvotes += 1
         await self.add_attachment(ctx, serverId, attachment)
         if msg:
-            await self.notify_subscribers(ctx, f"New downvote by <@{author}>: {msg}")
+            await self.notify_subscribers(ctx.bot, f"New downvote by <@{author}>: {msg}")
         if self.upvotes - self.downvotes in (14, 9) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
 
@@ -567,13 +570,13 @@ class Report:
     async def addnote(self, author, msg, ctx, serverId, add_to_github=True):
         attachment = Attachment(author, msg)
         await self.add_attachment(ctx, serverId, attachment, add_to_github)
-        await self.notify_subscribers(ctx, f"New note by <@{author}>: {msg}")
+        await self.notify_subscribers(ctx.bot, f"New note by <@{author}>: {msg}")
 
     async def force_accept(self, ctx, serverId):
         await self.setup_github(ctx, serverId)
 
     async def force_deny(self, ctx, serverId):
-        await self.notify_subscribers(ctx, f"Report closed.")
+        await self.notify_subscribers(ctx.bot, f"Report closed.")
         guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
         await self.addnote(guild.admin, f"Resolved - This report was denied.", ctx, serverId)
 
@@ -641,13 +644,15 @@ class Report:
                   Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
                   Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷"),
                   Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
-                )
+                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
+                 [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
+                               )
             else:
                 await msg.edit(embed=await self.get_embed(), components=
                 [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")]]
-                )
+                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️")],
+                 [Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
+                               )
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:
@@ -655,9 +660,9 @@ class Report:
 
         self.severity = -1
         if pend:
-            await self.notify_subscribers(ctx, f"Report resolved - a patch is pending.")
+            await self.notify_subscribers(ctx.bot, f"Report resolved - a patch is pending.")
         else:
-            await self.notify_subscribers(ctx, f"Report closed.")
+            await self.notify_subscribers(ctx.bot, f"Report closed.")
         if msg:
             await self.addnote(ctx.message.author.id, f"Resolved - {msg}", ctx, serverId)
 
@@ -684,7 +689,7 @@ class Report:
             raise ReportException("This report is still open.")
 
         self.severity = 6
-        await self.notify_subscribers(ctx, f"Report unresolved.")
+        await self.notify_subscribers(ctx.bot, f"Report unresolved.")
         if msg:
             await self.addnote(ctx.message.author.id, f"Unresolved - {msg}", ctx, serverId)
 
@@ -725,11 +730,11 @@ class Report:
         githubTitle = f"{idnum}{new_title}"
         await GitHubClient.get_instance().rename_issue(self.repo, self.github_issue, githubTitle)
 
-    async def notify_subscribers(self, ctx, msg):
+    async def notify_subscribers(self, bot, msg):
         msg = f"`{self.report_id}` - {self.title}: {msg}"
         for sub in self.subscribers:
             try:
-                member = next(m for m in ctx.bot.get_all_members() if m.id == sub)
+                member = next(m for m in bot.get_all_members() if m.id == sub)
                 await member.send(msg)
             except (StopIteration, discord.HTTPException):
                 continue

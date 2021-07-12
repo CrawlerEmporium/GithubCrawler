@@ -77,3 +77,24 @@ async def isReporter(ctx, report):
             return False
     else:
         return False
+
+
+async def isManagerAssigneeOrReporterButton(userId, guildId, report, bot):
+    manager = await GG.MDB.Managers.find_one({"user": userId, "server": guildId})
+    if manager is None:
+        server = await GG.MDB.Github.find_one({"server": guildId})
+        if userId == server['admin']:
+            return True
+        elif userId == report.assignee:
+            return True
+        elif userId == report.reporter:
+            guild_settings = await GG.get_settings(bot, guildId)
+            allow_selfClose = guild_settings.get("allow_selfClose", False)
+            if allow_selfClose:
+                return True
+            else:
+                return False
+        else:
+            return False
+    else:
+        return True
