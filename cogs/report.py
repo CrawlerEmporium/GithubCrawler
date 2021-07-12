@@ -393,10 +393,22 @@ class ReportCog(commands.Cog):
         except ReportException:
             return
 
-        if report.is_bug:
-            return
         if member.bot:
             return
+        if report.is_bug:
+            if emoji.name == INFORMATION_REACTION:
+                print(f"Information: {member} - {report.report_id}")
+                em = await report.get_embed(True)
+                if member.dm_channel is not None:
+                    DM = member.dm_channel
+                else:
+                    DM = await member.create_dm()
+                try:
+                    await DM.send(embed=em)
+                except:
+                    pass
+            else:
+                return
 
         if GG.checkUserVsAdmin(server.id, member.id):
             if emoji.name == UPVOTE_REACTION:
@@ -453,10 +465,22 @@ class ReportCog(commands.Cog):
         except ReportException:
             return
 
-        if report.is_bug:
-            return
         if member.bot:
             return
+        if report.is_bug:
+            if label == INFORMATION:
+                print(f"Information: {member} - {report.report_id}")
+                em = await report.get_embed(True)
+                await response.respond(embed=em)
+            elif label == SUBSCRIBE:
+                if member.id in report.subscribers:
+                    report.unsubscribe(member.id)
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have unsubscribed from {report.report_id}")
+                else:
+                    report.subscribe(member.id)
+                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
+            else:
+                return
 
         if server.owner.id == member.id:
             if label == UPVOTE:
