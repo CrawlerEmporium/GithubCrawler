@@ -54,6 +54,7 @@ class Crawler(commands.AutoShardedBot):
         self.error = 858336390277627904
         self.defaultPrefix = GG.PREFIX
         self.settings = self.mdb.issuesettings
+        self.port = 5002
 
     async def get_server_prefix(self, msg):
         return (await get_prefix(self, msg))[-1]
@@ -96,10 +97,6 @@ async def on_resumed():
 
 def loadCogs():
     i = 0
-
-    crawler_utilities_events = ["cmdLog", "errors", "joinLeave", "settings"]
-    events = "crawler_utilities.events"
-
     log.info("Loading Cogs...")
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
@@ -115,17 +112,41 @@ def loadCogs():
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
             i += 1
-    for extension in crawler_utilities_events:
+    log.info("-------------------")
+    log.info("Finished Loading All Cogs...")
+
+
+def loadCrawlerUtilitiesCogs():
+    cu_event_extensions = ["cmdLog", "errors", "joinLeave", "settings"]
+    cu_event_folder = "crawler_utilities.events"
+    cu_cogs_extensions = ["flare"]
+    cu_cogs_folder = "crawler_utilities.cogs"
+
+    i = 0
+    log.info("Loading Cogs...")
+    for extension in cu_cogs_extensions:
         try:
-            bot.load_extension(f"{events}.{extension}", package=f".{events}")
+            bot.load_extension(f"{cu_cogs_folder}.{extension}")
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
             i += 1
     log.info("-------------------")
-    log.info("Finished Loading All Cogs...")
+    log.info("Loading Event Cogs...")
+    for extension in cu_event_extensions:
+        try:
+            bot.load_extension(f"{cu_event_folder}.{extension}")
+        except Exception as e:
+            log.error(f'Failed to load extension {extension}')
+            i += 1
+    log.info("-------------------")
+    if i == 0:
+        log.info("Finished Loading All Utility Cogs...")
+    else:
+        log.info(f"Finished Loading Utility Cogs with {i} errors...")
 
 
 if __name__ == "__main__":
     bot.state = "run"
     loadCogs()
+    loadCrawlerUtilitiesCogs()
     bot.run(bot.token)
