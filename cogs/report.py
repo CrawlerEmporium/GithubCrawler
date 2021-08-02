@@ -363,31 +363,44 @@ class ReportCog(commands.Cog):
             await self.getAssignedReports(ctx, member)
 
     async def getAssignedReports(self, ctx, member):
-        reports = getAllReports()
+        server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+        trackers = []
+        for listen in server['listen']:
+            trackers.append(listen['tracker'])
+
+        query = {"trackerId": {"$in": trackers}}
+        reports = await GG.MDB.Reports.find(query).to_list(length=None)
+
+        if len(reports) == 0:
+            return await ctx.reply(f"No reports found.")
+
         assignedReports = []
         for report in reports:
-            if member.id in report.get('assignee', []):
+            if member.id == report.get('assignee', []):
                 rep = {
                     "report_id": report['report_id'],
                     "title": report['title']
                 }
                 assignedReports.append(rep)
 
-        embedList = []
-        for i in range(0, len(assignedReports), 10):
-            lst = assignedReports[i:i + 10]
-            desc = ""
-            for item in lst:
-                desc += f'• `{item["report_id"]} - {item["title"]}`\n'
-            if isinstance(ctx.author, discord.Member) and ctx.author.color != discord.Colour.default():
-                embed = discord.Embed(description=desc, color=ctx.author.color)
-            else:
-                embed = discord.Embed(description=desc)
-            embed.set_author(name='Assigned Reports', icon_url=ctx.author.avatar_url)
-            embedList.append(embed)
+        if len(assignedReports) > 0:
+            embedList = []
+            for i in range(0, len(assignedReports), 10):
+                lst = assignedReports[i:i + 10]
+                desc = ""
+                for item in lst:
+                    desc += f'• `{item["report_id"]}` - {item["title"]}\n'
+                if isinstance(member, discord.Member) and member.color != discord.Colour.default():
+                    embed = discord.Embed(description=desc, color=member.color)
+                else:
+                    embed = discord.Embed(description=desc)
+                embed.set_author(name=f'Assigned Reports for {member.mention}', icon_url=member.avatar_url)
+                embedList.append(embed)
 
-        paginator = BotEmbedPaginator(ctx, embedList)
-        await paginator.run()
+            paginator = BotEmbedPaginator(ctx, embedList)
+            await paginator.run()
+        else:
+            await ctx.reply(f"{member.mention} doesn't have any assigned reports on this server.")
 
 
     @commands.command()
