@@ -376,7 +376,7 @@ class ReportCog(commands.Cog):
 
         assignedReports = []
         for report in reports:
-            if member.id == report.get('assignee', []):
+            if member.id == report.get('assignee', []) and report['severity'] != -1:
                 rep = {
                     "report_id": report['report_id'],
                     "title": report['title']
