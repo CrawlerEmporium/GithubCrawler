@@ -7,6 +7,7 @@ from discord.ext import commands
 from discord_components import InteractionType
 
 import utils.globals as GG
+from crawler_utilities.utils.pagination import BotEmbedPaginator
 from models.milestone import Milestone, MilestoneException
 from crawler_utilities.handlers import logger
 from utils.checks import isManager, isAssignee, isReporter, isManagerAssigneeOrReporterButton
@@ -348,6 +349,46 @@ class ReportCog(commands.Cog):
             await report.commit()
             await report.update(ctx, ctx.guild.id)
             await ctx.reply(f"Assigned {report.report_id} to {member.mention}")
+
+    @commands.command()
+    @commands.guild_only()
+    async def assigned(self, ctx, member: typing.Optional[discord.Member]):
+        if member is not None:
+            if await isManager(ctx):
+                await self.getAssignedReports(ctx, member)
+            else:
+                await ctx.reply("Only managers can request the assigned list for other people.")
+        else:
+            member = ctx.author
+            await self.getAssignedReports(ctx, member)
+
+    async def getAssignedReports(self, ctx, member):
+        reports = getAllReports()
+        assignedReports = []
+        for report in reports:
+            if member.id in report.get('assignee', []):
+                rep = {
+                    "report_id": report['report_id'],
+                    "title": report['title']
+                }
+                assignedReports.append(rep)
+
+        embedList = []
+        for i in range(0, len(assignedReports), 10):
+            lst = assignedReports[i:i + 10]
+            desc = ""
+            for item in lst:
+                desc += f'• `{item["report_id"]} - {item["title"]}`\n'
+            if isinstance(ctx.author, discord.Member) and ctx.author.color != discord.Colour.default():
+                embed = discord.Embed(description=desc, color=ctx.author.color)
+            else:
+                embed = discord.Embed(description=desc)
+            embed.set_author(name='Assigned Reports', icon_url=ctx.author.avatar_url)
+            embedList.append(embed)
+
+        paginator = BotEmbedPaginator(ctx, embedList)
+        await paginator.run()
+
 
     @commands.command()
     @commands.guild_only()
