@@ -394,7 +394,7 @@ class ReportCog(commands.Cog):
                     embed = discord.Embed(description=desc, color=member.color)
                 else:
                     embed = discord.Embed(description=desc)
-                embed.set_author(name=f'Assigned open tickets for {member.nick}', icon_url=member.avatar_url)
+                embed.set_author(name=f'Assigned open tickets for {member.nick if member.nick is not None else member.name}', icon_url=member.avatar_url)
                 embedList.append(embed)
 
             paginator = BotEmbedPaginator(ctx, embedList)
