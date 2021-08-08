@@ -7,6 +7,7 @@ from discord.ext import commands
 import utils.globals as GG
 from models.server import Server, Listen
 from crawler_utilities.handlers import logger
+from utils.checks import isManager
 from utils.functions import loadGithubServers, get_selection
 from models.reports import Report, PRIORITY
 
@@ -286,7 +287,7 @@ class Issue(commands.Cog):
     @issue.command(name='open')
     @commands.guild_only()
     async def issueOpen(self, ctx, identifier=None):
-        if await GG.isManager(ctx):
+        if await isManager(ctx):
             if identifier is None:
                 server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
                 identString = ""
