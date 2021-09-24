@@ -240,17 +240,17 @@ class Report:
     async def setup_message(self, bot, guildID, trackerChannel):
         view = discord.ui.View()
         if not self.is_bug:
-            view.add_item(Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️", row=0))
-            view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️", row=0))
+            view.add_item(Button(label=UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
+            view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
             view.add_item(Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷", row=0))
             view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
             view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
-            view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=1))
+            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
         else:
             view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
             view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-            view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=0))
+            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=0))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
 
         self.message = report_message.id
@@ -640,17 +640,17 @@ class Report:
             await msg.clear_reactions()
             view = discord.ui.View()
             if not self.is_bug:
-                view.add_item(Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️", row=0))
-                view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️", row=0))
+                view.add_item(Button(label=UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
+                view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
                 view.add_item(Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷", row=0))
                 view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
                 view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
-                view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=1))
+                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
                 msg.edit(embed=await self.get_embed(), view=view)
             else:
                 view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
                 view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-                view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=0))
+                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=0))
                 msg.edit(embed=await self.get_embed(), view=view)
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
