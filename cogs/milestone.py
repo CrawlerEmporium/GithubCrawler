@@ -246,6 +246,6 @@ def list_embed(list_personals, author):
             embed = discord.Embed(description=desc, color=author.color)
         else:
             embed = discord.Embed(description=desc)
-        embed.set_author(name='Milestones', icon_url=author.avatar_url)
+        embed.set_author(name='Milestones', icon_url=author.display_avatar.url)
         embedList.append(embed)
     return embedList

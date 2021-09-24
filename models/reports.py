@@ -1,12 +1,13 @@
 import discord
 import re
 from cachetools import LRUCache
+from discord.types.components import ButtonStyle
+from discord.ui import Button
 
 from crawler_utilities.handlers.errors import CrawlerException
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 
 import utils.globals as GG
-from discord_components import Button, ButtonStyle
 from models.attachment import Attachment
 from utils.functions import paginate
 from crawler_utilities.utils.functions import splitDiscordEmbedField
@@ -237,21 +238,20 @@ class Report:
             # await GitHubClient.get_instance().add_issue_to_project(issue.number, is_bug=self.is_bug)
 
     async def setup_message(self, bot, guildID, trackerChannel):
+        view = discord.ui.View()
         if not self.is_bug:
-            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
-            [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
-              Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
-              Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷")],
-             [Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
-              Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
-                                                                        )
+            view.add_item(Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️", row=0))
+            view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️", row=0))
+            view.add_item(Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷", row=0))
+            view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢", row=1))
+            view.add_item(Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️", row=1))
+            view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=1))
+            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
         else:
-            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), components=
-            [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-              Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
-              Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
-                                                                        )
+            view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢", row=0))
+            view.add_item(Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️", row=0))
+            view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=0))
+            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
 
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
@@ -638,21 +638,20 @@ class Report:
             await self.setup_message(ctx.bot, serverId, self.trackerId)
         elif self.is_open():
             await msg.clear_reactions()
+            view = discord.ui.View()
             if not self.is_bug:
-                await msg.edit(embed=await self.get_embed(), components=
-                [[Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️"),
-                  Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️"),
-                  Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷")],
-                 [Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
-                  Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
-                               )
+                view.add_item(Button(label=UPVOTE, style=ButtonStyle.green, emoji="⬆️", row=0))
+                view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.red, emoji="⬇️", row=0))
+                view.add_item(Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷", row=0))
+                view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢", row=1))
+                view.add_item(Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️", row=1))
+                view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=1))
+                msg.edit(embed=await self.get_embed(), view=view)
             else:
-                await msg.edit(embed=await self.get_embed(), components=
-                [[Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢"),
-                  Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️"),
-                  Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️")]]
-                               )
+                view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.blue, emoji="📢", row=0))
+                view.add_item(Button(label=INFORMATION, style=ButtonStyle.blue, emoji="ℹ️", row=0))
+                view.add_item(Button(label=RESOLVE, style=ButtonStyle.green, emoji="✔️", row=0))
+                msg.edit(embed=await self.get_embed(), view=view)
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:

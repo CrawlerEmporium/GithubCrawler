@@ -10,7 +10,6 @@ from crawler_utilities.handlers import logger
 from os import listdir
 from os.path import isfile, join
 from discord.ext import commands
-from discord_components import DiscordComponents
 
 from utils.functions import loadGithubServers
 
@@ -18,11 +17,12 @@ log = logger.logger
 
 MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 
-version = "2.3.3"
+version = "2.3.4"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '*'
-intents = discord.Intents().all()
+intents = discord.Intents().default()
+intents.members = True
 
 
 async def get_prefix(bot, message):
@@ -79,8 +79,7 @@ bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=
 @bot.event
 async def on_ready():
     await loadGithubServers()
-    DiscordComponents(bot)
-    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | {bot.defaultPrefix}help | v{version}"), afk=True)
+    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | {bot.defaultPrefix}help | v{version}"))
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
@@ -101,14 +100,6 @@ def loadCogs():
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
             bot.load_extension(GG.COGS + "." + extension)
-        except Exception as e:
-            log.error(f'Failed to load extension {extension}')
-            i += 1
-    log.info("-------------------")
-    log.info("Loading Event Cogs...")
-    for extension in [f.replace('.py', '') for f in listdir("cogsEvents") if isfile(join("cogsEvents", f))]:
-        try:
-            bot.load_extension("cogsEvents" + "." + extension)
         except Exception as e:
             log.error(f'Failed to load extension {extension}')
             i += 1

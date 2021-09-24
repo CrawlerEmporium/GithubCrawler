@@ -5,7 +5,8 @@ import time
 
 from discord.ext import commands
 from discord.ext.commands import BucketType
-from discord_components import Button, ButtonStyle
+from discord.types.components import ButtonStyle
+from discord.ui import Button
 
 from crawler_utilities.handlers import logger
 from crawler_utilities.utils.embeds import EmbedWithAuthor
@@ -23,7 +24,7 @@ class Info(commands.Cog):
         """Shows info about bot"""
         em = discord.Embed(color=discord.Color.green(), description="IssueCrawler, a bug and feature request tracker for Discord.")
         em.title = 'Bot Info'
-        em.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar_url)
+        em.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.display_avatar.url)
         em.add_field(name="Servers", value=str(len(ctx.bot.guilds)))
         total_members = sum(len(s.members) for s in self.bot.guilds)
         unique_members = set(self.bot.get_all_members())
@@ -40,7 +41,7 @@ class Info(commands.Cog):
         em.add_field(name="About",
                      value='A multipurpose bot made by LordDusk#0001 .\n[Support Server](https://discord.gg/HEY6BWj)')
         em.set_footer(text=f"IssueCrawler {ctx.bot.version} | Powered by discord.py")
-        em.set_thumbnail(url=ctx.bot.user.avatar_url)
+        em.set_thumbnail(url=ctx.bot.user.display_avatar.url)
         await ctx.send(embed=em)
 
     @commands.command()
@@ -54,11 +55,12 @@ class Info(commands.Cog):
         serverEmoji = self.bot.get_emoji(int("<:5e:603932658820448267>".split(":")[2].replace(">", "")))
         patreonEmoji = self.bot.get_emoji(int("<:Patreon:855754853153505280>".split(":")[2].replace(">", "")))
         kofiEmoji = self.bot.get_emoji(int("<:Kofi:855758703772958751>".split(":")[2].replace(">", "")))
-        components = [[Button(label="Discord", style=ButtonStyle.URL, emoji=serverEmoji, url="https://discord.gg/HEY6BWj"),
-                       Button(label="Website", style=ButtonStyle.URL, url="https://www.crawleremporium.com"),
-                       Button(label="Patreon", style=ButtonStyle.URL, emoji=patreonEmoji, url="https://www.patreon.com/LordDusk"),
-                       Button(label="Buy me a coffee", style=ButtonStyle.URL, emoji=kofiEmoji, url="https://ko-fi.com/5ecrawler")]]
-        await ctx.send(embed=em, components=components)
+        view = discord.ui.View()
+        view.add_item(Button(label="Discord", style=ButtonStyle.url, emoji=serverEmoji, url="https://discord.gg/HEY6BWj"))
+        view.add_item(Button(label="Website", style=ButtonStyle.url, url="https://www.crawleremporium.com"))
+        view.add_item(Button(label="Patreon", style=ButtonStyle.url, emoji=patreonEmoji, url="https://www.patreon.com/LordDusk"))
+        view.add_item(Button(label="Buy me a coffee", style=ButtonStyle.url, emoji=kofiEmoji, url="https://ko-fi.com/5ecrawler"))
+        await ctx.send(embed=em, view=view)
 
     @commands.command()
     async def invite(self, ctx):

@@ -4,7 +4,7 @@ import re
 
 import discord
 from discord.ext import commands
-from discord_components import InteractionType
+from discord.types.interactions import InteractionType
 
 import utils.globals as GG
 from crawler_utilities.utils.pagination import BotEmbedPaginator
@@ -154,10 +154,187 @@ class ReportCog(commands.Cog):
 
         await self.handle_reaction(msg_id, member, emoji, server)
 
+    async def handle_reaction(self, msg_id, member, emoji, server):
+        if emoji.name not in (UPVOTE_REACTION, DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION):
+            return
+
+        try:
+            report = await Report.from_message_id(msg_id)
+        except ReportException:
+            return
+
+        if member.bot:
+            return
+        if report.is_bug:
+            if emoji.name == INFORMATION_REACTION:
+                print(f"Information: {member} - {report.report_id}")
+                em = await report.get_embed(True)
+                if member.dm_channel is not None:
+                    DM = member.dm_channel
+                else:
+                    DM = await member.create_dm()
+                try:
+                    await DM.send(embed=em)
+                except:
+                    pass
+            else:
+                return
+
+        if server.owner.id == member.id:
+            if emoji.name == UPVOTE_REACTION:
+                await report.force_accept(GG.ContextProxy(self.bot), server.id)
+            elif emoji.name == INFORMATION_REACTION:
+                em = await report.get_embed(True)
+                if member.dm_channel is not None:
+                    DM = member.dm_channel
+                else:
+                    DM = await member.create_dm()
+                try:
+                    await DM.send(embed=em)
+                except:
+                    pass
+            else:
+                log.info(f"Force denying {report.title}")
+                await report.force_deny(GG.ContextProxy(self.bot), server.id)
+                await report.commit()
+                return
+        else:
+            try:
+                if emoji.name == UPVOTE_REACTION:
+                    print(f"Upvote: {member} - {report.report_id}")
+                    await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
+                elif emoji.name == INFORMATION_REACTION:
+                    print(f"Information: {member} - {report.report_id}")
+                    em = await report.get_embed(True)
+                    if member.dm_channel is not None:
+                        DM = member.dm_channel
+                    else:
+                        DM = await member.create_dm()
+                    try:
+                        await DM.send(embed=em)
+                    except:
+                        pass
+                elif emoji.name == SHRUG_REACTION:
+                    print(f"Shrugged: {member} - {report.report_id}")
+                    await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
+                else:
+                    print(f"Downvote: {member} - {report.report_id}")
+                    await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
+            except ReportException as e:
+                await member.send(str(e))
+
+        await report.commit()
+        await report.update(GG.ContextProxy(self.bot), server.id)
+
     @commands.Cog.listener()
-    async def on_button_click(self, res):
-        label = res.component.label
-        await self.handle_button(res.message, res.user, label, res.guild, res)
+    async def on_interaction(self, interaction):
+        custom_id = interaction.data['custom_id']
+        components = interaction.message.components
+        label = None
+        for button in components:
+            if button.custom_id == custom_id:
+                label = button.label
+                break
+        if label is None:
+            return
+
+        await self.handle_button(interaction.message, interaction.user, label, interaction.guild, interaction)
+
+    async def handle_button(self, message, member, label, server, interaction):
+        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE, RESOLVE):
+            return
+
+        try:
+            report = await Report.from_message_id(message.id)
+        except ReportException:
+            return
+
+        if member.bot:
+            return
+
+        if report.is_bug:
+            if label == INFORMATION:
+                print(f"Information: {member} - {report.report_id}")
+                em = await report.get_embed(True)
+                await interaction.response.send_message(embed=em)
+            elif label == SUBSCRIBE:
+                if member.id in report.subscribers:
+                    report.unsubscribe(member.id)
+                    await interaction.response.send_message(content=f"You have unsubscribed from {report.report_id}", ephemeral=True)
+                else:
+                    report.subscribe(member.id)
+                    await interaction.response.send_message(content=f"You have subscribed to {report.report_id}", ephemeral=True)
+            elif label == RESOLVE:
+                if await isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                    await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
+                    await report.commit()
+                else:
+                    await interaction.response.send_message(content=f"You do not have permissions to resolve/close this.", ephemeral=True)
+            else:
+                return
+
+        if not report.is_bug:
+            if server.owner.id == member.id:
+                if label == UPVOTE:
+                    await report.force_accept(GG.ContextProxy(self.bot), server.id)
+                    await interaction.response.send_message(content=f"You have accepted {report.report_id}", ephemeral=True)
+                elif label == INFORMATION:
+                    em = await report.get_embed(True)
+                    await interaction.response.send_message(embed=em, ephemeral=True)
+                elif label == SHRUG:
+                    pass
+                elif label == SUBSCRIBE:
+                    pass
+                elif label == RESOLVE:
+                    await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
+                    await report.commit()
+                else:
+                    log.info(f"Force denying {report.title}")
+                    await report.force_deny(GG.ContextProxy(self.bot), server.id)
+                    await report.commit()
+            else:
+                try:
+                    if label == UPVOTE:
+                        print(f"Upvote: {member} - {report.report_id}")
+                        await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
+                        await interaction.response.send_message(content=f"You have upvoted {report.report_id}", ephemeral=True)
+                    elif label == INFORMATION:
+                        print(f"Information: {member} - {report.report_id}")
+                        em = await report.get_embed(True)
+                        await interaction.response.send_message(embed=em, ephemeral=True)
+                    elif label == SHRUG:
+                        print(f"Shrugged: {member} - {report.report_id}")
+                        await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
+                        await interaction.response.send_message(content=f"You have shown indifference for {report.report_id}", ephemeral=True)
+                    elif label == SUBSCRIBE:
+                        if member.id in report.subscribers:
+                            report.unsubscribe(member.id)
+                            await interaction.response.send_message(content=f"You have unsubscribed from {report.report_id}", ephemeral=True)
+                        else:
+                            report.subscribe(member.id)
+                            await interaction.response.send_message(content=f"You have subscribed to {report.report_id}", ephemeral=True)
+                    elif label == RESOLVE:
+                        if await isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
+                            await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.", ephemeral=True)
+                            await report.commit()
+                        else:
+                            await interaction.response.send_message(content=f"You do not have permissions to resolve/close this.", ephemeral=True)
+                    else:
+                        print(f"Downvote: {member} - {report.report_id}")
+                        await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
+                        await interaction.response.send_message(content=f"You have downvoted {report.report_id}", ephemeral=True)
+                except ReportException as e:
+                    if interaction.channel == message.channel:
+                        await interaction.response.send_message(content=str(e))
+                    else:
+                        await member.send(str(e))
+                        await interaction.response.defer()
+
+        if not interaction.is_done():
+            await interaction.response.defer()
+
+        await report.commit()
+        await report.update(GG.ContextProxy(self.bot), server.id)
 
     # USER METHODS
     @commands.command(name="report")
@@ -394,14 +571,13 @@ class ReportCog(commands.Cog):
                     embed = discord.Embed(description=desc, color=member.color)
                 else:
                     embed = discord.Embed(description=desc)
-                embed.set_author(name=f'Assigned open tickets for {member.nick if member.nick is not None else member.name}', icon_url=member.avatar_url)
+                embed.set_author(name=f'Assigned open tickets for {member.nick if member.nick is not None else member.name}', icon_url=member.display_avatar.url)
                 embedList.append(embed)
 
             paginator = BotEmbedPaginator(ctx, embedList)
             await paginator.run()
         else:
             await ctx.reply(f"{member.mention} doesn't have any assigned reports on this server.")
-
 
     @commands.command()
     @commands.guild_only()
@@ -438,174 +614,6 @@ class ReportCog(commands.Cog):
                 await merge.commit()
                 await merge.update(ctx, ctx.guild.id)
                 await ctx.reply(f"Merged `{dupe.report_id}` into `{merge.report_id}`")
-
-    async def handle_reaction(self, msg_id, member, emoji, server):
-        if emoji.name not in (UPVOTE_REACTION, DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION):
-            return
-
-        try:
-            report = await Report.from_message_id(msg_id)
-        except ReportException:
-            return
-
-        if member.bot:
-            return
-        if report.is_bug:
-            if emoji.name == INFORMATION_REACTION:
-                print(f"Information: {member} - {report.report_id}")
-                em = await report.get_embed(True)
-                if member.dm_channel is not None:
-                    DM = member.dm_channel
-                else:
-                    DM = await member.create_dm()
-                try:
-                    await DM.send(embed=em)
-                except:
-                    pass
-            else:
-                return
-
-        if server.owner.id == member.id:
-            if emoji.name == UPVOTE_REACTION:
-                await report.force_accept(GG.ContextProxy(self.bot), server.id)
-            elif emoji.name == INFORMATION_REACTION:
-                em = await report.get_embed(True)
-                if member.dm_channel is not None:
-                    DM = member.dm_channel
-                else:
-                    DM = await member.create_dm()
-                try:
-                    await DM.send(embed=em)
-                except:
-                    pass
-            else:
-                log.info(f"Force denying {report.title}")
-                await report.force_deny(GG.ContextProxy(self.bot), server.id)
-                await report.commit()
-                return
-        else:
-            try:
-                if emoji.name == UPVOTE_REACTION:
-                    print(f"Upvote: {member} - {report.report_id}")
-                    await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
-                elif emoji.name == INFORMATION_REACTION:
-                    print(f"Information: {member} - {report.report_id}")
-                    em = await report.get_embed(True)
-                    if member.dm_channel is not None:
-                        DM = member.dm_channel
-                    else:
-                        DM = await member.create_dm()
-                    try:
-                        await DM.send(embed=em)
-                    except:
-                        pass
-                elif emoji.name == SHRUG_REACTION:
-                    print(f"Shrugged: {member} - {report.report_id}")
-                    await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
-                else:
-                    print(f"Downvote: {member} - {report.report_id}")
-                    await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
-            except ReportException as e:
-                await member.send(str(e))
-
-        await report.commit()
-        await report.update(GG.ContextProxy(self.bot), server.id)
-
-    async def handle_button(self, message, member, label, server, response):
-        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE, RESOLVE):
-            return
-
-        try:
-            report = await Report.from_message_id(message.id)
-        except ReportException:
-            return
-
-        if member.bot:
-            return
-
-        if report.is_bug:
-            if label == INFORMATION:
-                print(f"Information: {member} - {report.report_id}")
-                em = await report.get_embed(True)
-                await response.respond(embed=em)
-            elif label == SUBSCRIBE:
-                if member.id in report.subscribers:
-                    report.unsubscribe(member.id)
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have unsubscribed from {report.report_id}")
-                else:
-                    report.subscribe(member.id)
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
-            elif label == RESOLVE:
-                if await isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
-                    await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
-                    await report.commit()
-                else:
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
-            else:
-                return
-
-        if not report.is_bug:
-            if server.owner.id == member.id:
-                if label == UPVOTE:
-                    await report.force_accept(GG.ContextProxy(self.bot), server.id)
-                    await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have accepted {report.report_id}")
-                elif label == INFORMATION:
-                    em = await report.get_embed(True)
-                    await response.respond(embed=em)
-                elif label == SHRUG:
-                    pass
-                elif label == SUBSCRIBE:
-                    pass
-                elif label == RESOLVE:
-                    await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
-                    await report.commit()
-                else:
-                    log.info(f"Force denying {report.title}")
-                    await report.force_deny(GG.ContextProxy(self.bot), server.id)
-                    await report.commit()
-            else:
-                try:
-                    if label == UPVOTE:
-                        print(f"Upvote: {member} - {report.report_id}")
-                        await report.upvote(member.id, '', GG.ContextProxy(self.bot), server.id)
-                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have upvoted {report.report_id}")
-                    elif label == INFORMATION:
-                        print(f"Information: {member} - {report.report_id}")
-                        em = await report.get_embed(True)
-                        await response.respond(embed=em)
-                    elif label == SHRUG:
-                        print(f"Shrugged: {member} - {report.report_id}")
-                        await report.indifferent(member.id, '', GG.ContextProxy(self.bot), server.id)
-                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have shown indifference for {report.report_id}")
-                    elif label == SUBSCRIBE:
-                        if member.id in report.subscribers:
-                            report.unsubscribe(member.id)
-                            await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have unsubscribed from {report.report_id}")
-                        else:
-                            report.subscribe(member.id)
-                            await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have subscribed to {report.report_id}")
-                    elif label == RESOLVE:
-                        if await isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
-                            await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
-                            await report.commit()
-                        else:
-                            await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You do not have permissions to resolve/close this.")
-                    else:
-                        print(f"Downvote: {member} - {report.report_id}")
-                        await report.downvote(member.id, '', GG.ContextProxy(self.bot), server.id)
-                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=f"You have downvoted {report.report_id}")
-                except ReportException as e:
-                    if response.channel == message.channel:
-                        await response.respond(type=InteractionType.ChannelMessageWithSource, content=str(e))
-                    else:
-                        await member.send(str(e))
-                        await response.respond(type=6)
-
-        if not response.responded:
-            await response.respond(type=6)
-
-        await report.commit()
-        await report.update(GG.ContextProxy(self.bot), server.id)
 
 
 def setup(bot):
