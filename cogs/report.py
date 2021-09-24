@@ -232,7 +232,7 @@ class ReportCog(commands.Cog):
         components = interaction.message.components
         label = None
         for button in components:
-            if button.custom_id is not None:
+            if hasattr(button, 'custom_id'):
                 if button.custom_id == custom_id:
                     label = button.label
                     break
