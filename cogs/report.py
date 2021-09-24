@@ -327,7 +327,7 @@ class ReportCog(commands.Cog):
                         await interaction.response.send_message(content=f"You have downvoted {report.report_id}", ephemeral=True)
                 except ReportException as e:
                     if interaction.channel == message.channel:
-                        await interaction.response.send_message(content=str(e))
+                        await interaction.response.send_message(content=str(e), ephemeral=True)
                     else:
                         await member.send(str(e))
                         await interaction.response.defer()
