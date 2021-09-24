@@ -231,14 +231,15 @@ class ReportCog(commands.Cog):
         custom_id = interaction.data['custom_id']
         components = interaction.message.components
         label = None
-        for button in components:
-            if hasattr(button, 'custom_id'):
-                if button.custom_id == custom_id:
-                    label = button.label
-                    break
+        for component in components:
+            if hasattr(component, 'children'):
+                for button in component.children:
+                    if hasattr(button, 'custom_id'):
+                        if button.custom_id == custom_id:
+                            label = button.label
+                            break
         if label is None:
             return
-
         await self.handle_button(interaction.message, interaction.user, label, interaction.guild, interaction)
 
     async def handle_button(self, message, member, label, server, interaction):
@@ -257,7 +258,7 @@ class ReportCog(commands.Cog):
             if label == INFORMATION:
                 print(f"Information: {member} - {report.report_id}")
                 em = await report.get_embed(True)
-                await interaction.response.send_message(embed=em)
+                await interaction.response.send_message(embed=em, ephemeral=True)
             elif label == SUBSCRIBE:
                 if member.id in report.subscribers:
                     report.unsubscribe(member.id)
@@ -330,9 +331,6 @@ class ReportCog(commands.Cog):
                     else:
                         await member.send(str(e))
                         await interaction.response.defer()
-
-        if not interaction.is_done():
-            await interaction.response.defer()
 
         await report.commit()
         await report.update(GG.ContextProxy(self.bot), server.id)

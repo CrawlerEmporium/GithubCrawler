@@ -8,7 +8,7 @@ from utils import checks
 log = logger.logger
 
 
-class Settings(commands.Cog):
+class GithubSettings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -72,4 +72,4 @@ class Settings(commands.Cog):
 
 def setup(bot):
     log.info("[Cogs] Settings...")
-    bot.add_cog(Settings(bot))
+    bot.add_cog(GithubSettings(bot))
