@@ -646,12 +646,12 @@ class Report:
                 view.add_item(Button(label=SUBSCRIBE, style=1, emoji="📢", row=1))
                 view.add_item(Button(label=INFORMATION, style=1, emoji="ℹ️", row=1))
                 view.add_item(Button(label=RESOLVE, style=3, emoji="✔️", row=1))
-                msg.edit(embed=await self.get_embed(), view=view)
+                await msg.edit(embed=await self.get_embed(), view=view)
             else:
                 view.add_item(Button(label=SUBSCRIBE, style=1, emoji="📢", row=0))
                 view.add_item(Button(label=INFORMATION, style=1, emoji="ℹ️", row=0))
                 view.add_item(Button(label=RESOLVE, style=3, emoji="✔️", row=0))
-                msg.edit(embed=await self.get_embed(), view=view)
+                await msg.edit(embed=await self.get_embed(), view=view)
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:
