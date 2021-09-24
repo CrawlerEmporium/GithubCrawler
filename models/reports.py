@@ -242,7 +242,7 @@ class Report:
         if not self.is_bug:
             view.add_item(Button(label=UPVOTE, style=3, emoji="⬆️", row=0))
             view.add_item(Button(label=DOWNVOTE, style=4, emoji="⬇️", row=0))
-            view.add_item(Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷", row=0))
+            view.add_item(Button(label=SHRUG, style=2, emoji="🤷", row=0))
             view.add_item(Button(label=SUBSCRIBE, style=1, emoji="📢", row=1))
             view.add_item(Button(label=INFORMATION, style=1, emoji="ℹ️", row=1))
             view.add_item(Button(label=RESOLVE, style=3, emoji="✔️", row=1))
@@ -642,7 +642,7 @@ class Report:
             if not self.is_bug:
                 view.add_item(Button(label=UPVOTE, style=3, emoji="⬆️", row=0))
                 view.add_item(Button(label=DOWNVOTE, style=4, emoji="⬇️", row=0))
-                view.add_item(Button(label=SHRUG, style=ButtonStyle.gray, emoji="🤷", row=0))
+                view.add_item(Button(label=SHRUG, style=2, emoji="🤷", row=0))
                 view.add_item(Button(label=SUBSCRIBE, style=1, emoji="📢", row=1))
                 view.add_item(Button(label=INFORMATION, style=1, emoji="ℹ️", row=1))
                 view.add_item(Button(label=RESOLVE, style=3, emoji="✔️", row=1))
