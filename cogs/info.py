@@ -5,7 +5,7 @@ import time
 
 from discord.ext import commands
 from discord.ext.commands import BucketType
-from discord.types.components import ButtonStyle
+from discord import ButtonStyle
 from discord.ui import Button
 
 from crawler_utilities.handlers import logger
@@ -56,10 +56,10 @@ class Info(commands.Cog):
         patreonEmoji = self.bot.get_emoji(int("<:Patreon:855754853153505280>".split(":")[2].replace(">", "")))
         kofiEmoji = self.bot.get_emoji(int("<:Kofi:855758703772958751>".split(":")[2].replace(">", "")))
         view = discord.ui.View()
-        view.add_item(Button(label="Discord", style=5, emoji=serverEmoji, url="https://discord.gg/HEY6BWj"))
-        view.add_item(Button(label="Website", style=5, url="https://www.crawleremporium.com"))
-        view.add_item(Button(label="Patreon", style=5, emoji=patreonEmoji, url="https://www.patreon.com/LordDusk"))
-        view.add_item(Button(label="Buy me a coffee", style=5, emoji=kofiEmoji, url="https://ko-fi.com/5ecrawler"))
+        view.add_item(Button(label="Discord", style=ButtonStyle.url, emoji=serverEmoji, url="https://discord.gg/HEY6BWj"))
+        view.add_item(Button(label="Website", style=ButtonStyle.url, url="https://www.crawleremporium.com"))
+        view.add_item(Button(label="Patreon", style=ButtonStyle.url, emoji=patreonEmoji, url="https://www.patreon.com/LordDusk"))
+        view.add_item(Button(label="Buy me a coffee", style=ButtonStyle.url, emoji=kofiEmoji, url="https://ko-fi.com/5ecrawler"))
         await ctx.send(embed=em, view=view)
 
     @commands.command()
