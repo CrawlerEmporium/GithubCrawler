@@ -67,7 +67,7 @@ class GithubSettings(commands.Cog):
         else:
             embed = getIssueSettingsEmbed(loopedSettings, ctx.author)
             buttons = getIssueSettingsButtons(loopedSettings)
-            await ctx.send(embed=embed, components=buttons)
+            await ctx.send(embed=embed, view=buttons)
 
 
 def setup(bot):
