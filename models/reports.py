@@ -620,7 +620,7 @@ class Report:
 
     async def delete_message(self, ctx, serverId):
         msg_ = await self.get_message(ctx, serverId)
-        if msg_:
+        if msg_ is not None:
             try:
                 await msg_.delete()
                 if self.message in Report.message_cache:
@@ -629,6 +629,8 @@ class Report:
                     del Report.messageIds[self.message]
             except discord.HTTPException:
                 pass
+            except Exception as e:
+                print(e)
             finally:
                 self.message = None
 
