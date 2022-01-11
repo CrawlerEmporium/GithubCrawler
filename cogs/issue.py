@@ -50,7 +50,7 @@ class Issue(commands.Cog):
     async def issueRegister(self, ctx):
         guild = ctx.guild
         server = guild.id
-        admin = guild.owner.id
+        admin = guild.owner_id
         name = guild.name
         exist = await GG.MDB.Github.find_one({"server": server})
         if exist is None:

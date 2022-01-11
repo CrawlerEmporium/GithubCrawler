@@ -180,7 +180,7 @@ class ReportCog(commands.Cog):
             else:
                 return
 
-        if server.owner.id == member.id:
+        if server.owner_id == member.id:
             if emoji.name == UPVOTE_REACTION:
                 await report.force_accept(GG.ContextProxy(self.bot), server.id)
             elif emoji.name == INFORMATION_REACTION:
