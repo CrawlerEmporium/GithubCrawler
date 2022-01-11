@@ -276,7 +276,7 @@ class ReportCog(commands.Cog):
                 return
 
         if not report.is_bug:
-            if server.owner.id == member.id:
+            if server.owner_id == member.id:
                 if label == UPVOTE:
                     await report.force_accept(GG.ContextProxy(self.bot), server.id)
                     await interaction.response.send_message(content=f"You have accepted {report.report_id}", ephemeral=True)
@@ -317,7 +317,7 @@ class ReportCog(commands.Cog):
                             await interaction.response.send_message(content=f"You have subscribed to {report.report_id}", ephemeral=True)
                     elif label == RESOLVE:
                         if await isManagerAssigneeOrReporterButton(member.id, server.id, report, self.bot):
-                            await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.", ephemeral=True)
+                            await report.resolve(GG.ContextProxy(self.bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
                             await report.commit()
                         else:
                             await interaction.response.send_message(content=f"You do not have permissions to resolve/close this.", ephemeral=True)
@@ -351,7 +351,7 @@ class ReportCog(commands.Cog):
         await report.canrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.reply(f"Added a note that you can reproduce this issue to `{report.report_id}` - {report.title}.", hidden=True)
+        await ctx.reply(f"Added a note that you can reproduce this issue to `{report.report_id}` - {report.title}.", delete_after=5)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['up'])
@@ -362,7 +362,7 @@ class ReportCog(commands.Cog):
         await report.upvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.reply(f"Added your upvote to `{report.report_id}` - {report.title}.", hidden=True)
+        await ctx.reply(f"Added your upvote to `{report.report_id}` - {report.title}.", delete_after=5)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['cnr'])
@@ -373,7 +373,7 @@ class ReportCog(commands.Cog):
         await report.cannotrepro(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.reply(f"Added a note that you cannot reproduce this issue to `{report.report_id}` - {report.title}.", hidden=True)
+        await ctx.reply(f"Added a note that you cannot reproduce this issue to `{report.report_id}` - {report.title}.", delete_after=5)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['down'])
@@ -384,7 +384,7 @@ class ReportCog(commands.Cog):
         await report.downvote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.reply(f"Added your downvote to `{report.report_id}` - {report.title}.", hidden=True)
+        await ctx.reply(f"Added your downvote to `{report.report_id}` - {report.title}.", delete_after=5)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['shrug'])
@@ -395,7 +395,7 @@ class ReportCog(commands.Cog):
         await report.indifferent(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.reply(f"Added your indifference to `{report.report_id}` - {report.title}.", hidden=True)
+        await ctx.reply(f"Added your indifference to `{report.report_id}` - {report.title}.", delete_after=5)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command()
@@ -406,7 +406,7 @@ class ReportCog(commands.Cog):
         await report.addnote(ctx.message.author.id, msg, ctx, ctx.guild.id)
         # report.subscribe(ctx)
         await report.commit()
-        await ctx.reply(f"Ok, I've added a note to `{report.report_id}` - {report.title}.")
+        await ctx.reply(f"Ok, I've added a note to `{report.report_id}` - {report.title}.", delete_after=5)
         await report.update(ctx, ctx.guild.id)
 
     @commands.command(aliases=['sub'])
@@ -416,10 +416,10 @@ class ReportCog(commands.Cog):
         report = await Report.from_id(report_id, ctx.guild.id)
         if ctx.message.author.id in report.subscribers:
             report.unsubscribe(ctx.message.author.id)
-            await ctx.reply(f"OK, unsubscribed from `{report.report_id}` - {report.title}.", hidden=True)
+            await ctx.reply(f"OK, unsubscribed from `{report.report_id}` - {report.title}.", delete_after=5)
         else:
             report.subscribe(ctx.message.author.id)
-            await ctx.reply(f"OK, subscribed to `{report.report_id}` - {report.title}.", hidden=True)
+            await ctx.reply(f"OK, subscribed to `{report.report_id}` - {report.title}.", delete_after=5)
         await report.commit()
 
     @commands.command()
@@ -435,7 +435,7 @@ class ReportCog(commands.Cog):
                 num_unsubbed += 1
                 await collection.replace_one({"report_id": report['report_id']}, report)
 
-        await ctx.reply(f"OK, unsubscribed from {num_unsubbed} reports.", hidden=True)
+        await ctx.reply(f"OK, unsubscribed from {num_unsubbed} reports.", delete_after=5)
 
     # Server Admins METHODS
     @commands.command(aliases=['close'])
