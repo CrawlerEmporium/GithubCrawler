@@ -13,6 +13,8 @@ from utils.functions import paginate
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.githubClient import GitHubClient
 from crawler_utilities.handlers import logger
+import calendar
+import time
 
 log = logger.logger
 
@@ -97,7 +99,7 @@ class Report:
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, shrugs: int = 0, github_issue: int = None,
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
-                 trackerId: int = None, assignee=None, milestone: list = None):
+                 trackerId: int = None, assignee=None, milestone: list = None, opened = None, closed = None):
         if subscribers is None:
             subscribers = []
         if milestone is None:
@@ -132,14 +134,18 @@ class Report:
         self.trackerId = trackerId
         self.assignee = assignee
 
+        self.opened = opened
+        self.closed = closed
+
     @classmethod
     async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None,
                   trackerId=None, assignee=None, milestone=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
+        ts = calendar.timegm(time.gmtime())
         inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug,
-                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone)
+                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone, opened=ts)
         return inst
 
     @classmethod
@@ -158,9 +164,10 @@ class Report:
             report_num = await get_next_report_num(identifier)
             report_id = f"{identifier}-{report_num}"
 
+        ts = calendar.timegm(time.gmtime())
         return cls("GitHub", report_id, title, -1,
                    # pri is created at -1 for unresolve (which changes it to 6)
-                   0, attachments, None, github_issue=issue['number'], github_repo=repo_name, is_bug=is_bug)
+                   0, attachments, None, github_issue=issue['number'], github_repo=repo_name, is_bug=is_bug, opened=ts)
 
     @classmethod
     def from_dict(cls, report_dict):
@@ -175,7 +182,7 @@ class Report:
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
             'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee,
-            'milestone': self.milestone
+            'milestone': self.milestone, 'opened': self.opened, 'closed': self.closed
         }
 
     @classmethod
@@ -577,6 +584,8 @@ class Report:
 
     async def force_deny(self, ctx, serverId):
         await self.notify_subscribers(ctx.bot, f"Report closed.")
+        ts = calendar.timegm(time.gmtime())
+        self.closed = ts
         guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
         await self.addnote(guild.admin, f"Resolved - This report was denied.", ctx, serverId)
 
@@ -660,6 +669,8 @@ class Report:
             raise ReportException("This report is already closed.")
 
         self.severity = -1
+        ts = calendar.timegm(time.gmtime())
+        self.closed = ts
 
         if pend:
             await self.notify_subscribers(ctx.bot, f"Report resolved - a patch is pending.")
@@ -692,6 +703,7 @@ class Report:
             raise ReportException("This report is still open.")
 
         self.severity = 6
+        self.closed = None
         await self.notify_subscribers(ctx.bot, f"Report unresolved.")
         if msg:
             await self.addnote(ctx.message.author.id, f"Unresolved - {msg}", ctx, serverId)
