@@ -41,14 +41,30 @@ async def get_prefix(bot, message):
     return commands.when_mentioned_or(gp)(bot, message)
 
 
+async def get_guild(bot, guild_id):
+    if guild_id in bot.prefixes:
+        gp = bot.prefixes.get(guild_id, defaultPrefix)
+    else:  # load from db and cache
+        gp_obj = await GG.MDB.prefixes.find_one({"guild_id": guild_id})
+        if gp_obj is None:
+            gp = defaultPrefix
+        else:
+            gp = gp_obj.get("prefix", defaultPrefix)
+        bot.prefixes[guild_id] = gp
+    return commands.when_mentioned_or(gp)(bot, guild_id)
+
+
 class Crawler(commands.AutoShardedBot):
-    def __init__(self, prefix, help_command=None, description=None, **options):
-        super(Crawler, self).__init__(prefix, help_command, description, **options)
+    def __init__(self, prefix, help_command=None, **options):
+        super(Crawler, self).__init__(prefix, help_command, **options)
         self.version = version
         self.owner = None
         self.testing = TESTING
         self.prefixes = dict()
-        self.token = GG.TOKEN
+        if TESTING:
+            self.token = GG.TEST_TOKEN
+        else:
+            self.token = GG.TOKEN
         self.mdb = MDB
         self.tracking = 737222642666307684
         self.error = 858336390277627904
@@ -58,6 +74,9 @@ class Crawler(commands.AutoShardedBot):
 
     async def get_server_prefix(self, msg):
         return (await get_prefix(self, msg))[-1]
+
+    async def get_guild_prefix(self, guild_id):
+        return (await get_guild(self, guild_id))[-1]
 
     async def launch_shards(self):
         if self.shard_count is None:
@@ -85,6 +104,7 @@ async def on_ready():
 
 @bot.event
 async def on_connect():
+    await discord.ApplicationCommandMixin.sync_commands(bot, force=True)
     bot.owner = await bot.fetch_user(GG.OWNER)
     print(f"OWNER: {bot.owner.name}")
 
@@ -110,7 +130,7 @@ def loadCogs():
 def loadCrawlerUtilitiesCogs():
     cu_event_extensions = ["cmdLog", "errors", "joinLeave", "settings"]
     cu_event_folder = "crawler_utilities.events"
-    cu_cogs_extensions = ["flare"]
+    cu_cogs_extensions = ["flare", "stats"]
     cu_cogs_folder = "crawler_utilities.cogs"
 
     i = 0
