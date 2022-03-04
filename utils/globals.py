@@ -13,6 +13,7 @@ env.read_env()
 
 PREFIX = env('PREFIX')
 TOKEN = env('TOKEN')
+TEST_TOKEN = env('TEST_TOKEN')
 COGS = env('COGS')
 OWNER = int(env('OWNER'))
 

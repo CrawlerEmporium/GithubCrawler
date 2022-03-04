@@ -60,6 +60,18 @@ async def isManager(ctx):
     return manager
 
 
+async def isManagerSlash(user, guild):
+    manager = await GG.MDB.Managers.find_one({"user": user, "server": guild})
+    if manager is None:
+        manager = False
+        server = await GG.MDB.Github.find_one({"server": guild})
+        if user == server['admin']:
+            manager = True
+    else:
+        manager = True
+    return manager
+
+
 def isAssignee(ctx, report):
     if ctx.message.author.id == report.assignee:
         return True

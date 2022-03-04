@@ -4,6 +4,7 @@ from cachetools import LRUCache
 from discord import ButtonStyle
 from discord.ui import Button
 
+from crawler_utilities.cogs.stats import track_google_analytics_event
 from crawler_utilities.handlers.errors import CrawlerException
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 
@@ -99,7 +100,7 @@ class Report:
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, shrugs: int = 0, github_issue: int = None,
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
-                 trackerId: int = None, assignee=None, milestone: list = None, opened = None, closed = None):
+                 trackerId: int = None, assignee=None, milestone: list = None, opened=None, closed=None):
         if subscribers is None:
             subscribers = []
         if milestone is None:
@@ -254,11 +255,13 @@ class Report:
             view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
             view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
+            view.stop()
         else:
             view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
             view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
             view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=0))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
+            view.stop()
 
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
@@ -487,6 +490,7 @@ class Report:
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
+        track_google_analytics_event("Can reproduce", f"{self.report_id}", f"{author}")
         if [a for a in self.attachments if a.author == author and a.veri == 1]:
             raise ReportException("You have already verified this report.")
         if not self.is_bug:
@@ -497,6 +501,7 @@ class Report:
         await self.notify_subscribers(ctx.bot, f"New CR by <@{author}>: {msg}")
 
     async def cannotrepro(self, author, msg, ctx, serverId):
+        track_google_analytics_event("Can't reproduce", f"{self.report_id}", f"{author}")
         if [a for a in self.attachments if a.author == author and a.veri == -1]:
             raise ReportException("You have already verified this report.")
         if not self.is_bug:
@@ -507,6 +512,7 @@ class Report:
         await self.notify_subscribers(ctx.bot, f"New CNR by <@{author}>: {msg}")
 
     async def upvote(self, author, msg, ctx, serverId):
+        track_google_analytics_event("Upvote", f"{self.report_id}", f"{author}")
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
                 raise ReportException(f"You have already upvoted {self.report_id}.")
@@ -537,6 +543,7 @@ class Report:
             await self.update_labels()
 
     async def downvote(self, author, msg, ctx, serverId):
+        track_google_analytics_event("Downvote", f"{self.report_id}", f"{author}")
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
                 self.upvotes -= 1
@@ -558,6 +565,7 @@ class Report:
             await self.update_labels()
 
     async def indifferent(self, author, msg, ctx, serverId):
+        track_google_analytics_event("Indifferent", f"{self.report_id}", f"{author}")
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
                 self.upvotes -= 1
@@ -575,14 +583,17 @@ class Report:
         await self.add_attachment(ctx, serverId, attachment)
 
     async def addnote(self, author, msg, ctx, serverId, add_to_github=True):
+        track_google_analytics_event("Note", f"{self.report_id}", f"{author}")
         attachment = Attachment(author, msg)
         await self.add_attachment(ctx, serverId, attachment, add_to_github)
         await self.notify_subscribers(ctx.bot, f"New note by <@{author}>: {msg}")
 
     async def force_accept(self, ctx, serverId):
+        track_google_analytics_event("Force Accept", f"{self.report_id}", f"{serverId}")
         await self.setup_github(ctx, serverId)
 
     async def force_deny(self, ctx, serverId):
+        track_google_analytics_event("Force Deny", f"{self.report_id}", f"{serverId}")
         await self.notify_subscribers(ctx.bot, f"Report closed.")
         ts = calendar.timegm(time.gmtime())
         self.closed = ts
@@ -605,10 +616,12 @@ class Report:
 
     def subscribe(self, userId):
         """Ensures a user is subscribed to this report."""
+        track_google_analytics_event("Subscribe", f"{self.report_id}", f"{userId}")
         if userId not in self.subscribers:
             self.subscribers.append(userId)
 
     def unsubscribe(self, userId):
+        track_google_analytics_event("Unsubscribe", f"{self.report_id}", f"{userId}")
         """Ensures a user is not subscribed to this report."""
         if userId in self.subscribers:
             self.subscribers.remove(userId)
@@ -658,11 +671,13 @@ class Report:
                 view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
                 view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
                 await msg.edit(embed=await self.get_embed(), view=view)
+                view.stop()
             else:
                 view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
                 view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
                 view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=0))
                 await msg.edit(embed=await self.get_embed(), view=view)
+                view.stop()
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:
@@ -680,6 +695,7 @@ class Report:
         if msg:
             await self.addnote(ctx.message.author.id, f"Resolved - {msg}", ctx, serverId)
 
+        track_google_analytics_event("Resolve", f"{self.report_id}", f"{serverId}")
         await self.delete_message(ctx, serverId)
 
         if close_github_issue and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
@@ -708,6 +724,7 @@ class Report:
         if msg:
             await self.addnote(ctx.message.author.id, f"Unresolved - {msg}", ctx, serverId)
 
+        track_google_analytics_event("Unresolve", f"{self.report_id}", f"{serverId}")
         await self.setup_message(ctx.bot, serverId, self.trackerId)
 
         if open_github_issue and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):

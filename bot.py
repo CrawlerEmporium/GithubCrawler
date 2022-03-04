@@ -17,7 +17,7 @@ log = logger.logger
 
 MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 
-version = "2.3.4"
+version = "2.4.0"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '*'
