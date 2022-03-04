@@ -481,7 +481,7 @@ class ReportCog(commands.Cog):
         """Gets the detailed status of a report."""
         report = await Report.from_id(_id, ctx.guild.id)
         await report.get_reportNotes(ctx)
-        track_google_analytics_event("Information", f"{report.report_id}", f"{ctx.user.id}")
+        track_google_analytics_event("Information", f"{report.report_id}", f"{ctx.author.id}")
 
     @commands.command(aliases=['cr'])
     @commands.guild_only()
@@ -658,7 +658,7 @@ class ReportCog(commands.Cog):
         """Server Admins only - Changes the priority of a report."""
         if await isManager(ctx):
             report = await Report.from_id(_id, ctx.guild.id)
-            track_google_analytics_event("Assign", f"{report.report_id}", f"{ctx.user.id}")
+            track_google_analytics_event("Assign", f"{report.report_id}", f"{ctx.author.id}")
 
             report.assignee = member.id
 
@@ -725,7 +725,7 @@ class ReportCog(commands.Cog):
         """Server Admins only - Changes the priority of a report."""
         if await isManager(ctx):
             report = await Report.from_id(_id, ctx.guild.id)
-            track_google_analytics_event("Unassign", f"{report.report_id}", f"{ctx.user.id}")
+            track_google_analytics_event("Unassign", f"{report.report_id}", f"{ctx.author.id}")
 
             report.assignee = None
 
@@ -742,8 +742,8 @@ class ReportCog(commands.Cog):
         if await isManager(ctx):
             dupe = await Report.from_id(duplicate, ctx.guild.id)
             merge = await Report.from_id(mergeTo, ctx.guild.id)
-            track_google_analytics_event("Duplicate", f"{dupe.report_id}", f"{ctx.user.id}")
-            track_google_analytics_event("Merge", f"{merge.report_id}", f"{ctx.user.id}")
+            track_google_analytics_event("Duplicate", f"{dupe.report_id}", f"{ctx.author.id}")
+            track_google_analytics_event("Merge", f"{merge.report_id}", f"{ctx.author.id}")
 
             if dupe is not None and merge is not None:
                 for x in dupe.attachments:
