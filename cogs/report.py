@@ -390,9 +390,12 @@ class ReportCog(commands.Cog):
 
         duplicate = await questionaire.add_question(question)
         if duplicate is False:
-            await ctx.defer(ephemeral=True)
             confirmation = BotConfirmation(ctx, 0x012345)
-            channel = await self.bot.fetch_channel(ctx.interaction.channel_id)
+            try:
+                channel = await self.bot.fetch_channel(ctx.interaction.channel_id)
+            except Exception:
+                return await ctx.respond(f"I tried posting a confirmation box in this channel, but I don't have access to this channel\nPlease try it in a channel where I have send message permissions.", ephemeral=True)
+            await ctx.defer(ephemeral=True)
             await confirmation.confirm(f"A question in this position already exists, do you want to overwrite it?", channel=channel)
             if confirmation.confirmed:
                 await confirmation.update(f"Confirmed, overwriting question..", color=0x55ff55)
