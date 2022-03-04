@@ -11,8 +11,8 @@ import utils.globals as GG
 
 
 class Bug(Modal):
-    def __init__(self, bot, interaction, report_id, author, repo, tracker, channel, custom_questions: Questionaire = None) -> None:
-        super().__init__("Bug Report")
+    def __init__(self, identifier, bot, interaction, report_id, author, repo, tracker, channel, custom_questions: Questionaire = None) -> None:
+        super().__init__(f"{identifier}: Bug Report")
 
         self.bot = bot
         self.interaction = interaction

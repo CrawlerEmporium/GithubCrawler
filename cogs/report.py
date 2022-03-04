@@ -354,11 +354,11 @@ class ReportCog(commands.Cog):
     @slash_command(name="questionnaire")
     async def slash_questionnaire(self, ctx,
                                   identifier: Option(str, "For what identifier do you want to add questions?", autocomplete=get_server_identifiers),
-                                  position: Option(int, "In what position?", min_value=1, max_value=5),
+                                  position: Option(int, "In what position? (Between 1 and 5)", min_value=1, max_value=5),
                                   required: Option(bool, "Is the question required?"),
                                   style: Option(str, "What input style?", choices=["Singleline", "Multiline"]),
                                   label: Option(str, "What's the question?"),
-                                  placeholder: Option(str, "Optional text inside the input box.", default="")
+                                  placeholder: Option(str, "Optional text inside the input box. (Max 100 characters.)", default="")
                                   ):
         """Create questions for feature requests and bug reports."""
         if not await isManagerSlash(ctx.interaction.user.id, ctx.interaction.guild_id):
@@ -438,7 +438,7 @@ class ReportCog(commands.Cog):
         report_id = f"{identifier}-{report_num}"
 
         questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
-        modal = Feature(self.bot, ctx.interaction, report_id, ctx.interaction.user, repo, tracker, channel, questionaire)
+        modal = Feature(identifier, self.bot, ctx.interaction, report_id, ctx.interaction.user, repo, tracker, channel, questionaire)
         await ctx.interaction.response.send_modal(modal)
 
     @slash_command(name="bug")
@@ -471,7 +471,7 @@ class ReportCog(commands.Cog):
         report_id = f"{identifier}-{report_num}"
 
         questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
-        modal = Bug(self.bot, ctx.interaction, report_id, ctx.interaction.user, repo, tracker, channel, questionaire)
+        modal = Bug(identifier, self.bot, ctx.interaction, report_id, ctx.interaction.user, repo, tracker, channel, questionaire)
         await ctx.interaction.response.send_modal(modal)
 
     # USER METHODS

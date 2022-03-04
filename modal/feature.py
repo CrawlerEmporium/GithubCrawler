@@ -10,8 +10,8 @@ from models.reports import Report
 
 
 class Feature(Modal):
-    def __init__(self, bot, interaction, report_id, author, repo, tracker, channel, custom_questions: Questionaire = None) -> None:
-        super().__init__("Feature Request")
+    def __init__(self, identifier, bot, interaction, report_id, author, repo, tracker, channel, custom_questions: Questionaire = None) -> None:
+        super().__init__(f"{identifier}: Feature Request")
 
         self.bot = bot
         self.interaction = interaction
