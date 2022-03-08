@@ -40,7 +40,7 @@ class Bug(Modal):
         embed = EmbedWithAuthorWithoutContext(self.author)
         embed.set_footer(text=f"Added by {self.author.name}")
 
-        if self.custom_questions.questions is None:
+        if self.custom_questions is None:
             if self.children[1].value is not None:
                 embed.add_field(name="Steps to reproduce", value=self.children[1].value, inline=False)
                 request += f"Steps to reproduce\n{self.children[1].value}\n\n"

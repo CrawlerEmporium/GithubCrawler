@@ -39,7 +39,7 @@ class Feature(Modal):
         requestChannel = self.bot.get_channel(self.channel)
         embed = EmbedWithAuthorWithoutContext(self.author)
         embed.set_footer(text=f"Added by {self.author.name}")
-        if self.custom_questions.questions is None:
+        if self.custom_questions is None:
             if self.children[1].value is not None:
                 embed.add_field(name="Information", value=self.children[1].value, inline=False)
                 request += f"Information\n{self.children[1].value}\n\n"
