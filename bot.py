@@ -91,8 +91,7 @@ class Crawler(commands.AutoShardedBot):
 
 bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"{GG.PREFIX}help | Initializing..."),
-              help_command=Help("issue"))
+              activity=discord.Game(f"{GG.PREFIX}help | Initializing..."))
 
 
 @bot.event
@@ -104,7 +103,7 @@ async def on_ready():
 
 @bot.event
 async def on_connect():
-    await discord.ApplicationCommandMixin.sync_commands(bot, force=True)
+    await bot.sync_commands(force=True)
     bot.owner = await bot.fetch_user(GG.OWNER)
     print(f"OWNER: {bot.owner.name}")
 
@@ -128,9 +127,9 @@ def loadCogs():
 
 
 def loadCrawlerUtilitiesCogs():
-    cu_event_extensions = ["cmdLog", "errors", "joinLeave", "settings"]
+    cu_event_extensions = ["errors", "joinLeave", "settings"]
     cu_event_folder = "crawler_utilities.events"
-    cu_cogs_extensions = ["flare", "stats"]
+    cu_cogs_extensions = ["flare", "stats", "help"]
     cu_cogs_folder = "crawler_utilities.cogs"
 
     i = 0
