@@ -2,7 +2,6 @@ import asyncio
 
 import discord
 import motor.motor_asyncio
-from crawler_utilities.handlers import Help
 
 import utils.globals as GG
 
