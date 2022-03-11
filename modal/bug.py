@@ -63,7 +63,7 @@ class Bug(Modal):
 
         report = await Report.new(self.author.id, self.report_id, title,
                                   [Attachment(self.author.id, request)], is_bug=True,
-                                  repo=self.repo, jumpUrl=message.jump_url, trackerId=self.channel)
+                                  repo=self.repo, jumpUrl=message.jump_url, trackerId=self.tracker)
 
         if interaction.guild_id in GG.SERVERS:
             if self.repo is not None:
