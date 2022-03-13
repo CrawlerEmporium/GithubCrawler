@@ -33,7 +33,9 @@ class Bug(Modal):
             self.add_item(InputText(label="Additional information", placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
-        title = f"{self.children[0].value}"
+        for child in self.children:
+            if child.row == 0:
+                title = child.value
         request = ""
 
         requestChannel = self.bot.get_channel(self.channel)
@@ -52,10 +54,9 @@ class Bug(Modal):
                 request += f"Additional information\n{self.children[3].value}\n\n"
         else:
             for index in range(1, len(self.children)):
-                try:
-                    child = self.children[index]
-                except IndexError:
-                    break
+                for index_child in self.children:
+                    if index_child.row == index:
+                        child = index_child
                 question = [x for x in self.custom_questions.questions if x['position'] == index][0]
                 label = question['text']
                 embed.add_field(name=label, value=child.value, inline=False)
