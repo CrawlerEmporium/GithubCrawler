@@ -51,13 +51,15 @@ class Bug(Modal):
                 embed.add_field(name="Additional information", value=self.children[3].value, inline=False)
                 request += f"Additional information\n{self.children[3].value}\n\n"
         else:
-            i = 0
-            for child in self.children:
-                question = [x for x in self.custom_questions.questions if x['position'] == i][0]
+            for index in range(1, len(self.children)):
+                try:
+                    child = self.children[index]
+                except IndexError:
+                    break
+                question = [x for x in self.custom_questions.questions if x['position'] == index][0]
                 label = question['text']
                 embed.add_field(name=label, value=child.value, inline=False)
                 request += f"{label}\n{child.value}\n\n"
-                i += 1
 
         message = await requestChannel.send(embed=embed)
 

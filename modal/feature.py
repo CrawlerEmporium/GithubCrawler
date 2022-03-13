@@ -54,13 +54,15 @@ class Feature(Modal):
                 embed.add_field(name="Why should this be added?", value=self.children[4].value, inline=False)
                 request += f"Why should this be added?\n{self.children[4].value}\n\n"
         else:
-            i = 0
-            for child in self.children:
-                question = [x for x in self.custom_questions.questions if x['position'] == i][0]
+            for index in range(1, len(self.children)):
+                try:
+                    child = self.children[index]
+                except IndexError:
+                    break
+                question = [x for x in self.custom_questions.questions if x['position'] == index][0]
                 label = question['text']
                 embed.add_field(name=label, value=child.value, inline=False)
                 request += f"{label}\n{child.value}\n\n"
-                i += 1
 
         message = await requestChannel.send(embed=embed)
 
