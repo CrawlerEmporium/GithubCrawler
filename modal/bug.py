@@ -42,7 +42,7 @@ class Bug(Modal):
         requestChannel = self.bot.get_channel(self.channel)
         embed = EmbedWithAuthorWithoutContext(self.author)
         embed.set_footer(text=f"Added by {self.author.name}")
-        embed.title = title if title is not None else self.children[1].value
+        embed.title = title if title is not None else self.children[0].value
         if self.custom_questions is None:
             if self.children[1].value is not None:
                 embed.add_field(name="Steps to reproduce", value=self.children[1].value, inline=False)
