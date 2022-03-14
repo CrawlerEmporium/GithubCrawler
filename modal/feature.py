@@ -33,6 +33,7 @@ class Feature(Modal):
             self.add_item(InputText(label="Why should this be added?", placeholder="Justify why you think it'd help others.", required=False, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
+        title = None
         for child in self.children:
             if child.row == 0:
                 title = child.value
@@ -41,7 +42,7 @@ class Feature(Modal):
         requestChannel = self.bot.get_channel(self.channel)
         embed = EmbedWithAuthorWithoutContext(self.author)
         embed.set_footer(text=f"Added by {self.author.name}")
-        embed.title = title
+        embed.title = title or self.children[1].value
         if self.custom_questions is None:
             if self.children[1].value is not None:
                 embed.add_field(name="Information", value=self.children[1].value, inline=False)
