@@ -68,7 +68,7 @@ class Feature(Modal):
 
         message = await requestChannel.send(embed=embed)
 
-        report = await Report.new(self.author.id, self.report_id, title,
+        report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=False,
                                   repo=self.repo, jumpUrl=message.jump_url, trackerId=self.tracker)
 
