@@ -33,6 +33,7 @@ class Feature(Modal):
             self.add_item(InputText(label="Why should this be added?", placeholder="Justify why you think it'd help others.", required=False, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         title = None
         for child in self.children:
             if child.row == 0:

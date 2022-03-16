@@ -33,6 +33,7 @@ class Bug(Modal):
             self.add_item(InputText(label="Additional information", placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         title = None
         for child in self.children:
             if child.row == 0:
