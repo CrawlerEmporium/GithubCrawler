@@ -18,10 +18,11 @@ MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 
 version = "2.4.0"
 SHARD_COUNT = 1
-TESTING = False
+TESTING = True
 defaultPrefix = GG.PREFIX if not TESTING else '*'
 intents = discord.Intents().default()
 intents.members = True
+intents.message_content = True
 
 
 async def get_prefix(bot, message):
@@ -102,7 +103,7 @@ async def on_ready():
 
 @bot.event
 async def on_connect():
-    await bot.sync_commands(force=True)
+    await bot.sync_commands()
     bot.owner = await bot.fetch_user(GG.OWNER)
     print(f"OWNER: {bot.owner.name}")
 
@@ -119,6 +120,7 @@ def loadCogs():
         try:
             bot.load_extension(GG.COGS + "." + extension)
         except Exception as e:
+            print(e)
             log.error(f'Failed to load extension {extension}')
             i += 1
     log.info("-------------------")
@@ -128,7 +130,7 @@ def loadCogs():
 def loadCrawlerUtilitiesCogs():
     cu_event_extensions = ["errors", "joinLeave", "settings"]
     cu_event_folder = "crawler_utilities.events"
-    cu_cogs_extensions = ["flare", "stats", "help"]
+    cu_cogs_extensions = ["flare", "help"]
     cu_cogs_folder = "crawler_utilities.cogs"
 
     i = 0

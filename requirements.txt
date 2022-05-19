@@ -23,4 +23,4 @@ patreon
 six>=1.10.0
 requests
 git+https://github.com/CrawlerEmporium/CrawlerUtilities.git
-py-cord~=2.0.0b4
+git+https://github.com/Pycord-Development/pycord.git
