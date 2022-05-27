@@ -36,4 +36,6 @@ async def get_server_reports(ctx: discord.AutocompleteContext):
         GG.cachedTrackerChannels.append({"guild_id": ctx.interaction.guild_id, "channels": trackerChannels})
     cachedTrackers = next(server["channels"] for server in GG.cachedTrackerChannels if server['guild_id'] == ctx.interaction.guild_id)
     reports = await GG.MDB.Reports.find({"trackerId": {"$in": cachedTrackers}}).to_list(length=None)
-    return [f"{report['report_id']} | {report['title'][:85]+'...' if len(report['title']) >= 90 else report['title']}" for report in reports if ctx.value.upper() in report['report_id']]
+
+    return [f"{report['report_id']} | {report['title'][:85]+'...' if report is not None and len(report['title']) >= 90 else report['title']}" for report in reports if ctx.value.upper() in report['report_id']]
+
