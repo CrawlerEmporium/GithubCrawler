@@ -1,29 +1,21 @@
 import asyncio
-import copy
-import typing
-import re
 
-import discord
-from discord import slash_command, Option
+from discord import slash_command, Option, permissions
 from discord.ext import commands
 
 import utils.globals as GG
-from crawler_utilities.cogs.stats import track_google_analytics_event
 from crawler_utilities.utils.confirmation import BotConfirmation
-from crawler_utilities.utils.pagination import BotEmbedPaginator
 from modal.bug import Bug
 from modal.feature import Feature
-from models.milestone import Milestone, MilestoneException
 from crawler_utilities.handlers import logger
 from models.questions import Question, Questionaire
-from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers, \
-    get_server_reports
-from utils.checks import isManager, isAssignee, isReporter, isManagerAssigneeOrReporterButton, isManagerSlash
-from utils.functions import get_settings
-from models.reports import get_next_report_num, Report, ReportException, Attachment, UPVOTE_REACTION, \
-    DOWNVOTE_REACTION, INFORMATION_REACTION, SHRUG_REACTION
+from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers
+from utils.checks import isManagerSlash
+from models.reports import get_next_report_num, ReportException
+from utils.reportglobals import IdentifierDoesNotExist
 
 log = logger.logger
+
 
 class CreateReport(commands.Cog):
     def __init__(self, bot):
@@ -31,6 +23,7 @@ class CreateReport(commands.Cog):
         self.userCache = set()
 
     @slash_command(name="questionnaire")
+    @permissions.guild_only()
     async def slash_questionnaire(self, ctx,
                                   identifier: Option(str, "For what identifier do you want to add questions?", autocomplete=get_server_identifiers),
                                   position: Option(int, "In what position? (Between 1 and 5)", min_value=1, max_value=5),
@@ -41,7 +34,7 @@ class CreateReport(commands.Cog):
                                   ):
         """Create questions for feature requests and bug reports."""
         if not await isManagerSlash(ctx.interaction.user.id, ctx.interaction.guild_id):
-            return await ctx.interaction.response.send_message("You do not have the required permissions to use this command.", ephemeral=True)
+            return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
 
         exists = False
 
@@ -52,9 +45,7 @@ class CreateReport(commands.Cog):
                 exists = True
 
         if not exists:
-            return await ctx.interaction.response.send_message(f"The identifier ``{identifier}`` could not be found.\n"
-                                                               f"If the identifier was shown in the option box, please contact the developer of the bot through the ``!support`` command.\n\n"
-                                                               f"Otherwise this command can only be used on servers that have the feature request functionality of the bot enabled.", ephemeral=True)
+            await IdentifierDoesNotExist(ctx, identifier)
 
         if style == "Singleline":
             style = 1
@@ -89,6 +80,7 @@ class CreateReport(commands.Cog):
             await ctx.respond(f"Question ``{label}`` added for ``{identifier}``", ephemeral=True)
 
     @slash_command(name="featurerequest")
+    @permissions.guild_only()
     async def slash_featurerequest(self, ctx, identifier: Option(str, "For what identifier do you want to make a feature request?", autocomplete=get_server_feature_identifiers)):
         """Opens a modal to post a feature request."""
         exists = False
@@ -104,9 +96,7 @@ class CreateReport(commands.Cog):
                     exists = True
 
         if not exists:
-            return await ctx.interaction.response.send_message(f"The identifier ``{identifier}`` could not be found.\n"
-                                                               f"If the identifier was shown in the option box, please contact the developer of the bot through the ``!support`` command.\n\n"
-                                                               f"Otherwise this command can only be used on servers that have the feature request functionality of the bot enabled.", ephemeral=True)
+            await IdentifierDoesNotExist(ctx, identifier)
 
         if identifier is not None:
             try:
@@ -120,7 +110,8 @@ class CreateReport(commands.Cog):
         modal = Feature(identifier, self.bot, ctx.interaction, report_id, ctx.interaction.user, repo, tracker, channel, questionaire)
         await ctx.interaction.response.send_modal(modal)
 
-    @slash_command(name="bug")
+    @slash_command(name="bugreport")
+    @permissions.guild_only()
     async def slash_bug(self, ctx, identifier: Option(str, "For what identifier do you want to make a bug report?", autocomplete=get_server_bug_identifiers)):
         """Opens a modal to post a bug report."""
         exists = False
@@ -136,10 +127,7 @@ class CreateReport(commands.Cog):
                     exists = True
 
         if not exists:
-            return await ctx.interaction.response.send_message(f"The identifier ``{identifier}`` could not be found.\n"
-                                                               f"If the identifier was shown in the option box, please contact the developer of the bot through the ``!support`` command.\n\n"
-                                                               f"Otherwise this command can only be used on servers that have the bug reports functionality of the bot enabled.", ephemeral=True)
-
+            await IdentifierDoesNotExist(ctx, identifier)
 
         if identifier is not None:
             try:

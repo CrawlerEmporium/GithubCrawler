@@ -16,9 +16,9 @@ log = logger.logger
 
 MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 
-version = "2.4.0"
+version = "3.0.0"
 SHARD_COUNT = 1
-TESTING = True
+TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '*'
 intents = discord.Intents().default()
 intents.members = True
@@ -119,6 +119,15 @@ def loadCogs():
     for extension in [f.replace('.py', '') for f in listdir(GG.COGS) if isfile(join(GG.COGS, f))]:
         try:
             bot.load_extension(GG.COGS + "." + extension)
+        except Exception as e:
+            print(e)
+            log.error(f'Failed to load extension {extension}')
+            i += 1
+    log.info("-------------------")
+    log.info("Loading Report Cogs...")
+    for extension in [f.replace('.py', '') for f in listdir("cogsReport") if isfile(join("cogsReport", f))]:
+        try:
+            bot.load_extension("cogsReport" + "." + extension)
         except Exception as e:
             print(e)
             log.error(f'Failed to load extension {extension}')
