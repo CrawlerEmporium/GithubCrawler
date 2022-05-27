@@ -8,11 +8,12 @@ from models.attachment import Attachment
 from models.questions import Questionaire
 from models.reports import Report
 import utils.globals as GG
+from utils.reportglobals import getAdmissionSuccessfulEmbed, finishReportCreation
 
 
 class Bug(Modal):
     def __init__(self, identifier, bot, interaction, report_id, author, repo, tracker, channel, custom_questions: Questionaire = None) -> None:
-        super().__init__(f"{identifier}: Bug Report")
+        super().__init__(title=f"{identifier}: Bug Report")
 
         self.bot = bot
         self.interaction = interaction
@@ -76,26 +77,4 @@ class Bug(Modal):
 
         reportMessage = await report.setup_message(self.bot, self.interaction.guild_id, report.trackerId)
 
-        track_google_analytics_event("Bug Report", f"{self.report_id}", f"{self.author.id}")
-
-        await report.commit()
-
-        prefix = await self.bot.get_guild_prefix(self.interaction.message)
-
-        embed = discord.Embed()
-        embed.title = f"Your submission ``{self.report_id}`` was accepted."
-        embed.add_field(name="Status Checking", value=f"To check on its status: `{prefix}report {self.report_id}`.",
-                        inline=False)
-        embed.add_field(name="Note Adding",
-                        value=f"To add a note: `{prefix}note {self.report_id} <comment>`.",
-                        inline=False)
-        embed.add_field(name="Subscribing",
-                        value=f"To subscribe: `{prefix}subscribe {self.report_id}`. (This is only for others, the submittee is automatically subscribed).",
-                        inline=False)
-        embed.add_field(name="Voting",
-                        value=f"You can find the report here: [Click me]({reportMessage.jump_url})",
-                        inline=False)
-
-        await requestChannel.send(embed=embed)
-
-        await interaction.response.send_message(f"Your feature request was sucessfully posted in <#{requestChannel.id}>!", ephemeral=True)
+        await finishReportCreation(self, interaction, report, reportMessage, requestChannel, True)

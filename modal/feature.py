@@ -7,11 +7,12 @@ from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
 from models.attachment import Attachment
 from models.questions import Questionaire
 from models.reports import Report
+from utils.reportglobals import finishReportCreation
 
 
 class Feature(Modal):
     def __init__(self, identifier, bot, interaction, report_id, author, repo, tracker, channel, custom_questions: Questionaire = None) -> None:
-        super().__init__(f"{identifier}: Feature Request")
+        super().__init__(title=f"{identifier}: Feature Request")
 
         self.bot = bot
         self.interaction = interaction
@@ -45,18 +46,26 @@ class Feature(Modal):
         embed.set_footer(text=f"Added by {self.author.name}")
         embed.title = title if title is not None else self.children[0].value
         if self.custom_questions is None:
-            if self.children[1].value is not None:
-                embed.add_field(name="Information", value=self.children[1].value, inline=False)
-                request += f"Information\n{self.children[1].value}\n\n"
-            if self.children[2].value is not None:
-                embed.add_field(name="Who would use it?", value=self.children[2].value, inline=False)
-                request += f"Who would use it?\n{self.children[2].value}\n\n"
-            if self.children[3].value is not None:
-                embed.add_field(name="How would it work?", value=self.children[3].value, inline=False)
-                request += f"How would it work?\n{self.children[3].value}\n\n"
-            if self.children[4].value is not None:
-                embed.add_field(name="Why should this be added?", value=self.children[4].value, inline=False)
-                request += f"Why should this be added?\n{self.children[4].value}\n\n"
+            information = self.children[1].value
+            who = self.children[2].value
+            how = self.children[3].value
+            why = self.children[4].value
+            if information is not None and information != "":
+                print("child1.value: ", information)
+                embed.add_field(name="Information", value=information, inline=False)
+                request += f"Information\n{information}\n\n"
+            if who is not None and who != "":
+                print("child2.value: ", who)
+                embed.add_field(name="Who would use it?", value=who, inline=False)
+                request += f"Who would use it?\n{who}\n\n"
+            if how is not None and how != "":
+                print("child3.value: ", how)
+                embed.add_field(name="How would it work?", value=how, inline=False)
+                request += f"How would it work?\n{how}\n\n"
+            if why is not None and why != "":
+                print("child4.value: ", why)
+                embed.add_field(name="Why should this be added?", value=why, inline=False)
+                request += f"Why should this be added?\n{why}\n\n"
         else:
             for index in range(1, len(self.children)):
                 for index_child in self.children:
@@ -75,26 +84,4 @@ class Feature(Modal):
 
         reportMessage = await report.setup_message(self.bot, self.interaction.guild_id, report.trackerId)
 
-        track_google_analytics_event("Feature Request", f"{self.report_id}", f"{self.author.id}")
-
-        await report.commit()
-
-        prefix = await self.bot.get_guild_prefix(self.interaction.message)
-
-        embed = discord.Embed()
-        embed.title = f"Your submission ``{self.report_id}`` was accepted."
-        embed.add_field(name="Status Checking", value=f"To check on its status: `{prefix}report {self.report_id}`.",
-                        inline=False)
-        embed.add_field(name="Note Adding",
-                        value=f"To add a note: `{prefix}note {self.report_id} <comment>`.",
-                        inline=False)
-        embed.add_field(name="Subscribing",
-                        value=f"To subscribe: `{prefix}subscribe {self.report_id}`. (This is only for others, the submittee is automatically subscribed).",
-                        inline=False)
-        embed.add_field(name="Voting",
-                        value=f"You can find the report here: [Click me]({reportMessage.jump_url})",
-                        inline=False)
-
-        await requestChannel.send(embed=embed)
-
-        await interaction.response.send_message(f"Your feature request was sucessfully posted in <#{requestChannel.id}>!", ephemeral=True)
+        await finishReportCreation(self, interaction, report, reportMessage, requestChannel)

@@ -31,6 +31,7 @@ GITHUBSERVERS = []
 BUG_LISTEN_CHANS = []
 ADMINS = []
 SERVERS = []
+cachedTrackerChannels = []
 
 REPO_ID_MAP = {
     "CrawlerEmporium/5eCrawler": "BUG",

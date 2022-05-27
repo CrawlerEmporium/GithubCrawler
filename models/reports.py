@@ -350,7 +350,7 @@ class Report:
 
         return embed
 
-    async def get_reportNotes(self, ctx=None):
+    async def get_reportNotes(self, ctx=None, msgToUse=None):
         attachments = self.attachments
         viewAttachments = []
         for attachment in attachments:
@@ -417,7 +417,7 @@ class Report:
 
             embeds.append(embed)
 
-        paginator = BotEmbedPaginator(ctx, embeds)
+        paginator = BotEmbedPaginator(ctx, pages=embeds, message=msgToUse)
         await paginator.run()
 
     async def get_github_desc(self, ctx, serverId):
