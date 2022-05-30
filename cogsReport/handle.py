@@ -60,14 +60,14 @@ class HandleReport(commands.Cog):
                 await self.handle_feature_user(self.bot, interaction, label, member, message, report, server)
 
         await report.commit()
-        await report.update(GG.ContextProxy(self.bot), server.id)
+        await report.update(GG.ContextProxy(self.bot, interaction=interaction), server.id)
 
     @staticmethod
     async def handle_feature_user(bot, interaction, label, member, message, report, server):
         try:
             if label == UPVOTE:
                 print(f"Upvote: {member} - {report.report_id}")
-                await report.upvote(member.id, '', GG.ContextProxy(bot), server.id)
+                await report.upvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
                 await interaction.response.send_message(content=f"You have upvoted {report.report_id}", ephemeral=True)
             elif label == INFORMATION:
                 print(f"Information: {member} - {report.report_id}")
@@ -75,7 +75,7 @@ class HandleReport(commands.Cog):
                 await interaction.response.send_message(embed=em, ephemeral=True)
             elif label == SHRUG:
                 print(f"Shrugged: {member} - {report.report_id}")
-                await report.indifferent(member.id, '', GG.ContextProxy(bot), server.id)
+                await report.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
                 await interaction.response.send_message(content=f"You have shown indifference for {report.report_id}", ephemeral=True)
             elif label == SUBSCRIBE:
                 await HandleReport.subscribe(interaction, member, report)
@@ -83,7 +83,7 @@ class HandleReport(commands.Cog):
                 await HandleReport.resolve(bot, interaction, member, report, server)
             else:
                 print(f"Downvote: {member} - {report.report_id}")
-                await report.downvote(member.id, '', GG.ContextProxy(bot), server.id)
+                await report.downvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
                 await interaction.response.send_message(content=f"You have downvoted {report.report_id}", ephemeral=True)
         except ReportException as e:
             if interaction.channel == message.channel:
@@ -96,7 +96,7 @@ class HandleReport(commands.Cog):
     async def handle_feature_server_owner(bot, interaction, label, member, report, server):
         if label == UPVOTE:
             print(f"Upvote: {member} - {report.report_id}")
-            await report.force_accept(GG.ContextProxy(bot), server.id)
+            await report.force_accept(GG.ContextProxy(bot, interaction=interaction), server.id)
             await interaction.response.send_message(content=f"You have accepted {report.report_id}", ephemeral=True)
         elif label == INFORMATION:
             print(f"Information: {member} - {report.report_id}")
@@ -104,16 +104,16 @@ class HandleReport(commands.Cog):
             await interaction.response.send_message(embed=em, ephemeral=True)
         elif label == SHRUG:
             print(f"Shrugged: {member} - {report.report_id}")
-            await report.indifferent(member.id, '', GG.ContextProxy(bot), server.id)
+            await report.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
             await interaction.response.send_message(content=f"You have shown indifference for {report.report_id}", ephemeral=True)
         elif label == SUBSCRIBE:
             await HandleReport.subscribe(interaction, member, report)
         elif label == RESOLVE:
-            await report.resolve(GG.ContextProxy(bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
+            await report.resolve(GG.ContextProxy(bot, interaction=interaction, message=GG.FakeAuthor(member)), server.id, "Report closed.")
             await interaction.response.send_message(content=f"You have resolved {report.report_id}", ephemeral=True)
             await report.commit()
         else:
-            await report.force_deny(GG.ContextProxy(bot), server.id)
+            await report.force_deny(GG.ContextProxy(bot, interaction=interaction), server.id)
             await interaction.response.send_message(content=f"You have denied {report.report_id}", ephemeral=True)
             await report.commit()
 
@@ -131,7 +131,7 @@ class HandleReport(commands.Cog):
     @staticmethod
     async def resolve(bot, interaction, member, report, server):
         if await isManagerAssigneeOrReporterButton(member.id, server.id, report, bot):
-            await report.resolve(GG.ContextProxy(bot, message=GG.FakeAuthor(member)), server.id, "Report closed.")
+            await report.resolve(GG.ContextProxy(bot, interaction=interaction, message=GG.FakeAuthor(member)), server.id, "Report closed.")
             await report.commit()
         else:
             await interaction.response.send_message(content=f"You do not have permissions to resolve/close this.", ephemeral=True)
