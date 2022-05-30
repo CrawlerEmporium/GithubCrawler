@@ -39,11 +39,8 @@ async def get_server_reports(ctx: discord.AutocompleteContext):
     reports = await GG.MDB.Reports.find({"trackerId": {"$in": cachedTrackers}}).to_list(length=None)
     stringReports = []
     for report in reports:
-        if len(report['title']) > 90:
-            stringReports.append({"id": report['report_id'], "title": f"{report['report_id']} | {report['title'][:85]}...".upper()})
-        else:
-            stringReports.append({"id": report['report_id'], "title": f"{report['report_id']} | {report['title']}".upper()})
+        stringReports.append({"id": report['report_id'], "title": f"{report['report_id']} | {report['title'][:85]}"})
 
     if stringReports is not None:
-        return [f"{report['id']}" for report in reports if ctx.value.upper() in report['title']]
+        return [f"{report['id']}" for report in reports if ctx.value.upper() in report['title'].upper()]
     return []
