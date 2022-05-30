@@ -49,11 +49,11 @@ def admin_or_permissions(**perms):
 
 
 async def isManager(ctx):
-    manager = await GG.MDB.Managers.find_one({"user": ctx.message.author.id, "server": ctx.guild.id})
+    manager = await GG.MDB.Managers.find_one({"user": ctx.interaction.user.id, "server": ctx.guild.id})
     if manager is None:
         manager = False
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-        if ctx.message.author.id == server['admin']:
+        if ctx.interaction.user.id == server['admin']:
             manager = True
     else:
         manager = True

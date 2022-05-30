@@ -25,7 +25,7 @@ class ManagerCommands(commands.Cog):
     @permissions.guild_only()
     async def resolve(self, ctx, _id: Option(str, "Which report do you want to resolve?", autocomplete=get_server_reports), msg: Option(str, "Optional resolve comment", default="")):
         """Server Admins only - Resolves a report."""
-        report = await Report.from_id(_id, ctx.guild.id)
+        report = await ReportFromId(_id, ctx)
         if await isManager(ctx) or isAssignee(ctx, report) or await isReporter(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
