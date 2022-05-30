@@ -51,7 +51,7 @@ class ManagerCommands(commands.Cog):
         """Server Admins only - Changes the identifier of a report."""
         if await isManager(ctx):
             identifier = identifier.upper()
-            id_num = await get_next_report_num(identifier, ctx.guild.id)
+            id_num = await get_next_report_num(identifier, ctx.interaction.guild.id)
 
             report = await ReportFromId(_id, ctx)
             new_report = copy.copy(report)
@@ -80,7 +80,7 @@ class ManagerCommands(commands.Cog):
             if report.github_issue and report.repo is not None:
                 await report.edit_title(f"{report.title}", f"{report.report_id} ")
             await report.commit()
-            await report.update(ctx, ctx.guild.id)
+            await report.update(ctx, ctx.interaction.guild.id)
             await ctx.respond(f"Renamed {report.report_id} as {report.title}.")
         else:
             await ctx.respond("You do not have the appropriate permissions to use this command.")
@@ -110,13 +110,13 @@ class ManagerCommands(commands.Cog):
         """Server Admins only - Assign a member to a report."""
         if await isManager(ctx):
             report = await ReportFromId(_id, ctx)
-            track_google_analytics_event("Assign", f"{report.report_id}", f"{ctx.author.id}")
+            track_google_analytics_event("Assign", f"{report.report_id}", f"{ctx.interaction.user.id}")
 
             report.assignee = member.id
 
-            await report.addnote(member.id, f"Assigned {report.report_id} to {member.mention}", ctx, ctx.guild.id)
+            await report.addnote(member.id, f"Assigned {report.report_id} to {member.mention}", ctx, ctx.interaction.guild.id)
             await report.commit()
-            await report.update(ctx, ctx.guild.id)
+            await report.update(ctx, ctx.interaction.guild.id)
             await ctx.respond(f"Assigned {report.report_id} to {member.mention}")
         else:
             await ctx.respond("You do not have the appropriate permissions to use this command.")
@@ -135,7 +135,7 @@ class ManagerCommands(commands.Cog):
             await self.getAssignedReports(ctx, member)
 
     async def getAssignedReports(self, ctx, member):
-        server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+        server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild.id})
         trackers = []
         for listen in server['listen']:
             trackers.append(listen['tracker'])
@@ -180,14 +180,14 @@ class ManagerCommands(commands.Cog):
         """Server Admins only - Unassign a member from a report."""
         if await isManager(ctx):
             report = await ReportFromId(_id, ctx)
-            track_google_analytics_event("Unassign", f"{report.report_id}", f"{ctx.author.id}")
+            track_google_analytics_event("Unassign", f"{report.report_id}", f"{ctx.interaction.user.id}")
 
             report.assignee = None
 
-            await report.addnote(ctx.message.author.id, f"Cleared assigned user from {report.report_id}", ctx,
-                                 ctx.guild.id)
+            await report.addnote(ctx.interaction.user.id, f"Cleared assigned user from {report.report_id}", ctx,
+                                 ctx.interaction.guild.id)
             await report.commit()
-            await report.update(ctx, ctx.guild.id)
+            await report.update(ctx, ctx.interaction.guild.id)
             await ctx.respond(f"Cleared assigned user of {report.report_id}.")
         else:
             await ctx.respond("You do not have the appropriate permissions to use this command.")
@@ -204,15 +204,15 @@ class ManagerCommands(commands.Cog):
 
             if dupe is not None and merge is not None:
                 for x in dupe.attachments:
-                    await merge.add_attachment(ctx, ctx.guild.id, x, False)
+                    await merge.add_attachment(ctx, ctx.interaction.guild.id, x, False)
 
-                await dupe.resolve(ctx, ctx.guild.id, f"Merged into {merge.report_id}")
+                await dupe.resolve(ctx, ctx.interaction.guild.id, f"Merged into {merge.report_id}")
                 await dupe.commit()
 
                 await merge.addnote(602779023151595546, f"Merged `{dupe.report_id}` into `{merge.report_id}`", ctx,
-                                    ctx.guild.id, True)
+                                    ctx.interaction.guild.id, True)
                 await merge.commit()
-                await merge.update(ctx, ctx.guild.id)
+                await merge.update(ctx, ctx.interaction.guild.id)
                 await ctx.respond(f"Merged `{dupe.report_id}` into `{merge.report_id}`")
             else:
                 await ctx.respond(f"Either the dupe, or the merged report was not found.")

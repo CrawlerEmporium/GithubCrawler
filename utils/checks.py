@@ -73,15 +73,15 @@ async def isManagerSlash(user, guild):
 
 
 def isAssignee(ctx, report):
-    if ctx.message.author.id == report.assignee:
+    if ctx.interaction.user.id == report.assignee:
         return True
     else:
         return False
 
 
 async def isReporter(ctx, report):
-    if ctx.message.author.id == report.reporter:
-        guild_settings = await GG.get_settings(ctx.bot, ctx.guild.id)
+    if ctx.interaction.user.id == report.reporter:
+        guild_settings = await GG.get_settings(ctx.bot, ctx.interaction.guild.id)
         allow_selfClose = guild_settings.get("allow_selfClose", False)
         if allow_selfClose:
             return True

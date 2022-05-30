@@ -693,7 +693,7 @@ class Report:
             await self.notify_subscribers(ctx.bot, f"Report closed.")
 
         if msg:
-            await self.addnote(ctx.message.author.id, f"Resolved - {msg}", ctx, serverId)
+            await self.addnote(ctx.interaction.user.id, f"Resolved - {msg}", ctx, serverId)
 
         track_google_analytics_event("Resolve", f"{self.report_id}", f"{serverId}")
         await self.delete_message(ctx, serverId)
@@ -722,7 +722,7 @@ class Report:
         self.closed = None
         await self.notify_subscribers(ctx.bot, f"Report unresolved.")
         if msg:
-            await self.addnote(ctx.message.author.id, f"Unresolved - {msg}", ctx, serverId)
+            await self.addnote(ctx.interaction.user.id, f"Unresolved - {msg}", ctx, serverId)
 
         track_google_analytics_event("Unresolve", f"{self.report_id}", f"{serverId}")
         await self.setup_message(ctx.bot, serverId, self.trackerId)
