@@ -119,9 +119,9 @@ class ManagerCommands(commands.Cog):
 
             report.assignee = member.id
 
-            await report.addnote(member.id, f"Assigned {report.report_id} to {member.mention}", ctx, ctx.interaction.guild.id)
+            await report.addnote(ctx.interaction.user.id, f"Assigned {report.report_id} to {member.mention}", ctx, ctx.interaction.guild_id)
             await report.commit()
-            await report.update(ctx, ctx.interaction.guild.id)
+            await report.update(ctx, ctx.interaction.guild_id)
             await ctx.respond(f"Assigned {report.report_id} to {member.mention}")
         else:
             await ctx.respond("You do not have the appropriate permissions to use this command.")
