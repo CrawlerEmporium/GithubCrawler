@@ -67,9 +67,9 @@ async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, re
 
 
 async def IdentifierDoesNotExist(ctx, identifier):
-    return await ctx.interaction.response.send_message(f"The identifier ``{identifier}`` could not be found.\n"
-                                                       f"If the identifier was shown in the option box, please contact the developer of the bot through the ``!support`` command.\n\n"
-                                                       f"Otherwise this command can only be used on servers that have the feature request functionality of the bot enabled.", ephemeral=True)
+    return await ctx.interaction.respond(f"The identifier ``{identifier}`` could not be found.\n"
+                                         f"If the identifier was shown in the option box, please contact the developer of the bot through the ``support`` command.\n\n"
+                                         f"Otherwise this command can only be used on servers that have the feature request functionality of the bot enabled.", ephemeral=True)
 
 
 async def ReportFromId(_id, ctx):

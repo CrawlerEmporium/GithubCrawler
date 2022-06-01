@@ -96,7 +96,7 @@ class CreateReport(commands.Cog):
                     exists = True
 
         if not exists:
-            await IdentifierDoesNotExist(ctx, identifier)
+            return await IdentifierDoesNotExist(ctx, identifier)
 
         if identifier is not None:
             try:
@@ -127,7 +127,7 @@ class CreateReport(commands.Cog):
                     exists = True
 
         if not exists:
-            await IdentifierDoesNotExist(ctx, identifier)
+            return await IdentifierDoesNotExist(ctx, identifier)
 
         if identifier is not None:
             try:
