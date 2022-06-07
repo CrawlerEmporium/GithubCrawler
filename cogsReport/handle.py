@@ -4,9 +4,10 @@ from discord.ext import commands
 import utils.globals as GG
 from crawler_utilities.cogs.stats import track_google_analytics_event
 from crawler_utilities.handlers import logger
+from modal.note import Note
 from models.reports import Report, ReportException
 from utils.checks import isManagerAssigneeOrReporterButton
-from utils.reportglobals import UPVOTE, DOWNVOTE, SHRUG, SUBSCRIBE, RESOLVE, INFORMATION
+from utils.reportglobals import UPVOTE, DOWNVOTE, SHRUG, SUBSCRIBE, RESOLVE, INFORMATION, NOTE
 
 log = logger.logger
 
@@ -39,7 +40,7 @@ class HandleReport(commands.Cog):
         member = interaction.user
         server = interaction.guild
 
-        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE, RESOLVE) or member.bot or label is None:
+        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE, RESOLVE, NOTE) or member.bot or label is None:
             return
 
         try:
@@ -81,6 +82,8 @@ class HandleReport(commands.Cog):
                 await HandleReport.subscribe(interaction, member, report)
             elif label == RESOLVE:
                 await HandleReport.resolve(bot, interaction, member, report, server)
+            elif label == NOTE:
+                await HandleReport.note(bot, interaction, report)
             else:
                 print(f"Downvote: {member} - {report.report_id}")
                 await report.downvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
@@ -112,6 +115,8 @@ class HandleReport(commands.Cog):
             await report.resolve(GG.ContextProxy(bot, interaction=interaction, message=GG.FakeAuthor(member)), server.id, "Report closed.")
             await interaction.response.send_message(content=f"You have resolved {report.report_id}", ephemeral=True)
             await report.commit()
+        elif label == NOTE:
+            await HandleReport.note(bot, interaction, report)
         else:
             await report.force_deny(GG.ContextProxy(bot, interaction=interaction), server.id)
             await interaction.response.send_message(content=f"You have denied {report.report_id}", ephemeral=True)
@@ -127,6 +132,8 @@ class HandleReport(commands.Cog):
             await HandleReport.subscribe(interaction, member, report)
         elif label == RESOLVE:
             await HandleReport.resolve(bot, interaction, member, report, server)
+        elif label == NOTE:
+            await HandleReport.note(bot, interaction, report)
 
     @staticmethod
     async def resolve(bot, interaction, member, report, server):
@@ -144,6 +151,13 @@ class HandleReport(commands.Cog):
         else:
             report.subscribe(member.id)
             await interaction.response.send_message(content=f"You have subscribed to {report.report_id}", ephemeral=True)
+
+    @staticmethod
+    async def note(bot, interaction, report):
+        channel = report.jumpUrl.split('/')[-2]
+        author = interaction.user
+        modal = Note(GG.ContextProxy(bot, interaction=interaction), report, author, channel)
+        await interaction.response.send_modal(modal)
 
 
 def setup(bot):

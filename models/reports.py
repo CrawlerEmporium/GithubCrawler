@@ -11,6 +11,7 @@ from crawler_utilities.utils.pagination import BotEmbedPaginator
 import utils.globals as GG
 from models.attachment import Attachment
 from utils.functions import paginate
+from utils.reportglobals import UPVOTE, DOWNVOTE, SHRUG, SUBSCRIBE, RESOLVE, INFORMATION, NOTE
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.githubClient import GitHubClient
 from crawler_utilities.handlers import logger
@@ -54,12 +55,6 @@ UPVOTE_REACTION = "\U0001f44d"
 DOWNVOTE_REACTION = "\U0001f44e"
 SHRUG_REACTION = "\U0001F937"
 INFORMATION_REACTION = "\U00002139"
-UPVOTE = "Upvote"
-DOWNVOTE = "Downvote"
-SHRUG = "Shrug"
-INFORMATION = "Info"
-SUBSCRIBE = "Subscribe"
-RESOLVE = "Resolve"
 GITHUB_THRESHOLD = 5
 GITHUB_THRESHOLD_5ET = 5
 
@@ -253,13 +248,15 @@ class Report:
             view.add_item(Button(label=SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
             view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
             view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
-            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
+            view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
+            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
             view.stop()
         else:
             view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
             view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=0))
+            view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
             view.stop()
 
@@ -669,13 +666,15 @@ class Report:
                 view.add_item(Button(label=SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
                 view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
                 view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
-                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
+                view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
+                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
                 await msg.edit(embed=await self.get_embed(), view=view)
                 view.stop()
             else:
                 view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
                 view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=0))
+                view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
                 await msg.edit(embed=await self.get_embed(), view=view)
                 view.stop()
 
