@@ -25,7 +25,7 @@ class Note(Modal):
         requestChannel = await self.bot.fetch_channel(self.channel)
 
         embed = EmbedWithAuthorWithoutContext(self.author)
-        embed.title = f"New note for: {self.report.report_id}"
+        embed.title = f"New note for: {self.report.report_id} - {self.report.title}"
         embed.description = f"{description}** **"
         embed.set_footer(text=f"Added by {self.author.name}")
 
