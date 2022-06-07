@@ -7,7 +7,6 @@ from crawler_utilities.handlers import logger
 from modal.note import Note
 from models.reports import Report, ReportException
 from utils.checks import isManagerAssigneeOrReporterButton
-from utils.reportglobals import UPVOTE, DOWNVOTE, SHRUG, SUBSCRIBE, RESOLVE, INFORMATION, NOTE
 
 log = logger.logger
 
@@ -40,7 +39,7 @@ class HandleReport(commands.Cog):
         member = interaction.user
         server = interaction.guild
 
-        if label not in (UPVOTE, DOWNVOTE, INFORMATION, SHRUG, SUBSCRIBE, RESOLVE, NOTE) or member.bot or label is None:
+        if label not in (GG.UPVOTE, GG.DOWNVOTE, GG.INFORMATION, GG.SHRUG, GG.SUBSCRIBE, GG.RESOLVE, GG.NOTE) or member.bot or label is None:
             return
 
         try:
@@ -48,7 +47,7 @@ class HandleReport(commands.Cog):
         except ReportException:
             return
 
-        if label == INFORMATION:
+        if label == GG.INFORMATION:
             track_google_analytics_event("Information", f"{report.report_id}", f"{member.id}")
 
         if report.is_bug:
@@ -66,23 +65,23 @@ class HandleReport(commands.Cog):
     @staticmethod
     async def handle_feature_user(bot, interaction, label, member, message, report, server):
         try:
-            if label == UPVOTE:
+            if label == GG.UPVOTE:
                 print(f"Upvote: {member} - {report.report_id}")
                 await report.upvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
                 await interaction.response.send_message(content=f"You have upvoted {report.report_id}", ephemeral=True)
-            elif label == INFORMATION:
+            elif label == GG.INFORMATION:
                 print(f"Information: {member} - {report.report_id}")
                 em = await report.get_embed(True)
                 await interaction.response.send_message(embed=em, ephemeral=True)
-            elif label == SHRUG:
+            elif label == GG.SHRUG:
                 print(f"Shrugged: {member} - {report.report_id}")
                 await report.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
                 await interaction.response.send_message(content=f"You have shown indifference for {report.report_id}", ephemeral=True)
-            elif label == SUBSCRIBE:
+            elif label == GG.SUBSCRIBE:
                 await HandleReport.subscribe(interaction, member, report)
-            elif label == RESOLVE:
+            elif label == GG.RESOLVE:
                 await HandleReport.resolve(bot, interaction, member, report, server)
-            elif label == NOTE:
+            elif label == GG.NOTE:
                 await HandleReport.note(bot, interaction, report)
             else:
                 print(f"Downvote: {member} - {report.report_id}")
@@ -97,25 +96,25 @@ class HandleReport(commands.Cog):
 
     @staticmethod
     async def handle_feature_server_owner(bot, interaction, label, member, report, server):
-        if label == UPVOTE:
+        if label == GG.UPVOTE:
             print(f"Upvote: {member} - {report.report_id}")
             await report.force_accept(GG.ContextProxy(bot, interaction=interaction), server.id)
             await interaction.response.send_message(content=f"You have accepted {report.report_id}", ephemeral=True)
-        elif label == INFORMATION:
+        elif label == GG.INFORMATION:
             print(f"Information: {member} - {report.report_id}")
             em = await report.get_embed(True)
             await interaction.response.send_message(embed=em, ephemeral=True)
-        elif label == SHRUG:
+        elif label == GG.SHRUG:
             print(f"Shrugged: {member} - {report.report_id}")
             await report.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
             await interaction.response.send_message(content=f"You have shown indifference for {report.report_id}", ephemeral=True)
-        elif label == SUBSCRIBE:
+        elif label == GG.SUBSCRIBE:
             await HandleReport.subscribe(interaction, member, report)
-        elif label == RESOLVE:
+        elif label == GG.RESOLVE:
             await report.resolve(GG.ContextProxy(bot, interaction=interaction, message=GG.FakeAuthor(member)), server.id, "Report closed.")
             await interaction.response.send_message(content=f"You have resolved {report.report_id}", ephemeral=True)
             await report.commit()
-        elif label == NOTE:
+        elif label == GG.NOTE:
             await HandleReport.note(bot, interaction, report)
         else:
             await report.force_deny(GG.ContextProxy(bot, interaction=interaction), server.id)
@@ -124,15 +123,15 @@ class HandleReport(commands.Cog):
 
     @staticmethod
     async def handle_bug(bot, interaction, label, member, report, server):
-        if label == INFORMATION:
+        if label == GG.INFORMATION:
             print(f"Information: {member} - {report.report_id}")
             em = await report.get_embed(True)
             await interaction.response.send_message(embed=em, ephemeral=True)
-        elif label == SUBSCRIBE:
+        elif label == GG.SUBSCRIBE:
             await HandleReport.subscribe(interaction, member, report)
-        elif label == RESOLVE:
+        elif label == GG.RESOLVE:
             await HandleReport.resolve(bot, interaction, member, report, server)
-        elif label == NOTE:
+        elif label == GG.NOTE:
             await HandleReport.note(bot, interaction, report)
 
     @staticmethod

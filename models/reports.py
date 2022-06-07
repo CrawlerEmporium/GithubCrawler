@@ -11,7 +11,6 @@ from crawler_utilities.utils.pagination import BotEmbedPaginator
 import utils.globals as GG
 from models.attachment import Attachment
 from utils.functions import paginate
-from utils.reportglobals import UPVOTE, DOWNVOTE, SHRUG, SUBSCRIBE, RESOLVE, INFORMATION, NOTE
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.githubClient import GitHubClient
 from crawler_utilities.handlers import logger
@@ -243,20 +242,20 @@ class Report:
     async def setup_message(self, bot, guildID, trackerChannel):
         view = discord.ui.View()
         if not self.is_bug:
-            view.add_item(Button(label=UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
-            view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
-            view.add_item(Button(label=SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
-            view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
-            view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
-            view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
-            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
+            view.add_item(Button(label=GG.UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
+            view.add_item(Button(label=GG.DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
+            view.add_item(Button(label=GG.SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
+            view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
+            view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
+            view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
+            view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
             view.stop()
         else:
-            view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
-            view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-            view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
-            view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
+            view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
+            view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
+            view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+            view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
             view.stop()
 
@@ -661,20 +660,20 @@ class Report:
             await msg.clear_reactions()
             view = discord.ui.View()
             if not self.is_bug:
-                view.add_item(Button(label=UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
-                view.add_item(Button(label=DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
-                view.add_item(Button(label=SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
-                view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
-                view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
-                view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
-                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
+                view.add_item(Button(label=GG.UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
+                view.add_item(Button(label=GG.DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
+                view.add_item(Button(label=GG.SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
+                view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
+                view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
+                view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
+                view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
                 await msg.edit(embed=await self.get_embed(), view=view)
                 view.stop()
             else:
-                view.add_item(Button(label=SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
-                view.add_item(Button(label=INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-                view.add_item(Button(label=NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
-                view.add_item(Button(label=RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
+                view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
+                view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
+                view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+                view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
                 await msg.edit(embed=await self.get_embed(), view=view)
                 view.stop()
 

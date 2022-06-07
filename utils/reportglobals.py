@@ -4,13 +4,6 @@ from crawler_utilities.cogs.stats import track_google_analytics_event
 import utils.globals as GG
 from models.reports import Report
 
-UPVOTE = "Upvote"
-DOWNVOTE = "Downvote"
-SHRUG = "Shrug"
-INFORMATION = "Info"
-SUBSCRIBE = "Subscribe"
-RESOLVE = "Resolve"
-NOTE = "Note"
 REPORTS = []
 
 
