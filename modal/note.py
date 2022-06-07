@@ -22,14 +22,15 @@ class Note(Modal):
         await interaction.response.defer(ephemeral=True)
         description = self.children[0].value if self.children[0].value is not None else ""
 
-        requestChannel = self.bot.get_channel(self.channel)
+        requestChannel = await self.bot.fetch_channel(self.channel)
 
         embed = EmbedWithAuthorWithoutContext(self.author)
         embed.title = f"New note for: {self.report.report_id}"
         embed.description = f"{description}** **"
         embed.set_footer(text=f"Added by {self.author.name}")
 
-        await requestChannel.send(embed=embed)
+        if requestChannel is not None:
+            await requestChannel.send(embed=embed)
 
         await self.report.addnote(self.author.id, description, self.ctx, self.interaction.guild_id)
 
