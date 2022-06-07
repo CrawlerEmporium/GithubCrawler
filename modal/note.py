@@ -19,6 +19,7 @@ class Note(Modal):
         self.add_item(InputText(label="The note you want to add.", placeholder="What's the note you want to add?", required=True, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         description = self.children[0].value if self.children[0].value is not None else ""
 
         requestChannel = await self.bot.fetch_channel(self.channel)
@@ -33,4 +34,4 @@ class Note(Modal):
 
         await self.report.addnote(self.author.id, description, self.ctx, self.interaction.guild_id)
 
-        await finishNoteCreation(self, self.ctx, embed)
+        await finishNoteCreation(self, interaction, embed)

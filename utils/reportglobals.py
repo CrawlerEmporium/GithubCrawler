@@ -37,7 +37,7 @@ async def finishReportCreation(self, interaction, report, reportMessage, request
                                     f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.", ephemeral=True)
 
 
-async def finishNoteCreation(self, ctx, embed):
+async def finishNoteCreation(self, interaction, embed):
     if self.author.dm_channel is not None:
         DM = self.author.dm_channel
     else:
@@ -46,7 +46,7 @@ async def finishNoteCreation(self, ctx, embed):
         await DM.send(embed=embed)
     except discord.Forbidden:
         pass
-    await ctx.interaction.followup.send(f"Your note for ``{self.report.report_id}`` was added, please check your DM's for more information.\n"
+    await interaction.followup.send(f"Your note for ``{self.report.report_id}`` was added, please check your DM's for more information.\n"
                                         f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.", ephemeral=True)
 
 
