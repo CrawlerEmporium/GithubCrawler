@@ -1,12 +1,16 @@
 import discord
 from utils import globals as GG
 
+
 async def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
     server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
     identifiers = []
     for identifier in server['listen']:
         if identifier['type'] == "feature":
-            identifiers.append(identifier['identifier'])
+            if identifier.get("alias", "") is not "":
+                identifiers.append(identifier['alias'])
+            else:
+                identifiers.append(identifier['identifier'])
     return identifiers
 
 
@@ -15,7 +19,10 @@ async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
     identifiers = []
     for identifier in server['listen']:
         if identifier['type'] == "bug":
-            identifiers.append(identifier['identifier'])
+            if identifier.get("alias", "") is not "":
+                identifiers.append(identifier['alias'])
+            else:
+                identifiers.append(identifier['identifier'])
     return identifiers
 
 
@@ -23,7 +30,10 @@ async def get_server_identifiers(ctx: discord.AutocompleteContext):
     server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
     identifiers = []
     for identifier in server['listen']:
-        identifiers.append(identifier['identifier'])
+        if identifier.get("alias", "") is not "":
+            identifiers.append(identifier['alias'])
+        else:
+            identifiers.append(identifier['identifier'])
     return identifiers
 
 
@@ -37,6 +47,5 @@ async def get_server_reports(ctx: discord.AutocompleteContext):
     cachedTrackers = next(server["channels"] for server in GG.cachedTrackerChannels if server['guild_id'] == ctx.interaction.guild_id)
     reports = await GG.MDB.Reports.find({"trackerId": {"$in": cachedTrackers}}).to_list(length=None)
     if reports is not None:
-        return [f"{report['report_id']} | {report['title'][:85]+'...' if report is not None and len(report['title']) >= 90 else report['title']}" for report in reports if ctx.value.upper() in report['report_id']]
+        return [f"{report['report_id']} | {report['title'][:85] + '...' if report is not None and len(report['title']) >= 90 else report['title']}" for report in reports if ctx.value.upper() in report['report_id']]
     return []
-

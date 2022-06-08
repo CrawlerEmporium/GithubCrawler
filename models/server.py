@@ -1,19 +1,20 @@
 class Listen:
-    def __init__(self, channel: int, tracker: int, identifier: str, type: str, repo: str, url: str):
+    def __init__(self, channel: int, tracker: int, identifier: str, type: str, repo: str, url: str, alias: str):
         self.channel = channel
         self.tracker = tracker
         self.identifier = identifier
         self.type = type
         self.repo = repo
         self.url = url
+        self.alias = alias
 
     @classmethod
     def from_data(cls, data):
-        return cls(data['channel'], data['tracker'], data['identifier'], data['type'], data.get('repo', None), data.get('url', None))
+        return cls(data['channel'], data['tracker'], data['identifier'], data['type'], data.get('repo', None), data.get('url', None), data.get('alias', None))
 
     def to_dict(self):
         return {
-            'channel': self.channel, 'tracker': self.tracker, 'identifier': self.identifier, 'type': self.type, 'repo': self.repo, 'url': self.url
+            'channel': self.channel, 'tracker': self.tracker, 'identifier': self.identifier, 'type': self.type, 'repo': self.repo, 'url': self.url, 'alias': self.alias
         }
 
 

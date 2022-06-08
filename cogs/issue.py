@@ -2,14 +2,17 @@ import csv
 import io
 
 import discord
+from discord import slash_command, permissions, Option
 from discord.ext import commands
 
 import utils.globals as GG
 from models.server import Server, Listen
 from crawler_utilities.handlers import logger
+from utils.autocomplete import get_server_identifiers
 from utils.checks import isManager
 from utils.functions import loadGithubServers, get_selection
 from models.reports import Report, PRIORITY
+from utils.reportglobals import IdentifierDoesNotExist
 
 log = logger.logger
 
@@ -101,7 +104,7 @@ class Issue(commands.Cog):
 
         # ADD LISTENER TO THE SERVER
         if channel is not None and tracker is not None:
-            listener = Listen(channel.id, tracker.id, identifier, type, None, "")
+            listener = Listen(channel=channel.id, tracker=tracker.id, identifier=identifier, type=type, repo=None, url="", alias="")
             data = await GG.MDB.Github.find_one({"server": ctx.guild.id})
             server = Server.from_data(data)
             listener = listener.to_dict()
@@ -328,6 +331,25 @@ class Issue(commands.Cog):
                     await ctx.send(file=file)
                 else:
                     await ctx.send(f"No (open) reports found with the {identifier} identifier.")
+
+    @slash_command(name="identifier")
+    @permissions.guild_only()
+    async def aliasidentifier(self,
+                              ctx,
+                              identifier: Option(str, "For which identifier do you want to change the alias?", autocomplete=get_server_identifiers),
+                              alias: Option(str, "What alias do you want to give the identifier?")):
+        """Adds an alias for your identifier, to make it easier for people to understand what the specific identifier does."""
+        listen = None
+        server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
+
+        for iden in server['listen']:
+            if iden['identifier'] == identifier or iden['alias'] == identifier:
+                iden['alias'] = alias
+                await GG.MDB.Github.replace_one({"server": ctx.interaction.guild_id}, server)
+                return await ctx.respond(f"Set alias ``{alias}`` for ``{identifier}``")
+
+        if listen is None:
+            return await IdentifierDoesNotExist(ctx, identifier)
 
 
 def setup(bot):

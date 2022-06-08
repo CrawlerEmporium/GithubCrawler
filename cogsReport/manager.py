@@ -11,7 +11,7 @@ from crawler_utilities.utils.pagination import BotEmbedPaginator
 from models.reports import Report, get_next_report_num
 from utils.autocomplete import get_server_reports, get_server_identifiers
 from utils.checks import isManager, isAssignee, isReporter
-from utils.reportglobals import ReportFromId
+from utils.reportglobals import ReportFromId, IdentifierDoesNotExist
 
 log = logger.logger
 
@@ -53,7 +53,17 @@ class ManagerCommands(commands.Cog):
         """Server Admins only - Changes the identifier of a report."""
         await ctx.defer()
         if await isManager(ctx):
-            identifier = identifier.upper()
+            exists = False
+
+            server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
+            for iden in server['listen']:
+                if iden['identifier'] == identifier or iden['alias'] == identifier:
+                    identifier = iden['identifier'].upper()
+                    exists = True
+
+            if not exists:
+                return await IdentifierDoesNotExist(ctx, identifier)
+
             id_num = await get_next_report_num(identifier, ctx.interaction.guild.id)
 
             report = await ReportFromId(_id, ctx)
@@ -191,8 +201,7 @@ class ManagerCommands(commands.Cog):
 
             report.assignee = None
 
-            await report.addnote(ctx.interaction.user.id, f"Cleared assigned user from {report.report_id}", ctx,
-                                 ctx.interaction.guild.id)
+            await report.addnote(ctx.interaction.user.id, f"Cleared assigned user from {report.report_id}", ctx, ctx.interaction.guild.id)
             await report.commit()
             await report.update(ctx, ctx.interaction.guild.id)
             await ctx.respond(f"Cleared assigned user of {report.report_id}.")
