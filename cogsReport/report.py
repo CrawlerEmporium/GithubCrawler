@@ -2,6 +2,7 @@ from discord import slash_command, Option, permissions
 from discord.ext import commands
 
 import utils.globals as GG
+from cogsReport.handle import HandleReport
 from crawler_utilities.cogs.stats import track_google_analytics_event
 from crawler_utilities.handlers import logger
 from utils.autocomplete import get_server_reports
@@ -67,16 +68,10 @@ class ReportCommands(commands.Cog):
 
     @slash_command(name="note")
     @permissions.guild_only()
-    async def note(self, ctx, _id: Option(str, "Which report do you want to add a note to?", autocomplete=get_server_reports), msg: Option(str, "Whats the note you want to add?")):
+    async def note(self, ctx, _id: Option(str, "Which report do you want to add a note to?", autocomplete=get_server_reports)):
         """Adds a note to a report."""
         report = await ReportFromId(_id, ctx)
-        user = ctx.interaction.user
-        guild_id = ctx.interaction.guild_id
-        await report.addnote(user.id, msg, ctx, guild_id)
-        await report.commit()
-        await ctx.respond(f"Added a note to `{report.report_id}` - {report.title}.")
-        track_google_analytics_event("Note", f"{report.report_id}", f"{user.id}")
-        await report.update(ctx, guild_id)
+        await HandleReport.note(ctx.bot, ctx.interaction, report)
 
     @slash_command(name="subscribe")
     @permissions.guild_only()
