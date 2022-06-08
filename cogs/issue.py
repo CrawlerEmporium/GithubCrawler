@@ -338,7 +338,7 @@ class Issue(commands.Cog):
                               ctx,
                               identifier: Option(str, "For which identifier do you want to change the alias?", autocomplete=get_server_identifiers),
                               alias: Option(str, "What alias do you want to give the identifier?")):
-        """Adds an alias for your identifier, to make it easier for people to understand what the specific identifier does."""
+        """Adds an alias for your identifier, for specification what an identifier does."""
         listen = None
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
 
