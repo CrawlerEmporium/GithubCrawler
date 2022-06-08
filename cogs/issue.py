@@ -339,17 +339,18 @@ class Issue(commands.Cog):
                               identifier: Option(str, "For which identifier do you want to change the alias?", autocomplete=get_server_identifiers),
                               alias: Option(str, "What alias do you want to give the identifier?")):
         """Adds an alias for your identifier, for specification what an identifier does."""
-        listen = None
-        server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
+        if await isManager(ctx):
+            listen = None
+            server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
 
-        for iden in server['listen']:
-            if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
-                iden['alias'] = alias
-                await GG.MDB.Github.replace_one({"server": ctx.interaction.guild_id}, server)
-                return await ctx.respond(f"Set alias ``{alias}`` for ``{identifier}``")
+            for iden in server['listen']:
+                if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
+                    iden['alias'] = alias
+                    await GG.MDB.Github.replace_one({"server": ctx.interaction.guild_id}, server)
+                    return await ctx.respond(f"Set alias ``{alias}`` for ``{identifier}``")
 
-        if listen is None:
-            return await IdentifierDoesNotExist(ctx, identifier)
+            if listen is None:
+                return await IdentifierDoesNotExist(ctx, identifier)
 
 
 def setup(bot):
