@@ -40,7 +40,7 @@ class CreateReport(commands.Cog):
 
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
         for iden in server['listen']:
-            if iden['identifier'] == identifier or iden['alias'] == identifier:
+            if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
                 identifier = iden['identifier']
                 exists = True
 
@@ -87,7 +87,7 @@ class CreateReport(commands.Cog):
 
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
         for iden in server['listen']:
-            if iden['identifier'] == identifier or iden['alias'] == identifier:
+            if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
                 identifier = iden['identifier']
                 repo = iden['repo']
                 tracker = iden['tracker']
@@ -118,7 +118,7 @@ class CreateReport(commands.Cog):
 
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
         for iden in server['listen']:
-            if iden['identifier'] == identifier or iden['alias'] == identifier:
+            if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
                 identifier = iden['identifier']
                 repo = iden['repo']
                 tracker = iden['tracker']

@@ -343,7 +343,7 @@ class Issue(commands.Cog):
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
 
         for iden in server['listen']:
-            if iden['identifier'] == identifier or iden['alias'] == identifier:
+            if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
                 iden['alias'] = alias
                 await GG.MDB.Github.replace_one({"server": ctx.interaction.guild_id}, server)
                 return await ctx.respond(f"Set alias ``{alias}`` for ``{identifier}``")
