@@ -68,7 +68,7 @@ class Feature(Modal):
                 for index_child in self.children:
                     if index_child.row == index:
                         child = index_child
-                print(child)
+                print(f"{index}: {child.value}")
                 question = [x for x in self.custom_questions.questions if x['position'] == index][0]
                 label = question['text']
                 await splitDiscordEmbedField(embed, child.value, label)
