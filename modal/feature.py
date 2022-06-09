@@ -4,6 +4,7 @@ from discord.ui import Modal, InputText
 
 from crawler_utilities.cogs.stats import track_google_analytics_event
 from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
+from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.attachment import Attachment
 from models.questions import Questionaire
 from models.reports import Report
@@ -51,20 +52,16 @@ class Feature(Modal):
             how = self.children[3].value
             why = self.children[4].value
             if information is not None and information != "":
-                print("child1.value: ", information)
-                embed.add_field(name="Information", value=information, inline=False)
+                await splitDiscordEmbedField(embed, information, "Information")
                 request += f"Information\n{information}\n\n"
             if who is not None and who != "":
-                print("child2.value: ", who)
-                embed.add_field(name="Who would use it?", value=who, inline=False)
+                await splitDiscordEmbedField(embed, who, "Who would use it?")
                 request += f"Who would use it?\n{who}\n\n"
             if how is not None and how != "":
-                print("child3.value: ", how)
-                embed.add_field(name="How would it work?", value=how, inline=False)
+                await splitDiscordEmbedField(embed, how, "How would it work?")
                 request += f"How would it work?\n{how}\n\n"
             if why is not None and why != "":
-                print("child4.value: ", why)
-                embed.add_field(name="Why should this be added?", value=why, inline=False)
+                await splitDiscordEmbedField(embed, why, "Why should this be added?")
                 request += f"Why should this be added?\n{why}\n\n"
         else:
             for index in range(1, len(self.children)):
@@ -73,7 +70,7 @@ class Feature(Modal):
                         child = index_child
                 question = [x for x in self.custom_questions.questions if x['position'] == index][0]
                 label = question['text']
-                embed.add_field(name=label, value=child.value, inline=False)
+                await splitDiscordEmbedField(embed, child.value, label)
                 request += f"{label}\n{child.value}\n\n"
 
         message = await requestChannel.send(embed=embed)
