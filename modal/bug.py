@@ -60,10 +60,11 @@ class Bug(Modal):
                 for index_child in self.children:
                     if index_child.row == index:
                         child = index_child
-                question = [x for x in self.custom_questions.questions if x['position'] == index][0]
-                label = question['text']
-                embed.add_field(name=label, value=child.value, inline=False)
-                request += f"{label}\n{child.value}\n\n"
+                if child.value is not None and child.value != "":
+                    question = [x for x in self.custom_questions.questions if x['position'] == index][0]
+                    label = question['text']
+                    embed.add_field(name=label, value=child.value, inline=False)
+                    request += f"{label}\n{child.value}\n\n"
 
         message = await requestChannel.send(embed=embed)
 
