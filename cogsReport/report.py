@@ -1,14 +1,13 @@
 from discord import slash_command, Option, permissions
 from discord.ext import commands
 
-import utils.globals as GG
 from cogsReport.handle import HandleReport
 from crawler_utilities.cogs.stats import track_google_analytics_event
-from crawler_utilities.handlers import logger
 from utils.autocomplete import get_server_reports
 from utils.reportglobals import ReportFromId, getAllReports
 
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 class ReportCommands(commands.Cog):
     def __init__(self, bot):

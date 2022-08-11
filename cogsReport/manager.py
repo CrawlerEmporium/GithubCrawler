@@ -4,16 +4,15 @@ import discord
 from discord import slash_command, Option, permissions
 from discord.ext import commands
 
-import utils.globals as GG
 from crawler_utilities.cogs.stats import track_google_analytics_event
-from crawler_utilities.handlers import logger
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 from models.reports import Report, get_next_report_num
 from utils.autocomplete import get_server_reports, get_server_identifiers
 from utils.checks import isManager, isAssignee, isReporter
 from utils.reportglobals import ReportFromId, IdentifierDoesNotExist
 
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 
 class ManagerCommands(commands.Cog):

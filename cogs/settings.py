@@ -1,11 +1,9 @@
-import utils.globals as GG
-
 from discord.ext import commands
 from crawler_utilities.events.settings import loopThroughIssueSettings, getIssueSettingsEmbed, getIssueSettingsButtons
-from crawler_utilities.handlers import logger
 from utils import checks
 
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 
 class GithubSettings(commands.Cog):

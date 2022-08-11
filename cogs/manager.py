@@ -3,10 +3,8 @@ import typing
 import discord
 from discord.ext import commands
 
-import utils.globals as GG
-from crawler_utilities.handlers import logger
-
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 TYPES = ['bug', 'feature']
 

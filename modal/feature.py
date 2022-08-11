@@ -1,5 +1,5 @@
 import discord
-from discord import InputTextStyle, Interaction
+from discord import InputTextStyle, Interaction, ChannelType
 from discord.ui import Modal, InputText
 
 from crawler_utilities.cogs.stats import track_google_analytics_event
@@ -12,7 +12,8 @@ from utils.reportglobals import finishReportCreation
 
 
 class Feature(Modal):
-    def __init__(self, identifier, bot, interaction, report_id, author, repo, tracker, channel, custom_questions: Questionaire = None) -> None:
+    def __init__(self, identifier, bot, interaction, report_id, author, repo, tracker, channel,
+                 custom_questions: Questionaire = None) -> None:
         super().__init__(title=f"{identifier}: Feature Request")
 
         self.bot = bot
@@ -26,13 +27,20 @@ class Feature(Modal):
 
         if custom_questions is not None:
             for question in custom_questions.questions:
-                self.add_item(InputText(label=question['text'], placeholder=question['placeholder'], style=InputTextStyle(question['style']), required=question['required'], row=question['position']))
+                self.add_item(InputText(label=question['text'], placeholder=question['placeholder'],
+                                        style=InputTextStyle(question['style']), required=question['required'],
+                                        row=question['position']))
         else:
-            self.add_item(InputText(label="Title of the request", placeholder="Be as precise as possible.", required=True))
-            self.add_item(InputText(label="Information", placeholder="Expand on your request, and be as detailed as possible.", required=True, style=InputTextStyle.long))
+            self.add_item(
+                InputText(label="Title of the request", placeholder="Be as precise as possible.", required=True))
+            self.add_item(
+                InputText(label="Information", placeholder="Expand on your request, and be as detailed as possible.",
+                          required=True, style=InputTextStyle.long))
             self.add_item(InputText(label="Who would use it?", required=False, style=InputTextStyle.long))
             self.add_item(InputText(label="How would it work?", required=False, style=InputTextStyle.long))
-            self.add_item(InputText(label="Why should this be added?", placeholder="Justify why you think it'd help others.", required=False, style=InputTextStyle.long))
+            self.add_item(
+                InputText(label="Why should this be added?", placeholder="Justify why you think it'd help others.",
+                          required=False, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -74,11 +82,17 @@ class Feature(Modal):
                     await splitDiscordEmbedField(embed, child.value, label)
                     request += f"{label}\n{child.value}\n\n"
 
-        message = await requestChannel.send(embed=embed)
+        if requestChannel.type != ChannelType.forum:
+            message = await requestChannel.send(embed=embed)
+            jumpUrl = message.jump_url
+        else:
+            thread = await requestChannel.create_thread(name=f"{self.report_id} - {title}", embed=embed)
+            jumpUrl = thread.jump_url
 
-        report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
+        report = await Report.new(self.author.id, self.report_id,
+                                  title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=False,
-                                  repo=self.repo, jumpUrl=message.jump_url, trackerId=self.tracker)
+                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker)
 
         reportMessage = await report.setup_message(self.bot, self.interaction.guild_id, report.trackerId)
 

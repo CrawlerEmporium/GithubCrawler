@@ -2,11 +2,9 @@ from discord.ext import commands
 from environs import Env
 import motor.motor_asyncio
 
-from utils.functions import get_settings
+from crawler_utilities.handlers.logger import Logger
 
-from crawler_utilities.handlers import logger
-
-log = logger.logger
+log = Logger("logs", "IssueCrawler", "IssueCrawler").logger
 
 env = Env()
 env.read_env()

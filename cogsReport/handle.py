@@ -1,14 +1,13 @@
 from discord import Interaction
 from discord.ext import commands
 
-import utils.globals as GG
 from crawler_utilities.cogs.stats import track_google_analytics_event
-from crawler_utilities.handlers import logger
 from modal.note import Note
 from models.reports import Report, ReportException
 from utils.checks import isManagerAssigneeOrReporterButton
 
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 
 class HandleReport(commands.Cog):

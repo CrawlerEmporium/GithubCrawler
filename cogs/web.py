@@ -3,12 +3,11 @@ import asyncio
 from aiohttp import web
 from discord.ext import commands
 
-import utils.globals as GG
-from crawler_utilities.handlers import logger
 from models.githubClient import GitHubClient
 from models.reports import Report, ReportException
 
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 PRI_LABEL_NAMES = ("P0", "P1", "P2", "P3", "P4", "P5")
 BUG_LABEL = "bug"

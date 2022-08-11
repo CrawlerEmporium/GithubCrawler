@@ -1,16 +1,15 @@
-import logging
 import random
 from itertools import zip_longest
 
 import discord
 
-import utils.globals as GG
 from crawler_utilities.handlers.errors import NoSelectionElements
 from models.server import Server
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 from models.githubClient import GitHubClient
 
-log = logging.getLogger(__name__)
+from utils import globals as GG
+log = GG.log
 
 
 def discord_trim(string):

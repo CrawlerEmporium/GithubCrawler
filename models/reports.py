@@ -221,7 +221,7 @@ class Report:
     def is_open(self):
         return self.severity >= 0
 
-    async def setup_github(self, ctx, serverId=None):
+    async def setup_github(self, bot, serverId=None):
         if (self.repo is not None or self.repo != 'NoRepo'):
             if self.github_issue:
                 raise ReportException("Issue is already on GitHub.")
@@ -229,7 +229,7 @@ class Report:
                 labels = ["bug"]
             else:
                 labels = ["featurereq"]
-            desc = await self.get_github_desc(ctx, serverId)
+            desc = await self.get_github_desc(bot, serverId)
 
             if self.repo != 'NoRepo':
                 issue = await GitHubClient.get_instance().create_issue(self.repo, f"{self.report_id} {self.title}",
@@ -416,12 +416,12 @@ class Report:
         paginator = BotEmbedPaginator(ctx, pages=embeds, message=msgToUse)
         await paginator.run()
 
-    async def get_github_desc(self, ctx, serverId):
+    async def get_github_desc(self, bot, serverId):
         msg = self.title
         if self.attachments:
             msg = self.attachments[0].message
 
-        author = next((m for m in ctx.bot.get_all_members() if m.id == self.reporter), None)
+        author = next((m for m in bot.get_all_members() if m.id == self.reporter), None)
         if author:
             desc = f"{msg}\n\n- {author}"
         else:
@@ -431,14 +431,14 @@ class Report:
             i = 0
             for attachment in self.attachments[1:]:
                 try:
-                    guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
+                    guild = next(item for item in GG.GITHUBSERVERS if item.server == serverId)
                     if attachment.message and i >= guild.threshold:
                         continue
                 except:
                     pass
                 i += attachment.veri // 2
                 msg = ''
-                attachMessage = await self.get_attachment_message(ctx, attachment, serverId)
+                attachMessage = await self.get_attachment_message(bot, attachment, serverId)
                 for line in attachMessage.strip().splitlines():
                     msg += f"> {line}\n"
                 desc += f"\n\n{msg}"
@@ -448,7 +448,7 @@ class Report:
                 if attachment.message:
                     continue
                 msg = ''
-                attachMessage = await self.get_attachment_message(ctx, attachment, serverId)
+                attachMessage = await self.get_attachment_message(bot, attachment, serverId)
                 for line in attachMessage.strip().splitlines():
                     msg += f"> {line}\n"
                 desc += f"\n\n{msg}"
@@ -465,16 +465,16 @@ class Report:
         self.attachments.append(attachment)
         if add_to_github and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
             if attachment.message:
-                msg = await self.get_attachment_message(ctx, attachment, serverId)
+                msg = await self.get_attachment_message(ctx.bot, attachment, serverId)
                 await GitHubClient.get_instance().add_issue_comment(self.repo, self.github_issue, msg)
 
             if attachment.veri:
-                gitDesc = await self.get_github_desc(ctx, serverId)
+                gitDesc = await self.get_github_desc(ctx.bot, serverId)
                 await GitHubClient.get_instance().edit_issue_body(self.repo, self.github_issue, gitDesc)
 
-    async def get_attachment_message(self, ctx, attachment: Attachment, guild_id):
+    async def get_attachment_message(self, bot, attachment: Attachment, guild_id):
         if isinstance(attachment.author, int):
-            username = str(next((m for m in ctx.bot.get_all_members() if m.id == attachment.author), attachment.author))
+            username = str(next((m for m in bot.get_all_members() if m.id == attachment.author), attachment.author))
         else:
             username = attachment.author
 
@@ -531,7 +531,7 @@ class Report:
         if self.is_open() and not self.github_issue and self.upvotes - self.downvotes >= guild.threshold and (
                 self.repo is not None or self.repo != 'NoRepo'):
             try:
-                await self.setup_github(ctx, serverId)
+                await self.setup_github(ctx.bot, serverId)
             except ReportException:
                 log.info(f"Report {self.report_id} is already on GitHub, so no need to add it.")
 
@@ -586,7 +586,7 @@ class Report:
 
     async def force_accept(self, ctx, serverId):
         track_google_analytics_event("Force Accept", f"{self.report_id}", f"{serverId}")
-        await self.setup_github(ctx, serverId)
+        await self.setup_github(ctx.bot, serverId)
 
     async def force_deny(self, ctx, serverId):
         track_google_analytics_event("Force Deny", f"{self.report_id}", f"{serverId}")

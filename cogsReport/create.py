@@ -1,20 +1,18 @@
 import asyncio
 
-from discord import slash_command, Option, permissions
+from discord import slash_command, Option, permissions, ForumChannel
 from discord.ext import commands
 
-import utils.globals as GG
 from crawler_utilities.utils.confirmation import BotConfirmation
 from modal.bug import Bug
 from modal.feature import Feature
-from crawler_utilities.handlers import logger
 from models.questions import Question, Questionaire
 from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers
 from utils.checks import isManagerSlash
 from models.reports import get_next_report_num, ReportException
 from utils.reportglobals import IdentifierDoesNotExist
-
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 
 class CreateReport(commands.Cog):
@@ -84,7 +82,6 @@ class CreateReport(commands.Cog):
     async def slash_featurerequest(self, ctx, identifier: Option(str, "For what identifier do you want to make a feature request?", autocomplete=get_server_feature_identifiers)):
         """Opens a modal to post a feature request."""
         exists = False
-
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
         for iden in server['listen']:
             if iden['identifier'] == identifier or iden.get('alias', '') == identifier:

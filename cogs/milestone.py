@@ -1,14 +1,11 @@
 import discord
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 
-import utils.globals as GG
-
 from discord.ext import commands
 from models.milestone import Milestone, STATUS, MilestoneException
-from crawler_utilities.handlers import logger
 from utils.checks import isManager
-
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 
 class Milestones(commands.Cog):

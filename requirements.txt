@@ -16,11 +16,10 @@ certifi==2018.4.16
 requests==2.20.0
 urllib3>=1.26.5
 python-dateutil
-PyGithub==1.40
-cachetools==2.1.0
+PyGithub>=1.40
+cachetools>=2.1.0
 motor
 patreon
 six>=1.10.0
-requests
 git+https://github.com/CrawlerEmporium/CrawlerUtilities.git
 git+https://github.com/Pycord-Development/pycord.git

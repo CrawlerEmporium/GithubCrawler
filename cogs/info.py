@@ -8,10 +8,9 @@ from discord.ext.commands import BucketType
 from discord import ButtonStyle
 from discord.ui import Button
 
-from crawler_utilities.handlers import logger
 from crawler_utilities.utils.embeds import EmbedWithAuthor
-
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 
 class Info(commands.Cog):

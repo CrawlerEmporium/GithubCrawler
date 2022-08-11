@@ -3,14 +3,10 @@ import os
 import subprocess
 import inspect
 
-from discord.ext.commands import BucketType
-
-import utils.globals as GG
 from discord.ext import commands
 
-from crawler_utilities.handlers import logger
-
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 extensions = [x.replace('.py', '') for x in os.listdir(GG.COGS) if x.endswith('.py')]
 path = GG.COGS + '.'

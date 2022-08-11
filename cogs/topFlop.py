@@ -4,11 +4,8 @@ import time
 from crawler_utilities.utils.embeds import EmbedWithAuthor
 from discord.ext import commands
 from discord import NotFound
-
-from crawler_utilities.handlers import logger
-import utils.globals as GG
-
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 
 async def round_down(value, decimals):

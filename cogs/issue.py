@@ -7,14 +7,13 @@ from discord.ext import commands
 
 import utils.globals as GG
 from models.server import Server, Listen
-from crawler_utilities.handlers import logger
 from utils.autocomplete import get_server_identifiers
 from utils.checks import isManager
 from utils.functions import loadGithubServers, get_selection
 from models.reports import Report, PRIORITY
 from utils.reportglobals import IdentifierDoesNotExist
 
-log = logger.logger
+log = GG.log
 
 TYPES = ['bug', 'feature']
 
@@ -120,32 +119,9 @@ class Issue(commands.Cog):
             await ctx.send("The given channel or tracker ID's are invalid.")
             return
 
-        # SEND MESSAGE TO NEW CHANNELS
-        msgChannel = self.bot.get_channel(channel.id)
-        try:
-            if type == 'bug':
-                await msgChannel.send(
-                    "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
-                    "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Severity**: Trivial (typos, "
-                    "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
-                    "impact) / High (a broken feature, major functional impact) / Critical (bot crash, extremely major "
-                    "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
-                    "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
-                    "trees.```")
-            if type == 'feature':
-                await msgChannel.send(
-                    "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
-                    "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
-                    "short and to the point.\n```**Feature Request:** Your request\n\n**Extra Information**\n**Who would "
-                    "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
-                    "others```")
-        except discord.Forbidden:
-            await ctx.send(f"Error: I am missing permissions to send the intro message..\n"
-                           f"Please make sure I have permission to send messages in <#{msgChannel.id}>.\n\n"
-                           f"After granting me permissions, you can run the ``!issue intro bug/feature`` command in that channel, to make me post the intro message.")
-
         await ctx.send(
-            f"Created (or added) {channel.mention} as Listening Channel\nCreated (or added) {tracker.mention} as Tracking Channel.\nIt is using {identifier} as Identifier.")
+            f"Created (or added) {channel.mention} as Listening Channel\nCreated (or added) {tracker.mention} as Tracking Channel.\n"
+            f"It is using {identifier} as Identifier.")
 
     @issue.command(name='intro')
     @commands.guild_only()
