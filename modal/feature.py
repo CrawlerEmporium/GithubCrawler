@@ -45,6 +45,7 @@ class Feature(Modal):
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
         title = None
+        thread = None
         for child in self.children:
             if child.row == 0:
                 title = child.value
@@ -92,8 +93,11 @@ class Feature(Modal):
         report = await Report.new(self.author.id, self.report_id,
                                   title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=False,
-                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker)
+                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None)
 
         reportMessage = await report.setup_message(self.bot, self.interaction.guild_id, report.trackerId)
 
-        await finishReportCreation(self, interaction, report, reportMessage, requestChannel)
+        if thread is not None:
+            await finishReportCreation(self, interaction, report, reportMessage, requestChannel, False, thread)
+        else:
+            await finishReportCreation(self, interaction, report, reportMessage, requestChannel, False)

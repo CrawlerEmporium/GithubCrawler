@@ -22,9 +22,9 @@ def getAllReports():
     return REPORTS
 
 
-async def finishReportCreation(self, interaction, report, reportMessage, requestChannel, bug=False):
+async def finishReportCreation(self, interaction, report, reportMessage, requestChannel, bug=False, forumPost=None):
     await report.commit()
-    embed = await getAdmissionSuccessfulEmbed(self.report_id, self.author, bug, requestChannel, reportMessage)
+    embed = await getAdmissionSuccessfulEmbed(self.report_id, self.author, bug, requestChannel, reportMessage, forumPost)
     if self.author.dm_channel is not None:
         DM = self.author.dm_channel
     else:
@@ -47,10 +47,10 @@ async def finishNoteCreation(self, interaction, embed):
     except discord.Forbidden:
         pass
     await interaction.followup.send(f"Your note for ``{self.report.report_id}`` was added, please check your DM's for more information.\n"
-                                        f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.", ephemeral=True)
+                                    f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.", ephemeral=True)
 
 
-async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, reportMessage):
+async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, reportMessage, forumPost=None):
     embed = discord.Embed()
     embed.title = f"Your submission ``{report_id}`` was accepted."
     if bug:
@@ -67,9 +67,14 @@ async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, re
     embed.add_field(name="Subscribing",
                     value=f"To subscribe: `/subscribe {report_id}`. (This is only for others, the submitter is automatically subscribed).",
                     inline=False)
-    embed.add_field(name="Voting",
-                    value=f"You can find the report here: [Click me]({reportMessage.jump_url})",
-                    inline=False)
+    if not bug:
+        embed.add_field(name="Voting",
+                        value=f"You can find the report here: [Click me]({reportMessage.jump_url})",
+                        inline=False)
+    if forumPost is not None:
+        embed.add_field(name="Discussion Post",
+                        value=f"You can find the created forum post here: [Click me]({forumPost})",
+                        inline=False)
     return embed
 
 

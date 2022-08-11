@@ -93,7 +93,7 @@ class Report:
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, shrugs: int = 0, github_issue: int = None,
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
-                 trackerId: int = None, assignee=None, milestone: list = None, opened=None, closed=None):
+                 trackerId: int = None, assignee=None, milestone: list = None, opened=None, closed=None, thread=None):
         if subscribers is None:
             subscribers = []
         if milestone is None:
@@ -131,15 +131,17 @@ class Report:
         self.opened = opened
         self.closed = closed
 
+        self.thread = thread
+
     @classmethod
     async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None,
-                  trackerId=None, assignee=None, milestone=None):
+                  trackerId=None, assignee=None, milestone=None, thread=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
         ts = calendar.timegm(time.gmtime())
         inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug,
-                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone, opened=ts)
+                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone, opened=ts, thread=thread)
         return inst
 
     @classmethod
@@ -176,7 +178,7 @@ class Report:
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
             'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee,
-            'milestone': self.milestone, 'opened': self.opened, 'closed': self.closed
+            'milestone': self.milestone, 'opened': self.opened, 'closed': self.closed, 'thread': self.thread
         }
 
     @classmethod
@@ -247,6 +249,9 @@ class Report:
             view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
             view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
             view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
+            if self.thread is not None:
+                url = await bot.get_channel(self.thread).jump_url
+                view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=1, url=url))
             view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
             view.stop()
@@ -254,6 +259,9 @@ class Report:
             view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
             view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
             view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+            if self.thread is not None:
+                url = await bot.get_channel(self.thread).jump_url
+                view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
             view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
             view.stop()
@@ -665,6 +673,9 @@ class Report:
                 view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=1))
                 view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
                 view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
+                if self.thread is not None:
+                    url = await ctx.bot.get_channel(self.thread).jump_url
+                    view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=1, url=url))
                 view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
                 await msg.edit(embed=await self.get_embed(), view=view)
                 view.stop()
@@ -672,6 +683,9 @@ class Report:
                 view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
                 view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
                 view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+                if self.thread is not None:
+                    url = await ctx.bot.get_channel(self.thread).jump_url
+                    view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
                 view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
                 await msg.edit(embed=await self.get_embed(), view=view)
                 view.stop()
@@ -687,7 +701,7 @@ class Report:
         if pend:
             await self.notify_subscribers(ctx.bot, f"Report resolved - a patch is pending.")
         else:
-            await self.notify_subscribers(ctx.bot, f"Report closed.")
+            await self.notify_subscribers(ctx.bot, f"Report resolved.")
 
         if msg:
             await self.addnote(ctx.interaction.user.id, f"Resolved - {msg}", ctx, serverId)
@@ -707,6 +721,12 @@ class Report:
                 await GitHubClient.get_instance().label_issue(self.repo, self.github_issue,
                                                               self.get_labels() + list(extra_labels))
             await GitHubClient.get_instance().close_issue(self.repo, self.github_issue)
+
+        if self.thread is not None:
+            channel = await ctx.bot.get_channel(self.thread)
+            name = channel.name
+            await channel.edit(name=f"[Resolved] - {name}", auto_archive_duration=1440)
+            await channel.send(f"{msg}\n\nThis thread will now automatically archive itself in 1 day.")
 
         if pend:
             await self.pend()

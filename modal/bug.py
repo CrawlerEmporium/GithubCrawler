@@ -2,13 +2,12 @@ import discord
 from discord import InputTextStyle, Interaction, ChannelType
 from discord.ui import Modal, InputText
 
-from crawler_utilities.cogs.stats import track_google_analytics_event
 from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
 from models.attachment import Attachment
 from models.questions import Questionaire
 from models.reports import Report
 import utils.globals as GG
-from utils.reportglobals import getAdmissionSuccessfulEmbed, finishReportCreation
+from utils.reportglobals import finishReportCreation
 
 
 class Bug(Modal):
@@ -36,6 +35,7 @@ class Bug(Modal):
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
         title = None
+        thread = None
         for child in self.children:
             if child.row == 0:
                 title = child.value
@@ -75,7 +75,7 @@ class Bug(Modal):
 
         report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=True,
-                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker)
+                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None)
 
         if interaction.guild_id in GG.SERVERS:
             if self.repo is not None:
@@ -83,4 +83,7 @@ class Bug(Modal):
 
         reportMessage = await report.setup_message(self.bot, self.interaction.guild_id, report.trackerId)
 
-        await finishReportCreation(self, interaction, report, reportMessage, requestChannel, True)
+        if thread is not None:
+            await finishReportCreation(self, interaction, report, reportMessage, requestChannel, True, jumpUrl)
+        else:
+            await finishReportCreation(self, interaction, report, reportMessage, requestChannel, True)
