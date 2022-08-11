@@ -1,22 +1,17 @@
-import asyncio
-
 import discord
 import motor.motor_asyncio
-
-import utils.globals as GG
-
-from crawler_utilities.handlers import logger
 from os import listdir
 from os.path import isfile, join
 from discord.ext import commands
 
 from utils.functions import loadGithubServers
 
-log = logger.logger
+from utils import globals as GG
+log = GG.log
 
 MDB = motor.motor_asyncio.AsyncIOMotorClient(GG.MONGODB)['issuesettings']
 
-version = "3.0.0"
+version = "3.1.0"
 SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '*'
