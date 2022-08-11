@@ -134,7 +134,7 @@ def loadCogs():
 def loadCrawlerUtilitiesCogs():
     cu_event_extensions = ["errors", "joinLeave", "settings"]
     cu_event_folder = "crawler_utilities.events"
-    cu_cogs_extensions = ["flare", "help"]
+    cu_cogs_extensions = ["flare", "help", "stats"]
     cu_cogs_folder = "crawler_utilities.cogs"
 
     i = 0
@@ -164,6 +164,6 @@ def loadCrawlerUtilitiesCogs():
 
 if __name__ == "__main__":
     bot.state = "run"
-    loadCogs()
     loadCrawlerUtilitiesCogs()
+    loadCogs()
     bot.run(bot.token)
