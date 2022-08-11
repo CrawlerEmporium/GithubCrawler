@@ -250,7 +250,7 @@ class Report:
             view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
             view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
             if self.thread is not None:
-                url = await bot.get_channel(self.thread).jump_url
+                url = await bot.fetch_channel(self.thread).jump_url
                 view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=1, url=url))
             view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
@@ -260,7 +260,7 @@ class Report:
             view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
             view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
             if self.thread is not None:
-                url = await bot.get_channel(self.thread).jump_url
+                url = await bot.fetch_channel(self.thread).jump_url
                 view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
             view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
             report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
@@ -674,7 +674,7 @@ class Report:
                 view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=1))
                 view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=1))
                 if self.thread is not None:
-                    url = await ctx.bot.get_channel(self.thread).jump_url
+                    url = await ctx.bot.fetch_channel(self.thread).jump_url
                     view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=1, url=url))
                 view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
                 await msg.edit(embed=await self.get_embed(), view=view)
@@ -684,7 +684,7 @@ class Report:
                 view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
                 view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
                 if self.thread is not None:
-                    url = await ctx.bot.get_channel(self.thread).jump_url
+                    url = await ctx.bot.fetch_channel(self.thread).jump_url
                     view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
                 view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
                 await msg.edit(embed=await self.get_embed(), view=view)
@@ -723,7 +723,7 @@ class Report:
             await GitHubClient.get_instance().close_issue(self.repo, self.github_issue)
 
         if self.thread is not None:
-            channel = await ctx.bot.get_channel(self.thread)
+            channel = await ctx.bot.fetch_channel(self.thread)
             name = channel.name
             await channel.edit(name=f"[Resolved] - {name}", auto_archive_duration=1440)
             await channel.send(f"{msg}\n\nThis thread will now automatically archive itself in 1 day.")
