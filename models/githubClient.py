@@ -2,9 +2,9 @@ import asyncio
 
 from github import Github
 from github.Repository import Repository
-from crawler_utilities.handlers import logger
+from utils import globals as GG
 
-log = logger.logger
+log = GG.log
 
 
 class GitHubClient:

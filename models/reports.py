@@ -13,11 +13,10 @@ from models.attachment import Attachment
 from utils.functions import paginate
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.githubClient import GitHubClient
-from crawler_utilities.handlers import logger
 import calendar
 import time
 
-log = logger.logger
+log = GG.log
 
 PRIORITY = {
     -2: "Patch Pending", -1: "Resolved",
