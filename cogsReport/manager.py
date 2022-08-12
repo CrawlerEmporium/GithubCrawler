@@ -94,6 +94,10 @@ class ManagerCommands(commands.Cog):
                 await report.edit_title(f"{report.title}", f"{report.report_id} ")
             await report.commit()
             await report.update(ctx, ctx.interaction.guild.id)
+            if report.thread:
+                channel = await ctx.bot.fetch_channel(report.thread)
+                await channel.edit(name=f"{report.report_id} - {name}")
+                await channel.send(f"Renamed {report.report_id} as {report.title}.")
             await ctx.respond(f"Renamed {report.report_id} as {report.title}.")
         else:
             await ctx.respond("You do not have the appropriate permissions to use this command.")
