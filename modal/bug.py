@@ -70,7 +70,7 @@ class Bug(Modal):
             message = await requestChannel.send(embed=embed)
             jumpUrl = message.jump_url
         else:
-            thread = await requestChannel.create_thread(name=f"{self.report_id} - {title if title is not None else self.children[0].value}", embed=embed)
+            thread = await requestChannel.create_thread(name=f"{self.report_id} - {title if title is not None else self.children[0].value}", embed=embed, content=f"<@{self.author.id}>")
             jumpUrl = thread.jump_url
 
         report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
