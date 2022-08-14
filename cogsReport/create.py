@@ -19,6 +19,7 @@ log = GG.log
 class CreateReport(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.get_identifiers.start()
         self.userCache = set()
 
     @tasks.loop(hours=1)
