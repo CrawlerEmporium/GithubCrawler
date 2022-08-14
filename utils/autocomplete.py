@@ -6,7 +6,7 @@ async def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
     identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.FEATURES))
     autoList = []
     for identifier in identifiers:
-        if identifier["alias"] is not None or identifier["alias"] != "":
+        if identifier["alias"] is not None and identifier["alias"] != "":
             autoList.append(identifier['alias'])
         else:
             autoList.append(identifier['identifier'])
@@ -17,7 +17,7 @@ async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
     identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.BUGS))
     autoList = []
     for identifier in identifiers:
-        if identifier["alias"] is not None or identifier["alias"] != "":
+        if identifier["alias"] is not None and identifier["alias"] != "":
             autoList.append(identifier['alias'])
         else:
             autoList.append(identifier['identifier'])
@@ -28,7 +28,7 @@ async def get_server_identifiers(ctx: discord.AutocompleteContext):
     identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.IDENTIFIERS))
     autoList = []
     for identifier in identifiers:
-        if identifier["alias"] is not None or identifier["alias"] != "":
+        if identifier["alias"] is not None and identifier["alias"] != "":
             autoList.append(identifier['alias'])
         else:
             autoList.append(identifier['identifier'])
