@@ -46,13 +46,13 @@ class Bug(Modal):
         embed.set_footer(text=f"Added by {self.author.name}")
         embed.title = title if title is not None else self.children[0].value
         if self.custom_questions is None:
-            if self.children[1].value is not None:
+            if self.children[1].value is not None and self.children[1].value != "":
                 embed.add_field(name="Steps to reproduce", value=self.children[1].value, inline=False)
                 request += f"Steps to reproduce\n{self.children[1].value}\n\n"
-            if self.children[2].value is not None:
+            if self.children[2].value is not None and self.children[2].value != "":
                 embed.add_field(name="Severity", value=self.children[2].value, inline=False)
                 request += f"Severity\n{self.children[2].value}\n\n"
-            if self.children[3].value is not None:
+            if self.children[3].value is not None and self.children[3].value != "":
                 embed.add_field(name="Additional information", value=self.children[3].value, inline=False)
                 request += f"Additional information\n{self.children[3].value}\n\n"
         else:
