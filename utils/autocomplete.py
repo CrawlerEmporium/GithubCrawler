@@ -2,30 +2,20 @@ import discord
 from utils import globals as GG
 
 
-async def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
-    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.FEATURES))
-    autoList = []
-    for identifier in identifiers:
-        if identifier["alias"] is not None and identifier["alias"] != "":
-            autoList.append(identifier['alias'])
-        else:
-            autoList.append(identifier['identifier'])
-    return autoList
+def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
+    get_identifiers(ctx, GG.FEATURES)
 
 
-async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
-    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.BUGS))
-    autoList = []
-    for identifier in identifiers:
-        if identifier["alias"] is not None and identifier["alias"] != "":
-            autoList.append(identifier['alias'])
-        else:
-            autoList.append(identifier['identifier'])
-    return autoList
+def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
+    get_identifiers(ctx, GG.BUGS)
 
 
-async def get_server_identifiers(ctx: discord.AutocompleteContext):
-    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.IDENTIFIERS))
+def get_server_identifiers(ctx: discord.AutocompleteContext):
+    get_identifiers(ctx, GG.IDENTIFIERS)
+
+
+def get_identifiers(ctx, lookup):
+    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, lookup))
     autoList = []
     for identifier in identifiers:
         if identifier["alias"] is not None and identifier["alias"] != "":
