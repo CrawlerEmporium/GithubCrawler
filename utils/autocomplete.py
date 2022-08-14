@@ -10,7 +10,7 @@ async def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
             autoList.append(identifier['alias'])
         else:
             autoList.append(identifier['identifier'])
-    return identifiers
+    return autoList
 
 
 async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
@@ -21,7 +21,7 @@ async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
             autoList.append(identifier['alias'])
         else:
             autoList.append(identifier['identifier'])
-    return identifiers
+    return autoList
 
 
 async def get_server_identifiers(ctx: discord.AutocompleteContext):
@@ -32,7 +32,7 @@ async def get_server_identifiers(ctx: discord.AutocompleteContext):
             autoList.append(identifier['alias'])
         else:
             autoList.append(identifier['identifier'])
-    return identifiers
+    return autoList
 
 
 async def get_server_reports(ctx: discord.AutocompleteContext):
