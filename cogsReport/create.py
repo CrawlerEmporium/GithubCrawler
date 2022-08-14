@@ -25,11 +25,9 @@ class CreateReport(commands.Cog):
     @tasks.loop(hours=1)
     async def get_identifiers(self):
         await self.bot.wait_until_ready()
-        log.info("[IN-MEMORY] Identifiers")
+        log.info("[IN-MEMORY] Reloading Identifiers")
         await GG.getIdentifiers()
-        print("features: ", GG.FEATURES)
-        print("bugs: ", GG.BUGS)
-        print("identifiers: ", GG.IDENTIFIERS)
+        log.info("[IN-MEMORY] Done Reloading Identifiers")
 
     @slash_command(name="questionnaire")
     @permissions.guild_only()
