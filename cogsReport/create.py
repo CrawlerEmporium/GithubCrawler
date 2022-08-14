@@ -27,6 +27,9 @@ class CreateReport(commands.Cog):
         await self.bot.wait_until_ready()
         log.info("[IN-MEMORY] Identifiers")
         await GG.getIdentifiers()
+        print("features: ", GG.FEATURES)
+        print("bugs: ", GG.BUGS)
+        print("identifiers: ", GG.IDENTIFIERS)
 
     @slash_command(name="questionnaire")
     @permissions.guild_only()
