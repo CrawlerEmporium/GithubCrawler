@@ -1,7 +1,7 @@
 import asyncio
 
 from discord import slash_command, Option, permissions, ForumChannel
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from crawler_utilities.utils.confirmation import BotConfirmation
 from modal.bug import Bug
@@ -12,6 +12,7 @@ from utils.checks import isManagerSlash
 from models.reports import get_next_report_num, ReportException
 from utils.reportglobals import IdentifierDoesNotExist
 from utils import globals as GG
+
 log = GG.log
 
 
@@ -19,6 +20,12 @@ class CreateReport(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.userCache = set()
+
+    @tasks.loop(hours=1)
+    async def get_identifiers(self):
+        await self.bot.wait_until_ready()
+        log.info("[IN-MEMORY] Identifiers")
+        await GG.getIdentifiers()
 
     @slash_command(name="questionnaire")
     @permissions.guild_only()

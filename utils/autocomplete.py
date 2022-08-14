@@ -3,37 +3,35 @@ from utils import globals as GG
 
 
 async def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
-    server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
-    identifiers = []
-    for identifier in server['listen']:
-        if identifier['type'] == "feature":
-            if identifier.get("alias", "") is not "":
-                identifiers.append(identifier['alias'])
-            else:
-                identifiers.append(identifier['identifier'])
+    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.FEATURES))
+    autoList = []
+    for identifier in identifiers:
+        if identifier.get("alias", "") is not "":
+            autoList.append(identifier['alias'])
+        else:
+            autoList.append(identifier['identifier'])
     return identifiers
 
 
 async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
-    server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
-    identifiers = []
-    for identifier in server['listen']:
-        if identifier['type'] == "bug":
-            if identifier.get("alias", "") is not "":
-                identifiers.append(identifier['alias'])
-            else:
-                identifiers.append(identifier['identifier'])
+    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.BUGS))
+    autoList = []
+    for identifier in identifiers:
+        if identifier.get("alias", "") is not "":
+            autoList.append(identifier['alias'])
+        else:
+            autoList.append(identifier['identifier'])
     return identifiers
 
 
 async def get_server_identifiers(ctx: discord.AutocompleteContext):
-    server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
-    identifiers = []
-    for identifier in server['listen']:
+    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, GG.IDENTIFIERS))
+    autoList = []
+    for identifier in identifiers:
         if identifier.get("alias", "") is not "":
-            identifiers.append(identifier['alias'])
+            autoList.append(identifier['alias'])
         else:
-            identifiers.append(identifier['identifier'])
+            autoList.append(identifier['identifier'])
     return identifiers
 
 
