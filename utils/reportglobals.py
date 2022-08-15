@@ -24,7 +24,8 @@ def getAllReports():
 
 async def finishReportCreation(self, interaction, report, reportMessage, requestChannel, bug=False, forumPost=None):
     await report.commit()
-    embed = await getAdmissionSuccessfulEmbed(self.report_id, self.author, bug, requestChannel, reportMessage, forumPost)
+    embed = await getAdmissionSuccessfulEmbed(self.report_id, self.author, bug, requestChannel, reportMessage,
+                                              forumPost)
     if self.author.dm_channel is not None:
         DM = self.author.dm_channel
     else:
@@ -33,8 +34,10 @@ async def finishReportCreation(self, interaction, report, reportMessage, request
         await DM.send(embed=embed)
     except discord.Forbidden:
         pass
-    await interaction.followup.send(f"Your submission ``{report.report_id}`` was accepted, please check your DM's for more information.\n"
-                                    f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.", ephemeral=True)
+    await interaction.followup.send(
+        f"Your submission ``{report.report_id}`` was accepted, please check your DM's for more information.\n"
+        f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.",
+        ephemeral=True)
 
 
 async def finishNoteCreation(self, interaction, embed):
@@ -46,8 +49,10 @@ async def finishNoteCreation(self, interaction, embed):
         await DM.send(embed=embed)
     except discord.Forbidden:
         pass
-    await interaction.followup.send(f"Your note for ``{self.report.report_id}`` was added, please check your DM's for more information.\n"
-                                    f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.", ephemeral=True)
+    await interaction.followup.send(
+        f"Your note for ``{self.report.report_id}`` was added, please check your DM's for more information.\n"
+        f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.",
+        ephemeral=True)
 
 
 async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, reportMessage, forumPost=None):
@@ -79,9 +84,10 @@ async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, re
 
 
 async def IdentifierDoesNotExist(ctx, identifier):
-    return await ctx.interaction.respond(f"The identifier ``{identifier}`` could not be found.\n"
-                                         f"If the identifier was shown in the option box, please contact the developer of the bot through the ``support`` command.\n\n"
-                                         f"Otherwise this command can only be used on servers that have the feature request functionality of the bot enabled.", ephemeral=True)
+    return await ctx.respond(f"The identifier ``{identifier}`` could not be found.\n"
+                             f"If the identifier was shown in the option box, please contact the developer of the bot through the ``support`` command.\n\n"
+                             f"Otherwise this command can only be used on servers that have the feature request functionality of the bot enabled.",
+                             ephemeral=True)
 
 
 async def ReportFromId(_id, ctx):

@@ -2,7 +2,7 @@ import csv
 import io
 
 import discord
-from discord import slash_command, permissions, Option
+from discord import Option, SlashCommandGroup, SlashCommandOptionType
 from discord.ext import commands
 
 import utils.globals as GG
@@ -12,6 +12,7 @@ from utils.checks import isManager
 from utils.functions import loadGithubServers, get_selection
 from models.reports import Report, PRIORITY
 from utils.reportglobals import IdentifierDoesNotExist
+from crawler_utilities.utils.confirmation import BotConfirmation
 
 log = GG.log
 
@@ -31,79 +32,66 @@ class Issue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(invoke_without_command=True)
-    @commands.guild_only()
-    async def issue(self, ctx):
-        prefix = await self.bot.get_server_prefix(ctx.message)
-        await ctx.send("**Valid options currently are:**\n"
-                       f"```{prefix}issue\n"
-                       f"{prefix}issue register\n"
-                       f"{prefix}issue channel <type> <identifier> [tracker=0] [channel=0]\n"
-                       f"{prefix}issue trackers\n"
-                       f"{prefix}issue intro <type>\n"
-                       f"{prefix}issue search <identifier> <keyword(s)>\n"
-                       f"{prefix}issue searchAll <identifier> <keyword(s)>\n"
-                       f"{prefix}issue remove <identifier>\n"
-                       f"{prefix}issue open <identifier>\n```")
+    issue = SlashCommandGroup("issue", "All commands that have effect on the issue tracker", checks=[commands.guild_only().predicate])
 
-    @issue.command(name='register')
-    @commands.guild_only()
-    @commands.has_permissions(administrator=True)
-    async def issueRegister(self, ctx):
-        guild = ctx.guild
+    @issue.command(name="enable")
+    @discord.default_permissions(
+        administrator=True,
+    )
+    async def enable(self, ctx):
+        """
+        Enables the features of IssueCrawler for this server.
+        """
+        guild = ctx.interaction.guild
         server = guild.id
         admin = guild.owner_id
         name = guild.name
         exist = await GG.MDB.Github.find_one({"server": server})
         if exist is None:
-            gh = Server(name, server, admin, None, [], 5)
+            gh = Server(name, server, admin)
             await GG.MDB.Github.insert_one(gh.to_dict())
             await loadGithubServers()
-            await ctx.send("Server was added to the database. You can now use the other commands.")
+            await ctx.respond("Server was successfully enabled.\nUse `\\issue new` to add a new listener to your server.")
         else:
-            await ctx.send("Server already exists in the database. Use the TODO command to check your info.")
+            await ctx.respond("Server was already enabled.")
 
-    @issue.command(name='channel')
-    @commands.guild_only()
-    @commands.has_permissions(administrator=True)
-    async def issueChannel(self, ctx, type: str, identifier: str, tracker: int = 0, channel: int = 0):
+    @issue.command(name='new')
+    @discord.default_permissions(
+        administrator=True,
+    )
+    async def new(self,
+                  ctx,
+                  type: Option(str, description="What type of listener do you want?", choices=TYPES, required=True),
+                  identifier: Option(str, description="Which identifier would you it to have?", min_length=3, max_length=6, required=True),
+                  tracker: Option(SlashCommandOptionType.channel, description="The channel you want your voting/overview to be posted in", required=False, default=None),
+                  channel: Option(SlashCommandOptionType.channel, description="The channel you want your bugs/features to be posted in", required=False, default=None)):
         """
-        Adds a new listener/tracker for the bot.
-        Usage:
-        type = 'bug' or 'feature'
-        identifier = what you want your prefix to be
-        tracker = OPTIONAL ChannelID of the channel you want as your posting channel, will create a new channel if not supplied.
-
-        channel = OPTIONAL ChannelID of the channel you want as your listening channel, will create a new channel if not supplied.
+        Adds a new listener/tracker to the bot.
         """
-        if type not in TYPES:
-            await ctx.send("Currently you can only use ``bug`` or ``feature``.")
-            return
-
+        await ctx.defer()
         # CHECK IDENTIFIER
         identifier = identifier.upper()
         exist = await GG.MDB.ReportNums.find_one({"key": identifier, "server": ctx.guild.id})
         if exist is not None:
             if exist['server'] != ctx.guild.id:
-                await ctx.send(
+                return await ctx.respond(
                     "This identifier is already in use, please select another one.")
-                return
         await GG.MDB.ReportNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
 
         # CREATE CHANNELS
-        if channel == 0:
+        if channel is None:
             channel = await ctx.guild.create_text_channel(f"{identifier}-listener")
         else:
             channel = self.bot.get_channel(channel)
 
-        if tracker == 0:
+        if tracker is None:
             tracker = await ctx.guild.create_text_channel(f"{identifier}-tracker")
         else:
             tracker = self.bot.get_channel(tracker)
 
         # ADD LISTENER TO THE SERVER
         if channel is not None and tracker is not None:
-            listener = Listen(channel=channel.id, tracker=tracker.id, identifier=identifier, type=type, repo=None, url="", alias="")
+            listener = Listen(channel=channel.id, tracker=tracker.id, identifier=identifier, type=type)
             data = await GG.MDB.Github.find_one({"server": ctx.guild.id})
             server = Server.from_data(data)
             listener = listener.to_dict()
@@ -116,100 +104,74 @@ class Issue(commands.Cog):
             await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
             await loadGithubServers()
         else:
-            await ctx.send("The given channel or tracker ID's are invalid.")
-            return
+            return await ctx.respond("The given channel or tracker ID's are invalid.")
 
-        await ctx.send(
-            f"Created (or added) {channel.mention} as Listening Channel\nCreated (or added) {tracker.mention} as Tracking Channel.\n"
-            f"It is using {identifier} as Identifier.")
-
-    @issue.command(name='intro')
-    @commands.guild_only()
-    async def issueIntro(self, ctx, type, milestone):
-        type = type.lower()
-        if type == 'bug':
-            if milestone == 'milestone':
-                await ctx.send(
-                    "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
-                    "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Milestone**: \n\n**Severity**: Trivial (typos, "
-                    "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
-                    "impact) / High (a broken feature, major functional impact) / Critical (bot crash, extremely major "
-                    "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
-                    "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
-                    "trees.```")
-            else:
-                await ctx.send(
-                    "If you have a bug, you can use the below posted template. Otherwise the bot will **NOT** pick it "
-                    "up.\n\n```**What is the bug?**: A quick description of the bug.\n\n**Severity**: Trivial (typos, "
-                    "etc) / Low (formatting issues, things that don't impact operation) / Medium (minor functional "
-                    "impact) / High (a broken feature, major functional impact) / Critical (bot crash, extremely major "
-                    "functional impact)\n\n**Steps to reproduce**: How the bug occured, and how to reproduce it. I cannot "
-                    "bugfix without this.\n\n**Context**: The command run that the bug occured in and any choice "
-                    "trees.```")
-        elif type == 'feature':
-            if milestone == 'milestone':
-                await ctx.send(
-                    "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
-                    "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
-                    "short and to the point.\n```**Feature Request:** Your request\n\n**Milestone**: n\n**Extra Information**\n**Who would "
-                    "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
-                    "others```")
-            else:
-                await ctx.send(
-                    "Want to suggest something? Use the template below, otherwise the bot will **NOT** pick it up and do "
-                    "**NOT** change the first line, it needs to start with ``**Feature Request:**``.\n\nKeep the title "
-                    "short and to the point.\n```**Feature Request:** Your request\n\n**Extra Information**\n**Who would "
-                    "use it?**\n**How would it work?**\n**Why should this be added?** Justify why you think it'd help "
-                    "others```")
-        else:
-            await ctx.send("Proper command usage is ``issue intro bug`` or ``issue intro feature``.\n"
-                           "If you want the add the default milestone line, you can use ``issue intro bug milestone`` or ``issue intro feature milestone``")
+        await ctx.respond(
+            f"Created (or added) {channel.mention} as Posting Channel\nCreated (or added) {tracker.mention} as Tracking Channel.\n"
+            f"It is using {identifier} as it's Identifier.")
 
     @issue.command(name='trackers')
-    @commands.guild_only()
     async def issueTrackers(self, ctx):
+        """
+        List all the currently enabled trackers for this server.
+        """
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         server = Server.from_data(server)
-        channels = "You have the following channels setup:\n\n"
+        channels = "This server has the following channels setup:\n\n"
         for listen in server.listen:
             channels += f"Listening to: {self.bot.get_channel(listen.channel).mention}\n" \
                         f"Posting to: {self.bot.get_channel(listen.tracker).mention}\n" \
                         f"Using Identifier: ``{listen.identifier}``\n\n"
-        await ctx.send(channels)
+        await ctx.respond(channels)
 
     @issue.command(name='remove')
-    @commands.guild_only()
-    @commands.has_permissions(administrator=True)
-    async def issueRemove(self, ctx, identifier):
+    @discord.default_permissions(
+        administrator=True,
+    )
+    async def issueRemove(self, ctx, identifier: Option(str, "Which identifier would you like to delete?", autocomplete=get_server_identifiers)):
+        await ctx.defer()
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         check = await GG.MDB.ReportNums.find_one({"key": identifier.upper(), "server": ctx.guild.id})
 
         if check is not None:
-            oldListen = []
-            for x in server['listen']:
-                if x['identifier'] != identifier.upper():
-                    oldListen.append(x)
+            confirmation = BotConfirmation(ctx, 0x012345)
+            await confirmation.confirm(
+                f"You are going to permanently delete {identifier}, are you sure?",
+                channel=ctx.channel)
+            if confirmation.confirmed:
+                await confirmation.update(f"Confirmed, deleting {identifier} ...", color=0x55ff55)
+                ch = None
+                tr = None
+                oldListen = []
+                for x in server['listen']:
+                    if x['identifier'] != identifier.upper():
+                        oldListen.append(x)
+                    else:
+                        ch = self.bot.get_channel(x['channel'])
+                        tr = self.bot.get_channel(x['tracker'])
+                server['listen'] = oldListen
+                await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
+                await GG.MDB.ReportNums.delete_one({"key": identifier.upper(), "server": ctx.guild.id})
+                await confirmation.quit()
+                if ch is not None and tr is not None:
+                    return await ctx.respond(
+                        f"``{identifier}`` removed from the database.\n\nYou can now safely remove these channels:\nListener: {ch.mention}, Tracker: {tr.mention}.\n"
+                        f"**WARNING**: Deleting these channels could cause the bot to malfunction if you still have other Identifiers linked to these channels. \n"
+                        f"Be **VERY** careful before deleting these channels and triple-check before doing so...")
+                elif ch is not None:
+                    return await ctx.respond(
+                        f"``{identifier}`` removed from the database.\nIt's connected listing channel was not found.")
+                elif tr is not None:
+                    return await ctx.respond(
+                        f"``{identifier}`` removed from the database.\nIt's connected tracking channel was not found.")
                 else:
-                    ch = self.bot.get_channel(x['channel'])
-                    tr = self.bot.get_channel(x['tracker'])
-            server['listen'] = oldListen
-            await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
-            await GG.MDB.ReportNums.delete_one({"key": identifier.upper(), "server": ctx.guild.id})
-            if ch is not None and tr is not None:
-                await ctx.send(
-                    f"``{identifier}`` removed from the database.\n\nYou can now safely remove these channels:\nListener: {ch.mention}, Tracker: {tr.mention}.\n"
-                    f"**WARNING**: Deleting these channels could cause the bot to malfunction if you still have other Identifiers linked to these channels. \n"
-                    f"Be **VERY** careful before deleting these channels and triple-check before doing so...")
-            elif ch is not None:
-                await ctx.send(
-                    f"``{identifier}`` removed from the database.\nIt's connected listing channel was not found.")
-            elif tr is not None:
-                await ctx.send(
-                    f"``{identifier}`` removed from the database.\nIt's connected tracking channel was not found.")
+                    return await ctx.respond(
+                        f"``{identifier}`` removed from the database.\nIt's connected channels were not found.")
             else:
-                await ctx.send(f"``{identifier}`` removed from the database.\nIt's connected channels were not found.")
+                await confirmation.quit()
+                return await ctx.respond("Deletion was canceled", delete_after=5)
         else:
-            await ctx.send(f"``{identifier}`` not found...")
+            await ctx.respond(f"``{identifier}`` not found...")
 
     @issue.command(name='search')
     @commands.guild_only()
@@ -308,8 +270,7 @@ class Issue(commands.Cog):
                 else:
                     await ctx.send(f"No (open) reports found with the {identifier} identifier.")
 
-    @slash_command(name="identifier")
-    @permissions.guild_only()
+    @issue.command(name="alias")
     async def aliasidentifier(self,
                               ctx,
                               identifier: Option(str, "For which identifier do you want to change the alias?", autocomplete=get_server_identifiers),
