@@ -1,7 +1,7 @@
 import typing
 
 import discord
-from discord import SlashCommandGroup, Option
+from discord import SlashCommandGroup, Option, AllowedMentions
 from discord.ext import commands
 
 from utils import globals as GG
@@ -56,7 +56,7 @@ class Manager(commands.Cog):
                     channels += f"{x['user']}\n"
                 else:
                     channels += f"{user.mention}\n"
-            await ctx.respond(channels)
+            await ctx.respond(channels, allowed_mention=AllowedMentions().none())
 
 
 def setup(bot):
