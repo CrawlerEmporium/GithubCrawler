@@ -5,6 +5,7 @@ from discord import SlashCommandGroup, Option
 from discord.ext import commands
 
 from utils import globals as GG
+
 log = GG.log
 
 TYPES = ['bug', 'feature']
@@ -15,7 +16,7 @@ class Manager(commands.Cog):
         self.bot = bot
 
     manager = SlashCommandGroup("manager", "All commands that have effect on managers for your server",
-                              checks=[commands.guild_only().predicate])
+                                checks=[commands.guild_only().predicate])
 
     @manager.command(name='add')
     @discord.default_permissions(
