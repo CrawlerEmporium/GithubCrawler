@@ -8,7 +8,7 @@ from discord.ext import commands
 import utils.globals as GG
 from models.server import Server, Listen
 from utils.autocomplete import get_server_identifiers
-from utils.checks import isManager
+from utils.checks import isManager, isManagerSlash
 from utils.functions import loadGithubServers, get_selection
 from models.reports import Report, PRIORITY
 from utils.reportglobals import IdentifierDoesNotExist
@@ -32,7 +32,8 @@ class Issue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    issue = SlashCommandGroup("issue", "All commands that have effect on the issue tracker", checks=[commands.guild_only().predicate])
+    issue = SlashCommandGroup("issue", "All commands that have effect on the issue tracker",
+                              checks=[commands.guild_only().predicate])
 
     @issue.command(name="enable")
     @discord.default_permissions(
@@ -51,7 +52,8 @@ class Issue(commands.Cog):
             gh = Server(name, server, admin)
             await GG.MDB.Github.insert_one(gh.to_dict())
             await loadGithubServers()
-            await ctx.respond("Server was successfully enabled.\nUse `\\issue new` to add a new listener to your server.")
+            await ctx.respond(
+                "Server was successfully enabled.\nUse `\\issue new` to add a new listener to your server.")
         else:
             await ctx.respond("Server was already enabled.")
 
@@ -62,9 +64,14 @@ class Issue(commands.Cog):
     async def new(self,
                   ctx,
                   type: Option(str, description="What type of listener do you want?", choices=TYPES, required=True),
-                  identifier: Option(str, description="Which identifier would you it to have?", min_length=3, max_length=6, required=True),
-                  tracker: Option(SlashCommandOptionType.channel, description="The channel you want your voting/overview to be posted in", required=False, default=None),
-                  channel: Option(SlashCommandOptionType.channel, description="The channel you want your bugs/features to be posted in", required=False, default=None)):
+                  identifier: Option(str, description="Which identifier would you it to have?", min_length=3,
+                                     max_length=6, required=True),
+                  tracker: Option(SlashCommandOptionType.channel,
+                                  description="The channel you want your voting/overview to be posted in",
+                                  required=False, default=None),
+                  channel: Option(SlashCommandOptionType.channel,
+                                  description="The channel you want your bugs/features to be posted in", required=False,
+                                  default=None)):
         """
         Adds a new listener/tracker to the bot.
         """
@@ -111,7 +118,7 @@ class Issue(commands.Cog):
             f"It is using {identifier} as it's Identifier.")
 
     @issue.command(name='trackers')
-    async def issueTrackers(self, ctx):
+    async def trackers(self, ctx):
         """
         List all the currently enabled trackers for this server.
         """
@@ -128,7 +135,9 @@ class Issue(commands.Cog):
     @discord.default_permissions(
         administrator=True,
     )
-    async def issueRemove(self, ctx, identifier: Option(str, "Which identifier would you like to delete?", autocomplete=get_server_identifiers)):
+    async def remove(self, ctx, identifier: Option(str, "Which identifier would you like to delete?",
+                                                   autocomplete=get_server_identifiers)):
+        """Deletes an identifier"""
         await ctx.defer()
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         check = await GG.MDB.ReportNums.find_one({"key": identifier.upper(), "server": ctx.guild.id})
@@ -174,34 +183,21 @@ class Issue(commands.Cog):
             await ctx.respond(f"``{identifier}`` not found...")
 
     @issue.command(name='search')
-    @commands.guild_only()
-    async def issueSearch(self, ctx, identifier, *, keywords):
-        allReports = await findInReports(GG.MDB.Reports, identifier, keywords)
-        server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-        trackers = []
-        for x in server['listen']:
-            trackers.append(x['tracker'])
-        results = []
-        for report in allReports:
-            if report['trackerId'] in trackers and report['severity'] != -1:
-                results.append(report)
-        if len(results) > 0:
-            results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
-            selection = await get_selection(ctx, results, force_select=True)
-            if selection is not None:
-                report = await Report.from_id(selection['report_id'], ctx.guild.id)
-                if report is not None:
-                    await ctx.send(embed=await report.get_embed(True, ctx))
-                else:
-                    await ctx.send("Selected report not found.")
-            else:
-                return
-        else:
-            await ctx.send("No results found, please try with a different keyword.")
+    async def search(self, ctx,
+                     identifier: Option(str, "In which identifier would you like to search?", autocomplete=get_server_identifiers),
+                     keywords: Option(str, "What do you want to search?", autocomplete=get_server_identifiers)):
+        """Searches in all open reports for a specified identifier"""
+        await self.searchInReports(ctx, identifier, keywords)
 
-    @issue.command(name='searchAll')
-    @commands.guild_only()
-    async def issueSearchAll(self, ctx, identifier, *, keywords):
+    @issue.command(name='searchall')
+    async def searchall(self, ctx,
+                        identifier: Option(str, "In which identifier would you like to search?", autocomplete=get_server_identifiers),
+                        keywords: Option(str, "What do you want to search?", autocomplete=get_server_identifiers)):
+        """Searches in all reports for a specified identifier"""
+        await self.searchInReports(ctx, identifier, keywords, False)
+
+    async def searchInReports(self, ctx, identifier, keywords, open=True):
+        await ctx.defer(ephemeral=True)
         allReports = await findInReports(GG.MDB.Reports, identifier, keywords)
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         trackers = []
@@ -209,74 +205,79 @@ class Issue(commands.Cog):
             trackers.append(x['tracker'])
         results = []
         for report in allReports:
-            if report['trackerId'] in trackers:
-                results.append(report)
+            if open:
+                if report['trackerId'] in trackers and report['severity'] != -1:
+                    results.append(report)
+            else:
+                if report['trackerId'] in trackers:
+                    results.append(report)
         if len(results) > 0:
             results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
             selection = await get_selection(ctx, results, force_select=True)
             if selection is not None:
                 report = await Report.from_id(selection['report_id'], ctx.guild.id)
                 if report is not None:
-                    await ctx.send(embed=await report.get_embed(True, ctx))
+                    await ctx.respond(embed=await report.get_embed(True, ctx))
                 else:
-                    await ctx.send("Selected report not found.")
+                    await ctx.respond("Selected report not found.", ephemeral=True)
             else:
-                return
+                await ctx.respond("Selection timed out, please try again.", ephemeral=True)
         else:
-            await ctx.send("No results found, please try with a different keyword.")
+            await ctx.respond("No results found, please try with a different keyword.", ephemeral=True)
 
     @issue.command(name='open')
-    @commands.guild_only()
-    async def issueOpen(self, ctx, identifier=None):
-        if await isManager(ctx):
-            if identifier is None:
-                server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-                identString = ""
-                for x in server['listen']:
-                    identString += f"``{x['identifier']}``, "
-                await ctx.send(
-                    f"Please supply me with an identifier for this server.\nThis server has the following identifiers:\n{identString[:-2]}")
-            else:
-                server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-                trackingChannels = []
-                for x in server['listen']:
-                    trackingChannels.append(x['tracker'])
-                query = {"report_id": {"$regex": f"{identifier}"}, "trackerId": {"$in": trackingChannels},
-                         "severity": {"$ne": -1}}
-                reports = await GG.MDB.Reports.find(query,
-                                                    {"_id": 0, "reporter": 0, "message": 0, "subscribers": 0, "jumpUrl": 0,
-                                                     "attachments": 0, "github_issue": 0, "github_repo": 0, "trackerId": 0,
-                                                     "milestone": 0}).to_list(length=None)
-                if len(reports) > 0:
-                    f = io.StringIO()
+    async def issueOpen(self, ctx, identifier: Option(str, "Which identifier would you like to return?", autocomplete=get_server_identifiers)):
+        """Lists all open reports of a specified identifier and returns a csv file"""
+        if not await isManagerSlash(ctx.interaction.user.id, ctx.interaction.guild_id):
+            return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
+        else:
+            server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
+            trackingChannels = []
+            for x in server['listen']:
+                trackingChannels.append(x['tracker'])
+            query = {"report_id": {"$regex": f"{identifier}"}, "trackerId": {"$in": trackingChannels},
+                     "severity": {"$ne": -1}}
+            reports = await GG.MDB.Reports.find(query,
+                                                {"_id": 0, "reporter": 0, "message": 0, "subscribers": 0,
+                                                 "jumpUrl": 0,
+                                                 "attachments": 0, "github_issue": 0, "github_repo": 0,
+                                                 "trackerId": 0,
+                                                 "milestone": 0}).to_list(length=None)
+            if len(reports) > 0:
+                f = io.StringIO()
 
+                csv.writer(f).writerow(
+                    ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug",
+                     "assigned"])
+                for row in reports:
+                    assigned = row.get('assignee', False)
+                    if assigned is not False:
+                        assigned = True
                     csv.writer(f).writerow(
-                        ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug", "assigned"])
-                    for row in reports:
-                        assigned = row.get('assignee', False)
-                        if assigned is not False:
-                            assigned = True
-                        csv.writer(f).writerow(
-                            [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"), row["verification"],
-                             row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"], assigned])
-                    f.seek(0)
+                        [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"),
+                         row["verification"],
+                         row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"], assigned])
+                f.seek(0)
 
-                    buffer = io.BytesIO()
-                    buffer.write(f.getvalue().encode())
-                    buffer.seek(0)
+                buffer = io.BytesIO()
+                buffer.write(f.getvalue().encode())
+                buffer.seek(0)
 
-                    file = discord.File(buffer, filename=f"Open Reports for {identifier}.csv")
-                    await ctx.send(file=file)
-                else:
-                    await ctx.send(f"No (open) reports found with the {identifier} identifier.")
+                file = discord.File(buffer, filename=f"Open Reports for {identifier}.csv")
+                await ctx.respond(file=file)
+            else:
+                await ctx.respond(f"No (open) reports found with the {identifier} identifier.")
 
     @issue.command(name="alias")
-    async def aliasidentifier(self,
-                              ctx,
-                              identifier: Option(str, "For which identifier do you want to change the alias?", autocomplete=get_server_identifiers),
-                              alias: Option(str, "What alias do you want to give the identifier?")):
+    async def alias(self,
+                    ctx,
+                    identifier: Option(str, "For which identifier do you want to change the alias?",
+                                       autocomplete=get_server_identifiers),
+                    alias: Option(str, "What alias do you want to give the identifier?")):
         """Adds an alias for your identifier, for specification what an identifier does."""
-        if await isManager(ctx):
+        if not await isManagerSlash(ctx.interaction.user.id, ctx.interaction.guild_id):
+            return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
+        else:
             listen = None
             server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
 
