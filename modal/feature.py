@@ -7,23 +7,24 @@ from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.attachment import Attachment
 from models.questions import Questionaire
-from models.reports import Report
+from models.reports import Report, get_next_report_num, ReportException
 from utils.reportglobals import finishReportCreation
 
 
 class Feature(Modal):
-    def __init__(self, identifier, bot, interaction, report_id, author, repo, tracker, channel,
+    def __init__(self, identifier, bot, interaction, author, repo, tracker, channel,
                  custom_questions: Questionaire = None) -> None:
         super().__init__(title=f"{identifier}: Feature Request")
 
         self.bot = bot
         self.interaction = interaction
-        self.report_id = report_id
         self.author = author
         self.repo = repo
         self.tracker = tracker
         self.channel = channel
         self.custom_questions = custom_questions
+        self.identifier = identifier
+        self.report_id = None
 
         if custom_questions is not None:
             for question in custom_questions.questions:
@@ -82,6 +83,13 @@ class Feature(Modal):
                     label = question['text']
                     await splitDiscordEmbedField(embed, child.value, label)
                     request += f"{label}\n{child.value}\n\n"
+
+        if self.identifier is not None:
+            try:
+                report_num = await get_next_report_num(self.identifier, interaction.guild_id)
+                self.report_id = f"{self.identifier}-{report_num}"
+            except ReportException as e:
+                return await interaction.response.send_message(e, ephemeral=True)
 
         if requestChannel.type != ChannelType.forum:
             message = await requestChannel.send(embed=embed)

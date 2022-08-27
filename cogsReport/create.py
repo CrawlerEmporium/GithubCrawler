@@ -104,16 +104,8 @@ class CreateReport(commands.Cog):
         if not exists:
             return await IdentifierDoesNotExist(ctx, identifier)
 
-        if identifier is not None:
-            try:
-                report_num = await get_next_report_num(identifier, ctx.guild.id)
-            except ReportException as e:
-                return await ctx.interaction.response.send_message(e, ephemeral=True)
-
-        report_id = f"{identifier}-{report_num}"
-
         questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
-        modal = Feature(identifier, self.bot, ctx.interaction, report_id, ctx.interaction.user, repo, tracker, channel, questionaire)
+        modal = Feature(identifier, self.bot, ctx.interaction, ctx.interaction.user, repo, tracker, channel, questionaire)
         await ctx.interaction.response.send_modal(modal)
 
     @slash_command(name="bugreport")
@@ -135,16 +127,8 @@ class CreateReport(commands.Cog):
         if not exists:
             return await IdentifierDoesNotExist(ctx, identifier)
 
-        if identifier is not None:
-            try:
-                report_num = await get_next_report_num(identifier, ctx.guild.id)
-            except ReportException as e:
-                return await ctx.interaction.response.send_message(e, ephemeral=True)
-
-        report_id = f"{identifier}-{report_num}"
-
         questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
-        modal = Bug(identifier, self.bot, ctx.interaction, report_id, ctx.interaction.user, repo, tracker, channel, questionaire)
+        modal = Bug(identifier, self.bot, ctx.interaction, ctx.interaction.user, repo, tracker, channel, questionaire)
         await ctx.interaction.response.send_modal(modal)
 
 
