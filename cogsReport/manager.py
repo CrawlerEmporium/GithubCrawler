@@ -1,7 +1,7 @@
 import copy
 
 import discord
-from discord import slash_command, Option, permissions
+from discord import slash_command, Option, permissions, ChannelType
 from discord.ext import commands
 
 from crawler_utilities.cogs.stats import track_google_analytics_event
@@ -58,12 +58,14 @@ class ManagerCommands(commands.Cog):
             for iden in server['listen']:
                 if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
                     identifier = iden['identifier'].upper()
+                    channel = iden['channel']
                     exists = True
 
             if not exists:
                 return await IdentifierDoesNotExist(ctx, identifier)
 
             id_num = await get_next_report_num(identifier, ctx.interaction.guild.id)
+            requestChannel = self.bot.get_channel(channel)
 
             report = await ReportFromId(_id, ctx)
             new_report = copy.copy(report)
@@ -72,6 +74,12 @@ class ManagerCommands(commands.Cog):
 
             new_report.report_id = f"{identifier}-{id_num}"
             msg = await self.bot.get_channel(report.trackerId).send(embed=await new_report.get_embed())
+
+            if requestChannel.type == ChannelType.forum:
+                embed = await new_report.get_embed()
+                thread = await requestChannel.create_thread(name=f"{new_report.report_id} - {new_report.title}", embed=embed, content=f"<@{new_report.reporter}>")
+                new_report.jumpUrl = thread.jump_url
+                new_report.thread = thread.id
 
             new_report.message = msg.id
             if new_report.github_issue:
