@@ -3,15 +3,15 @@ from utils import globals as GG
 
 
 async def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
-    await get_identifiers(ctx, GG.FEATURES)
+    return await get_identifiers(ctx, GG.FEATURES)
 
 
 async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
-    await get_identifiers(ctx, GG.BUGS)
+    return await get_identifiers(ctx, GG.BUGS)
 
 
 async def get_server_identifiers(ctx: discord.AutocompleteContext):
-    await get_identifiers(ctx, GG.IDENTIFIERS)
+    return await get_identifiers(ctx, GG.IDENTIFIERS)
 
 
 async def get_identifiers(ctx, lookup):
