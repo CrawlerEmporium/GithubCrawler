@@ -2,19 +2,19 @@ import discord
 from utils import globals as GG
 
 
-def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
-    get_identifiers(ctx, GG.FEATURES)
+async def get_server_feature_identifiers(ctx: discord.AutocompleteContext):
+    await get_identifiers(ctx, GG.FEATURES)
 
 
-def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
-    get_identifiers(ctx, GG.BUGS)
+async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
+    await get_identifiers(ctx, GG.BUGS)
 
 
-def get_server_identifiers(ctx: discord.AutocompleteContext):
-    get_identifiers(ctx, GG.IDENTIFIERS)
+async def get_server_identifiers(ctx: discord.AutocompleteContext):
+    await get_identifiers(ctx, GG.IDENTIFIERS)
 
 
-def get_identifiers(ctx, lookup):
+async def get_identifiers(ctx, lookup):
     identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, lookup))
     autoList = []
     for identifier in identifiers:
