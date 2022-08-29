@@ -152,7 +152,9 @@ class ManagerCommands(commands.Cog):
     async def assigned(self, ctx, member: Option(discord.Member, "For which user?")):
         """Get a list of assigned reports from a member. (or yourself)"""
         await ctx.respond("Gathering information...", delete_after=5)
-        if await isManager(ctx):
+        if ctx.interaction.user.id == member.id:
+            await self.getAssignedReports(ctx, member)
+        elif await isManager(ctx):
             await self.getAssignedReports(ctx, member)
         else:
             return await ctx.respond("Only managers can request the assigned list for other people.")
