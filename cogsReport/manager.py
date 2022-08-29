@@ -151,14 +151,13 @@ class ManagerCommands(commands.Cog):
     @permissions.guild_only()
     async def assigned(self, ctx, member: Option(discord.Member, "For which user?")):
         """Get a list of assigned reports from a member. (or yourself)"""
-        async with ctx.channel.typing():
-            msg = (await ctx.respond("Gathering information...")).message
-            if await isManager(ctx):
-                await self.getAssignedReports(ctx, member, msg)
-            else:
-                return await ctx.respond("Only managers can request the assigned list for other people.")
+        await ctx.respond("Gathering information...", delete_after=5)
+        if await isManager(ctx):
+            await self.getAssignedReports(ctx, member)
+        else:
+            return await ctx.respond("Only managers can request the assigned list for other people.")
 
-    async def getAssignedReports(self, ctx, member, msg = None):
+    async def getAssignedReports(self, ctx, member):
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild.id})
         trackers = []
         for listen in server['listen']:
@@ -193,7 +192,7 @@ class ManagerCommands(commands.Cog):
                 embed.set_author(name=f'Assigned open tickets for {member.nick if member.nick is not None else member.name}', icon_url=member.display_avatar.url)
                 embedList.append(embed)
 
-            paginator = BotEmbedPaginator(ctx, embedList, msg)
+            paginator = BotEmbedPaginator(ctx, embedList)
             await paginator.run()
         else:
             return await ctx.respond(f"{member.mention} doesn't have any assigned reports on this server.")

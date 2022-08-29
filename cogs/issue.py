@@ -1,8 +1,10 @@
 import csv
 import io
+from typing import Union
 
 import discord
 from discord import Option, SlashCommandGroup, SlashCommandOptionType
+from discord.abc import GuildChannel
 from discord.ext import commands
 
 import utils.globals as GG
@@ -66,10 +68,10 @@ class Issue(commands.Cog):
                   type: Option(str, description="What type of listener do you want?", choices=TYPES, required=True),
                   identifier: Option(str, description="Which identifier would you it to have?", min_length=3,
                                      max_length=6, required=True),
-                  tracker: Option(SlashCommandOptionType.channel,
+                  tracker: Option(GuildChannel,
                                   description="The channel you want your voting/overview to be posted in",
                                   required=False, default=None),
-                  channel: Option(SlashCommandOptionType.channel,
+                  channel: Option(GuildChannel,
                                   description="The channel you want your bugs/features to be posted in", required=False,
                                   default=None)):
         """
@@ -81,20 +83,14 @@ class Issue(commands.Cog):
         exist = await GG.MDB.ReportNums.find_one({"key": identifier, "server": ctx.guild.id})
         if exist is not None:
             if exist['server'] != ctx.guild.id:
-                return await ctx.respond(
-                    "This identifier is already in use, please select another one.")
-        await GG.MDB.ReportNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
+                return await ctx.respond("This identifier is already in use, please select another one.")
 
         # CREATE CHANNELS
         if channel is None:
             channel = await ctx.guild.create_text_channel(f"{identifier}-listener")
-        else:
-            channel = self.bot.get_channel(channel)
 
         if tracker is None:
             tracker = await ctx.guild.create_text_channel(f"{identifier}-tracker")
-        else:
-            tracker = self.bot.get_channel(tracker)
 
         # ADD LISTENER TO THE SERVER
         if channel is not None and tracker is not None:
@@ -109,6 +105,7 @@ class Issue(commands.Cog):
             server['listen'] = oldListen
             server['listen'].append(listener)
             await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
+            await GG.MDB.ReportNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
             await loadGithubServers()
         else:
             return await ctx.respond("The given channel or tracker ID's are invalid.")
