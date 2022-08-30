@@ -2,6 +2,7 @@ import discord.utils
 from discord.ext import commands
 
 import utils.globals as GG
+from utils.functions import get_settings
 
 
 def author_is_owner(ctx):
@@ -51,25 +52,13 @@ def admin_or_permissions(**perms):
 async def isManager(ctx):
     manager = await GG.MDB.Managers.find_one({"user": ctx.interaction.user.id, "server": ctx.guild.id})
     if manager is None:
-        manager = False
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         if ctx.interaction.user.id == server['admin']:
-            manager = True
+            return True
+        else:
+            return False
     else:
-        manager = True
-    return manager
-
-
-async def isManagerSlash(user, guild):
-    manager = await GG.MDB.Managers.find_one({"user": user, "server": guild})
-    if manager is None:
-        manager = False
-        server = await GG.MDB.Github.find_one({"server": guild})
-        if user == server['admin']:
-            manager = True
-    else:
-        manager = True
-    return manager
+        return True
 
 
 def isAssignee(ctx, report):
@@ -81,7 +70,7 @@ def isAssignee(ctx, report):
 
 async def isReporter(ctx, report):
     if ctx.interaction.user.id == report.reporter:
-        guild_settings = await GG.get_settings(ctx.bot, ctx.interaction.guild.id)
+        guild_settings = await get_settings(ctx.bot, ctx.interaction.guild_id)
         allow_selfClose = guild_settings.get("allow_selfClose", False)
         if allow_selfClose:
             return True
@@ -100,7 +89,7 @@ async def isManagerAssigneeOrReporterButton(userId, guildId, report, bot):
         elif userId == report.assignee:
             return True
         elif userId == report.reporter:
-            guild_settings = await GG.get_settings(bot, guildId)
+            guild_settings = await get_settings(bot, guildId)
             allow_selfClose = guild_settings.get("allow_selfClose", False)
             if allow_selfClose:
                 return True

@@ -10,7 +10,7 @@ from discord.ext import commands
 import utils.globals as GG
 from models.server import Server, Listen
 from utils.autocomplete import get_server_identifiers
-from utils.checks import isManager, isManagerSlash
+from utils.checks import isManager
 from utils.functions import loadGithubServers, get_selection
 from models.reports import Report, PRIORITY
 from utils.reportglobals import IdentifierDoesNotExist
@@ -225,7 +225,7 @@ class Issue(commands.Cog):
     @issue.command(name='open')
     async def issueOpen(self, ctx, identifier: Option(str, "Which identifier would you like to return?", autocomplete=get_server_identifiers)):
         """Lists all open reports of a specified identifier and returns a csv file"""
-        if not await isManagerSlash(ctx.interaction.user.id, ctx.interaction.guild_id):
+        if not await isManager(ctx):
             return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
         else:
             server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
@@ -272,7 +272,7 @@ class Issue(commands.Cog):
                                        autocomplete=get_server_identifiers),
                     alias: Option(str, "What alias do you want to give the identifier?")):
         """Adds an alias for your identifier, for specification what an identifier does."""
-        if not await isManagerSlash(ctx.interaction.user.id, ctx.interaction.guild_id):
+        if not await isManager(ctx):
             return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
         else:
             listen = None

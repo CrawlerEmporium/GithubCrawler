@@ -8,8 +8,7 @@ from modal.bug import Bug
 from modal.feature import Feature
 from models.questions import Question, Questionaire
 from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers
-from utils.checks import isManagerSlash
-from models.reports import get_next_report_num, ReportException
+from utils.checks import isManager
 from utils.reportglobals import IdentifierDoesNotExist
 from utils import globals as GG
 
@@ -40,7 +39,7 @@ class CreateReport(commands.Cog):
                                   placeholder: Option(str, "Optional text inside the input box. (Max 100 characters.)", default="")
                                   ):
         """Create questions for feature requests and bug reports."""
-        if not await isManagerSlash(ctx.interaction.user.id, ctx.interaction.guild_id):
+        if not await isManager(ctx):
             return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
 
         exists = False
