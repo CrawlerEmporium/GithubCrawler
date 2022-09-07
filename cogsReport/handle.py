@@ -152,7 +152,8 @@ class HandleReport(commands.Cog):
 
     @staticmethod
     async def note(bot, interaction, report):
-        channel = report.jumpUrl.split('/')[-2]
+        jumpURL = report.jumpUrl.replace('https://discord.com/channels/','').split('/')
+        channel = jumpURL[1]
         author = interaction.user
         modal = Note(GG.ContextProxy(bot, interaction=interaction), report, author, channel)
         await interaction.response.send_modal(modal)
