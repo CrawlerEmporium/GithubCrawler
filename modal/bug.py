@@ -28,7 +28,7 @@ class Bug(Modal):
             for question in custom_questions.questions:
                 self.add_item(InputText(label=question['text'], placeholder=question['placeholder'], style=InputTextStyle(question['style']), required=question['required'], row=question['position']))
         else:
-            self.add_item(InputText(label="What is the bug?", placeholder="A quick description of the bug.", required=True, max_length=85))
+            self.add_item(InputText(label="What is the bug?", placeholder="A quick description of the bug.", required=True))
             self.add_item(InputText(label="Steps to reproduce", placeholder="How the bug occured, and how to reproduce it.", required=True, style=InputTextStyle.long))
             self.add_item(InputText(label="Severity", placeholder="Trivial / Low / Medium / High / Critical", required=True, style=InputTextStyle.long))
             self.add_item(InputText(label="Additional information", placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long))
@@ -39,13 +39,13 @@ class Bug(Modal):
         thread = None
         for child in self.children:
             if child.row == 0:
-                title = child.value[:85]
+                title = child.value
         request = ""
 
         requestChannel = self.bot.get_channel(self.channel)
         embed = EmbedWithAuthorWithoutContext(self.author)
         embed.set_footer(text=f"Added by {self.author.name}")
-        embed.title = title if title is not None else self.children[0].value[:85]
+        embed.title = title if title is not None else self.children[0].value
         if self.custom_questions is None:
             if self.children[1].value is not None and self.children[1].value != "":
                 embed.add_field(name="Steps to reproduce", value=self.children[1].value, inline=False)
@@ -78,10 +78,17 @@ class Bug(Modal):
             message = await requestChannel.send(embed=embed)
             jumpUrl = message.jump_url
         else:
-            thread = await requestChannel.create_thread(name=f"{self.report_id} - {title if title is not None else self.children[0].value[:85]}", embed=embed, content=f"<@{self.author.id}>")
+            extra = len(f"{self.report_id} - ")
+            extra += len(f"[Resolved] ")
+            maxThreadTitleLength = 97 - extra
+            if len(self.children[0].value) > maxThreadTitleLength:
+                threadTitle = title if title is not None else f"{self.children[0].value[:maxThreadTitleLength]}..."
+            else:
+                threadTitle = title if title is not None else self.children[0].value
+            thread = await requestChannel.create_thread(name=f"{self.report_id} - {threadTitle}", embed=embed, content=f"<@{self.author.id}>")
             jumpUrl = thread.jump_url
 
-        report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value[:85],
+        report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=True,
                                   repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None)
 
