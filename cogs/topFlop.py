@@ -180,7 +180,8 @@ class TopFlop(commands.Cog):
                         rep = {
                             "report_id": report['report_id'],
                             "title": report['title'],
-                            f"{type}s": report[f'{type}s']
+                            f"{type}s": report[f'{type}s'],
+                            "jumpUrl": report.get('jumpUrl', "NoLink")
                         }
                         serverReports.append(rep)
         else:
@@ -194,7 +195,8 @@ class TopFlop(commands.Cog):
                         rep = {
                             "report_id": report['report_id'],
                             "title": report['title'],
-                            f"{type}s": report[f'{type}s']
+                            f"{type}s": report[f'{type}s'],
+                            "jumpUrl": report.get('jumpUrl', "NoLink")
                         }
                         serverReports.append(rep)
 
