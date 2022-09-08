@@ -120,7 +120,7 @@ class TopFlop(commands.Cog):
         i = 1
         for report in sortedList[:top]:
             jumpUrl = report.get("jumpUrl", "NoLink")
-            if jumpUrl is not None or jumpUrl != "NoLink":
+            if jumpUrl is not None and jumpUrl != "NoLink":
                 msg_url = f"[Link]({jumpUrl})"
             else:
                 msg_url = f"NoLink"
@@ -154,7 +154,7 @@ class TopFlop(commands.Cog):
         i = 1
         for report in sortedList[:top]:
             jumpUrl = report.get("jumpUrl", "NoLink")
-            if jumpUrl is not None or jumpUrl != "NoLink":
+            if jumpUrl is not None and jumpUrl != "NoLink":
                 msg_url = f"[Link]({jumpUrl})"
             else:
                 msg_url = f"NoLink"
