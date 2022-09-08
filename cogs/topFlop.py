@@ -119,7 +119,11 @@ class TopFlop(commands.Cog):
 
         i = 1
         for report in sortedList[:top]:
-            msg_url = report.get("jumpUrl", "NoLink")
+            jumpUrl = report.get("jumpUrl", "NoLink")
+            if jumpUrl is not None or jumpUrl != "NoLink":
+                msg_url = f"[Link]({jumpUrl})"
+            else:
+                msg_url = f"NoLink"
             embed.add_field(name=f"**[#{i}] {report['upvotes']}** upvotes",
                             value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
             i += 1
@@ -149,7 +153,12 @@ class TopFlop(commands.Cog):
 
         i = 1
         for report in sortedList[:top]:
-            msg_url = report.get("jumpUrl", "NoLink")
+            jumpUrl = report.get("jumpUrl", "NoLink")
+            if jumpUrl is not None or jumpUrl != "NoLink":
+                msg_url = f"[Link]({jumpUrl})"
+            else:
+                msg_url = f"NoLink"
+
             embed.add_field(name=f"**[#{i}] {report['downvotes']}** downvotes",
                             value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
             i += 1
