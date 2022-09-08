@@ -17,6 +17,80 @@ async def round_down(value, decimals):
         return round(d, decimals)
 
 
+async def tools_specific_topflop(ctx, reports, top, flop=False):
+    async with ctx.channel.typing():
+        BOOSTERMEMBERS = [x.id for x in ctx.interaction.guild.get_role(585540203704483860).members]
+        T2MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989073453678602).members]
+        T3MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989264051503124).members]
+        serverReports = []
+        toolsReports = []
+        for report in reports:
+            repo = report.get('github_repo', None)
+            if repo == "5etools/tracker":
+                toolsReports.append(report)
+        if flop:
+            await ctx.respond(f"Checking {len(toolsReports)} suggestions for their downvotes...", delete_after=5)
+        else:
+            await ctx.respond(f"Checking {len(toolsReports)} suggestions for their upvotes...", delete_after=5)
+        for report in toolsReports:
+            if report['severity'] != -1:
+                attachments = report['attachments']
+                upvotes = 0
+                downvotes = 0
+                for attachment in attachments:
+                    if attachment['veri'] == -2:
+                        try:
+                            if attachment['author'] in BOOSTERMEMBERS or attachment['author'] in T2MEMBERS:
+                                downvotes += 1
+                            if attachment['author'] in T3MEMBERS:
+                                downvotes += 2
+                            downvotes += 1
+                        except NotFound:
+                            downvotes += 1
+                    if attachment['veri'] == 2:
+                        try:
+                            if attachment['author'] in BOOSTERMEMBERS or attachment['author'] in T2MEMBERS:
+                                upvotes += 1
+                            if attachment['author'] in T3MEMBERS:
+                                upvotes += 2
+                            upvotes += 1
+                        except NotFound:
+                            upvotes += 1
+                rep = {
+                    "report_id": report['report_id'],
+                    "title": report['title'],
+                    "upvotes": upvotes,
+                    "downvotes": downvotes,
+                    "message": report['message'],
+                    "rating": (0 - downvotes) + upvotes,
+                    "total": downvotes + upvotes
+                }
+                serverReports.append(rep)
+        embed = EmbedWithAuthor(ctx)
+        if flop:
+            sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=False)
+            embed.title = f"Top {top} most downvoted suggestions."
+        else:
+            sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=True)
+            embed.title = f"Top {top} most upvoted suggestions."
+        i = 1
+        channel = await ctx.bot.fetch_channel(593769144969723914)
+        for report in sortedList[:top]:
+            try:
+                message = await channel.fetch_message(report['message'])
+                msg_url = f"[Link]({message.jump_url})"
+            except:
+                msg_url = f"No Link"
+
+            perc = 100 * float(report['upvotes']) / float(report['total'])
+            percRounded = await round_down(perc, 2)
+
+            embed.add_field(name=f"**#{i} - {report['rating']}** points ({str(percRounded)}% upvotes)",
+                            value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
+            i += 1
+        return await ctx.respond(embed=embed)
+
+
 class TopFlop(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -27,10 +101,10 @@ class TopFlop(commands.Cog):
     async def top(self, ctx, identifier: Option(str, "From which identifier would you like a top X?", autocomplete=get_server_feature_identifiers, default=None, required=False), top: Option(int, "The top of how many?", max_value=25, min_value=10, default=10, required=False)):
         """Gets top x or top 10"""
         await ctx.defer()
-        reports, results = await self.getResults(identifier)
+        reports, results = await self.getResults(ctx, identifier)
 
         if ctx.interaction.guild_id == 363680385336606740 and identifier is None:
-            return await self.tools_specific_topflop(ctx, reports, top)
+            return await tools_specific_topflop(ctx, reports, top)
 
         try:
             guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.interaction.guild_id)
@@ -56,10 +130,10 @@ class TopFlop(commands.Cog):
         """Gets top x or top 10"""
         # -2 in attachment
         await ctx.defer()
-        reports, results = await self.getResults(identifier)
+        reports, results = await self.getResults(ctx, identifier)
 
-        if ctx.guild.id == 363680385336606740 and identifier is None:
-            return await self.tools_specific_topflop(ctx, reports, top, flop=True)
+        if ctx.interaction.guild_id == 363680385336606740 and identifier is None:
+            return await tools_specific_topflop(ctx, reports, top, flop=True)
 
         try:
             guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.interaction.guild_id)
@@ -79,10 +153,15 @@ class TopFlop(commands.Cog):
             i += 1
         await ctx.respond(embed=embed)
 
-    async def getResults(self, identifier):
+    async def getResults(self, ctx, identifier):
         reports = await GG.MDB.Reports.find({}).to_list(length=None)
         results = []
         if identifier is not None:
+            server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
+            for iden in server['listen']:
+                if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
+                    identifier = iden['identifier']
+
             for x in reports:
                 if identifier.upper() in x['report_id']:
                     results.append(x)
@@ -121,79 +200,6 @@ class TopFlop(commands.Cog):
         embed = EmbedWithAuthor(ctx)
         embed.title = f"Top {top} most {type}d suggestions."
         return embed, sortedList, top
-
-    async def tools_specific_topflop(self, ctx, reports, top, flop=False):
-        async with ctx.channel.typing():
-            BOOSTERMEMBERS = [x.id for x in ctx.interaction.guild.get_role(585540203704483860).members]
-            T2MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989073453678602).members]
-            T3MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989264051503124).members]
-            serverReports = []
-            toolsReports = []
-            for report in reports:
-                repo = report.get('github_repo', None)
-                if repo == "5etools/tracker":
-                    toolsReports.append(report)
-            if flop:
-                await ctx.respond(f"Checking {len(toolsReports)} suggestions for their downvotes...", delete_after=5)
-            else:
-                await ctx.respond(f"Checking {len(toolsReports)} suggestions for their upvotes...", delete_after=5)
-            for report in toolsReports:
-                if report['severity'] != -1:
-                    attachments = report['attachments']
-                    upvotes = 0
-                    downvotes = 0
-                    for attachment in attachments:
-                        if attachment['veri'] == -2:
-                            try:
-                                if attachment['author'] in BOOSTERMEMBERS or attachment['author'] in T2MEMBERS:
-                                    downvotes += 1
-                                if attachment['author'] in T3MEMBERS:
-                                    downvotes += 2
-                                downvotes += 1
-                            except NotFound:
-                                downvotes += 1
-                        if attachment['veri'] == 2:
-                            try:
-                                if attachment['author'] in BOOSTERMEMBERS or attachment['author'] in T2MEMBERS:
-                                    upvotes += 1
-                                if attachment['author'] in T3MEMBERS:
-                                    upvotes += 2
-                                upvotes += 1
-                            except NotFound:
-                                upvotes += 1
-                    rep = {
-                        "report_id": report['report_id'],
-                        "title": report['title'],
-                        "upvotes": upvotes,
-                        "downvotes": downvotes,
-                        "message": report['message'],
-                        "rating": (0 - downvotes) + upvotes,
-                        "total": downvotes + upvotes
-                    }
-                    serverReports.append(rep)
-            embed = EmbedWithAuthor(ctx)
-            if flop:
-                sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=False)
-                embed.title = f"Top {top} most downvoted suggestions."
-            else:
-                sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=True)
-                embed.title = f"Top {top} most upvoted suggestions."
-            i = 1
-            channel = await ctx.bot.fetch_channel(593769144969723914)
-            for report in sortedList[:top]:
-                try:
-                    message = await channel.fetch_message(report['message'])
-                    msg_url = f"[Link]({message.jump_url})"
-                except:
-                    msg_url = f"No Link"
-
-                perc = 100 * float(report['upvotes']) / float(report['total'])
-                percRounded = await round_down(perc, 2)
-
-                embed.add_field(name=f"**#{i} - {report['rating']}** points ({str(percRounded)}% upvotes)",
-                                value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
-                i += 1
-            return await ctx.respond(embed=embed)
 
 
 def setup(bot):
