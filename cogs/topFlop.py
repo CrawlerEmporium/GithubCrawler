@@ -5,7 +5,7 @@ from crawler_utilities.utils.embeds import EmbedWithAuthor
 from discord.ext import commands
 from discord import NotFound, slash_command, Option
 from utils import globals as GG
-from utils.autocomplete import get_server_identifiers
+from utils.autocomplete import get_server_feature_identifiers
 
 log = GG.log
 
@@ -24,19 +24,19 @@ class TopFlop(commands.Cog):
 
     @slash_command(name="top")
     @commands.guild_only()
-    async def top(self, ctx, identifier: Option(str, "From which identifier would you like a top X?", autocomplete=get_server_identifiers, default=None, required=False), top: Option(int, "The top of how many?", max_value=25, min_value=10, default=10, required=False)):
+    async def top(self, ctx, identifier: Option(str, "From which identifier would you like a top X?", autocomplete=get_server_feature_identifiers, default=None, required=False), top: Option(int, "The top of how many?", max_value=25, min_value=10, default=10, required=False)):
         """Gets top x or top 10"""
-        await ctx.defer(ephemeral=True)
+        await ctx.defer()
         reports, results = await self.getResults(identifier)
 
         if ctx.interaction.guild_id == 363680385336606740 and identifier is None:
             return await self.tools_specific_topflop(ctx, reports, top)
 
         try:
-            guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
+            guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.interaction.guild_id)
             server = guild.listen[0].repo
         except:
-            return await ctx.respond("Your server isn't registered or doesn't have any channels set up yet.", ephemeral=True)
+            return await ctx.respond("Your server isn't registered or doesn't have any channels set up yet.")
 
         if identifier is None:
             embed, sortedList, top = await self.getCount(ctx, guild, reports, server, top, "upvote")
@@ -52,20 +52,20 @@ class TopFlop(commands.Cog):
 
     @slash_command(name="flop")
     @commands.guild_only()
-    async def flop(self, ctx, identifier: Option(str, "From which identifier would you like a flop X?", autocomplete=get_server_identifiers, default=None, required=False), top: Option(int, "The flop of how many?", max_value=25, min_value=10, default=10, required=False)):
+    async def flop(self, ctx, identifier: Option(str, "From which identifier would you like a flop X?", autocomplete=get_server_feature_identifiers, default=None, required=False), top: Option(int, "The flop of how many?", max_value=25, min_value=10, default=10, required=False)):
         """Gets top x or top 10"""
         # -2 in attachment
-        await ctx.defer(ephemeral=True)
+        await ctx.defer()
         reports, results = await self.getResults(identifier)
 
         if ctx.guild.id == 363680385336606740 and identifier is None:
             return await self.tools_specific_topflop(ctx, reports, top, flop=True)
 
         try:
-            guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.guild.id)
+            guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.interaction.guild_id)
             server = guild.listen[0].repo
         except:
-            return await ctx.respond("Your server isn't registered or doesn't have any channels set up yet.", ephemeral=True)
+            return await ctx.respond("Your server isn't registered or doesn't have any channels set up yet.")
 
         if identifier is None:
             embed, sortedList, top = await self.getCount(ctx, guild, reports, server, top, "downvote")
@@ -124,9 +124,9 @@ class TopFlop(commands.Cog):
 
     async def tools_specific_topflop(self, ctx, reports, top, flop=False):
         async with ctx.channel.typing():
-            BOOSTERMEMBERS = [x.id for x in ctx.guild.get_role(585540203704483860).members]
-            T2MEMBERS = [x.id for x in ctx.guild.get_role(606989073453678602).members]
-            T3MEMBERS = [x.id for x in ctx.guild.get_role(606989264051503124).members]
+            BOOSTERMEMBERS = [x.id for x in ctx.interaction.guild.get_role(585540203704483860).members]
+            T2MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989073453678602).members]
+            T3MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989264051503124).members]
             serverReports = []
             toolsReports = []
             for report in reports:
