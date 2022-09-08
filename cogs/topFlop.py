@@ -85,7 +85,7 @@ async def tools_specific_topflop(ctx, reports, top, flop=False):
             perc = 100 * float(report['upvotes']) / float(report['total'])
             percRounded = await round_down(perc, 2)
 
-            embed.add_field(name=f"**#{i} - {report['rating']}** points ({str(percRounded)}% upvotes)",
+            embed.add_field(name=f"**[#{i}] {report['rating']}** points ({str(percRounded)}% upvotes)",
                             value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
             i += 1
         return await ctx.respond(embed=embed)
@@ -119,8 +119,9 @@ class TopFlop(commands.Cog):
 
         i = 1
         for report in sortedList[:top]:
-            embed.add_field(name=f"**#{i} - {report['upvotes']}** upvotes",
-                            value=f"{report['report_id']}: {report['title']}", inline=False)
+            msg_url = report.get("jumpUrl", "NoLink")
+            embed.add_field(name=f"**[#{i}] {report['upvotes']}** upvotes",
+                            value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
             i += 1
         await ctx.respond(embed=embed)
 
@@ -148,8 +149,9 @@ class TopFlop(commands.Cog):
 
         i = 1
         for report in sortedList[:top]:
-            embed.add_field(name=f"**#{i} - {report['downvotes']}** downvotes",
-                            value=f"{report['report_id']}: {report['title']}", inline=False)
+            msg_url = report.get("jumpUrl", "NoLink")
+            embed.add_field(name=f"**[#{i}] {report['downvotes']}** downvotes",
+                            value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
             i += 1
         await ctx.respond(embed=embed)
 
@@ -165,7 +167,7 @@ class TopFlop(commands.Cog):
             for x in reports:
                 if identifier.upper() in x['report_id']:
                     results.append(x)
-        reports = results
+            reports = results
         return reports, results
 
     async def getCount(self, ctx, guild, reports, server, top, type):
