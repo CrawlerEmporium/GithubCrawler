@@ -23,10 +23,10 @@ class ManagerCommands(commands.Cog):
     @slash_command(name="resolve")
     @permissions.guild_only()
     async def resolve(self, ctx, _id: Option(str, "Which report do you want to resolve?", autocomplete=get_server_reports), msg: Option(str, "Optional resolve comment", default="")):
-        """Server Admins only - Resolves a report."""
+        """Server Managers and Identifier Managers only - Resolves a report."""
         await ctx.defer()
         report = await ReportFromId(_id, ctx)
-        if await isManager(ctx) or isAssignee(ctx, report) or await isReporter(ctx, report):
+        if await isManager(ctx, report) or isAssignee(ctx, report) or await isReporter(ctx, report):
             await report.resolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.respond(f"Resolved `{report.report_id}`: {report.title}.")
@@ -36,10 +36,10 @@ class ManagerCommands(commands.Cog):
     @slash_command(name="unresolve")
     @permissions.guild_only()
     async def unresolve(self, ctx, _id: Option(str, "Which report do you want to unresolve?", autocomplete=get_server_reports), msg: Option(str, "Optional unresolve comment", default="")):
-        """Server Admins only - Unresolves a report."""
+        """Server Managers and Identifier Managers only - Unresolves a report."""
         await ctx.defer()
-        if await isManager(ctx):
-            report = await ReportFromId(_id, ctx)
+        report = await ReportFromId(_id, ctx)
+        if await isManager(ctx, report):
             await report.unresolve(ctx, ctx.guild.id, msg)
             await report.commit()
             await ctx.respond(f"Unresolved `{report.report_id}`: {report.title}.")
@@ -49,7 +49,7 @@ class ManagerCommands(commands.Cog):
     @slash_command(name="reidentify")
     @permissions.guild_only()
     async def reidentify(self, ctx, _id: Option(str, "Which report do you want to reidentify?", autocomplete=get_server_reports), identifier: Option(str, "To which identifier do you want to change this report?", autocomplete=get_server_identifiers)):
-        """Server Admins only - Changes the identifier of a report."""
+        """Server Managers only - Changes the identifier of a report."""
         await ctx.defer()
         if await isManager(ctx):
             exists = False
@@ -93,10 +93,10 @@ class ManagerCommands(commands.Cog):
     @slash_command(name="rename")
     @permissions.guild_only()
     async def rename(self, ctx, _id: Option(str, "Which report do you want to rename?", autocomplete=get_server_reports), name: Option(str, "The new title for the report")):
-        """Server Admins only - Changes the title of a report."""
+        """Server Managers and Identifier Managers only - Changes the title of a report."""
         await ctx.defer()
-        if await isManager(ctx):
-            report = await ReportFromId(_id, ctx)
+        report = await ReportFromId(_id, ctx)
+        if await isManager(ctx, report):
             report.title = name
             if report.github_issue and report.repo is not None:
                 await report.edit_title(f"{report.title}", f"{report.report_id} ")
@@ -113,10 +113,11 @@ class ManagerCommands(commands.Cog):
     @slash_command(name="assign")
     @permissions.guild_only()
     async def assign(self, ctx, member: Option(discord.Member, "What user do you want to assign?"), _id: Option(str, "To which report do you want to assign the user?", autocomplete=get_server_reports)):
-        """Server Admins only - Assign a member to a report."""
+        """Server Managers and Identifier Managers only - Assign a member to a report."""
         await ctx.defer()
-        if await isManager(ctx):
-            report = await ReportFromId(_id, ctx)
+        report = await ReportFromId(_id, ctx)
+        if await isManager(ctx, report):
+
             track_google_analytics_event("Assign", f"{report.report_id}", f"{ctx.interaction.user.id}")
 
             report.assignee = member.id
@@ -183,10 +184,10 @@ class ManagerCommands(commands.Cog):
     @slash_command(name="unassign")
     @permissions.guild_only()
     async def unassign(self, ctx, _id: Option(str, "Unassign everyone from this report", autocomplete=get_server_reports)):
-        """Server Admins only - Unassign a member from a report."""
+        """Server Managers only - Unassign a member from a report."""
         await ctx.defer()
-        if await isManager(ctx):
-            report = await ReportFromId(_id, ctx)
+        report = await ReportFromId(_id, ctx)
+        if await isManager(ctx, report):
             track_google_analytics_event("Unassign", f"{report.report_id}", f"{ctx.interaction.user.id}")
 
             report.assignee = None
@@ -201,7 +202,7 @@ class ManagerCommands(commands.Cog):
     @slash_command(name="merge")
     @permissions.guild_only()
     async def merge(self, ctx, duplicate: Option(str, "Duped report", autocomplete=get_server_reports), merger: Option(str, "Merge into this report", autocomplete=get_server_reports)):
-        """Server Admins only - Merges duplicate into mergeTo."""
+        """Server Managers only - Merges duplicate into mergeTo."""
         await ctx.defer()
         if await isManager(ctx):
             dupe = await ReportFromId(duplicate, ctx)

@@ -49,16 +49,20 @@ def admin_or_permissions(**perms):
     return commands.check(predicate)
 
 
-async def isManager(ctx):
+async def isManager(ctx, report=None):
     manager = await GG.MDB.Managers.find_one({"user": ctx.interaction.user.id, "server": ctx.guild.id})
     if manager is None:
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         if ctx.interaction.user.id == server['admin']:
             return True
-        else:
-            return False
+        return False
     else:
-        return True
+        if manager['identifier'] is None:
+            return True
+        else:
+            if report is not None and manager['identifier'] in report.report_id:
+                return True
+            return False
 
 
 def isAssignee(ctx, report):
@@ -93,9 +97,13 @@ async def isManagerAssigneeOrReporterButton(userId, guildId, report, bot):
             allow_selfClose = guild_settings.get("allow_selfClose", False)
             if allow_selfClose:
                 return True
-            else:
-                return False
+            return False
         else:
             return False
     else:
-        return True
+        if manager['identifier'] is None:
+            return True
+        else:
+            if manager['identifier'] in report.report_id:
+                return True
+            return False
