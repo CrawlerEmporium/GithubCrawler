@@ -130,6 +130,29 @@ class CreateReport(commands.Cog):
         modal = Bug(identifier, self.bot, ctx.interaction, ctx.interaction.user, repo, tracker, channel, questionaire)
         await ctx.interaction.response.send_modal(modal)
 
+    @slash_command(name="supportrequest")
+    @permissions.guild_only()
+    async def slash_support(self, ctx, identifier: Option(str, "For what identifier do you want to make a support request?", autocomplete=get_server_bug_identifiers)):
+        """Opens a modal to post a bug report."""
+        exists = False
+
+        server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
+        for iden in server['listen']:
+            if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
+                identifier = iden['identifier']
+                repo = iden['repo']
+                tracker = iden['tracker']
+                channel = iden['channel']
+                if iden['type'] == "bug":
+                    exists = True
+
+        if not exists:
+            return await IdentifierDoesNotExist(ctx, identifier)
+
+        questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
+        modal = Bug(identifier, self.bot, ctx.interaction, ctx.interaction.user, repo, tracker, channel, questionaire)
+        await ctx.interaction.response.send_modal(modal)
+
 
 def setup(bot):
     log.info("[Report] CreateReport...")

@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from cogsReport.handle import HandleReport
 from crawler_utilities.cogs.stats import track_google_analytics_event
-from utils.autocomplete import get_server_reports
+from utils.autocomplete import get_server_reports, get_server_feature_identifiers
 from utils.reportglobals import ReportFromId, getAllReports
 
 from utils import globals as GG
@@ -28,7 +28,7 @@ class ReportCommands(commands.Cog):
 
     @slash_command(name="upvote")
     @permissions.guild_only()
-    async def upvote(self, ctx, _id: Option(str, "Which report do you want to upvote?", autocomplete=get_server_reports), msg: Option(str, "Do you have any added comment for this upvote?", default="")):
+    async def upvote(self, ctx, _id: Option(str, "Which report do you want to upvote?", autocomplete=get_server_feature_identifiers), msg: Option(str, "Do you have any added comment for this upvote?", default="")):
         """Adds an upvote to the selected report."""
         report = await ReportFromId(_id, ctx)
         user = ctx.interaction.user
@@ -41,7 +41,7 @@ class ReportCommands(commands.Cog):
 
     @slash_command(name="downvote")
     @permissions.guild_only()
-    async def downvote(self, ctx, _id: Option(str, "Which report do you want to downvote?", autocomplete=get_server_reports), msg: Option(str, "Do you have any added comment for this downvote?", default="")):
+    async def downvote(self, ctx, _id: Option(str, "Which report do you want to downvote?", autocomplete=get_server_feature_identifiers), msg: Option(str, "Do you have any added comment for this downvote?", default="")):
         """Adds a downvote to the selected report."""
         report = await ReportFromId(_id, ctx)
         user = ctx.interaction.user
@@ -54,8 +54,8 @@ class ReportCommands(commands.Cog):
 
     @slash_command(name="indifferent")
     @permissions.guild_only()
-    async def indifferent(self, ctx, _id: Option(str, "Which report do you want to be indifferent about?", autocomplete=get_server_reports), msg: Option(str, "Do you have any added comment for the indifference?", default="")):
-        """Adds a indifference to the selected report."""
+    async def indifferent(self, ctx, _id: Option(str, "Which report do you want to be indifferent about?", autocomplete=get_server_feature_identifiers), msg: Option(str, "Do you have any added comment for the indifference?", default="")):
+        """Adds an indifference to the selected report."""
         report = await ReportFromId(_id, ctx)
         user = ctx.interaction.user
         guild_id = ctx.interaction.guild_id
@@ -105,28 +105,6 @@ class ReportCommands(commands.Cog):
                 await collection.replace_one({"report_id": report['report_id']}, report)
 
         await ctx.respond(f"Unsubscribed from {num_unsubbed} reports.", ephemeral=True)
-
-    # @commands.command(aliases=['cr'])
-    # @commands.guild_only()
-    # async def canrepro(self, ctx, _id, *, msg=''):
-    #     """Adds reproduction to a report."""
-    #     report = await Report.from_id(_id, guild_id)
-    #     await report.canrepro(user.id, msg, ctx, guild_id)
-    #     # report.subscribe(ctx)
-    #     await report.commit()
-    #     await ctx.reply(f"Added a note that you can reproduce this issue to `{report.report_id}` - {report.title}.", delete_after=5)
-    #     await report.update(ctx, guild_id)
-    #
-    # @commands.command(aliases=['cnr'])
-    # @commands.guild_only()
-    # async def cannotrepro(self, ctx, _id: Option(str, "Which report do you want to view?", autocomplete=get_server_reports), msg: Option(str, "Do you have any added comment for this upvate?")):
-    #     """Adds a nonreproduction to a report."""
-    #     report = await ReportFromId(_id, ctx)
-    #     await report.cannotrepro(user.id, msg, ctx, guild_id)
-    #     # report.subscribe(ctx)
-    #     await report.commit()
-    #     await ctx.reply(f"Added a note that you cannot reproduce this issue to `{report.report_id}` - {report.title}.", delete_after=5)
-    #     await report.update(ctx, guild_id)
 
 
 def setup(bot):

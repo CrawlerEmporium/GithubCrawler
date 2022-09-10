@@ -110,25 +110,6 @@ class ManagerCommands(commands.Cog):
         else:
             await ctx.respond("You do not have the appropriate permissions to use this command.")
 
-    # @slash_command(name="priority")
-    # async def priority(self, ctx, _id, pri: int, *, msg=''):
-    #     """Server Admins only - Changes the priority of a report."""
-    #     if await isManager(ctx):
-    #         report = await ReportFromId(_id, ctx)
-    #
-    #         report.severity = pri
-    #         if msg:
-    #             await report.addnote(ctx.message.author.id, f"Priority changed to {pri} - {msg}", ctx, ctx.guild.id)
-    #
-    #         if report.github_issue and report.repo is not None:
-    #             await report.update_labels()
-    #
-    #         await report.commit()
-    #         await report.update(ctx, ctx.guild.id)
-    #         await ctx.respond(f"Changed priority of `{report.report_id}`: {report.title} to P{pri}.")
-    #     else:
-    #         await ctx.respond("You do not have the appropriate permissions to use this command.")
-
     @slash_command(name="assign")
     @permissions.guild_only()
     async def assign(self, ctx, member: Option(discord.Member, "What user do you want to assign?"), _id: Option(str, "To which report do you want to assign the user?", autocomplete=get_server_reports)):

@@ -12,6 +12,7 @@ log = GG.log
 PRI_LABEL_NAMES = ("P0", "P1", "P2", "P3", "P4", "P5")
 BUG_LABEL = "bug"
 FEATURE_LABEL = "featurereq"
+SUPPORT_LABEL = "support"
 EXEMPT_LABEL = "enhancement"
 
 
@@ -124,7 +125,8 @@ class Web(commands.Cog):
                     priority = i
                     break
             report.severity = priority
-            report.is_bug = FEATURE_LABEL in label_names
+            report.is_bug = BUG_LABEL in label_names
+            report.is_support = SUPPORT_LABEL in label_names
             await report.commit()
             await report.update(ctx, report.repo)
 

@@ -49,10 +49,9 @@ class HandleReport(commands.Cog):
         if label == GG.INFORMATION:
             track_google_analytics_event("Information", f"{report.report_id}", f"{member.id}")
 
-        if report.is_bug:
-            await self.handle_bug(self.bot, interaction, label, member, report, server)
-
-        if not report.is_bug:
+        if report.is_bug or report.is_support:
+            await self.handle_bug_or_support(self.bot, interaction, label, member, report, server)
+        else:
             if server.owner_id == member.id:
                 await self.handle_feature_server_owner(self.bot, interaction, label, member, report, server)
             else:
@@ -121,7 +120,7 @@ class HandleReport(commands.Cog):
             await report.commit()
 
     @staticmethod
-    async def handle_bug(bot, interaction, label, member, report, server):
+    async def handle_bug_or_support(bot, interaction, label, member, report, server):
         if label == GG.INFORMATION:
             print(f"Information: {member} - {report.report_id}")
             em = await report.get_embed(True)
@@ -152,8 +151,8 @@ class HandleReport(commands.Cog):
 
     @staticmethod
     async def note(bot, interaction, report):
-        jumpURL = report.jumpUrl.replace('https://discord.com/channels/','').split('/')
-        channel = jumpURL[1]
+        jumpUrl = report.jumpUrl.replace('https://discord.com/channels/','').split('/')
+        channel = jumpUrl[1]
         author = interaction.user
         modal = Note(GG.ContextProxy(bot, interaction=interaction), report, author, channel)
         await interaction.response.send_modal(modal)

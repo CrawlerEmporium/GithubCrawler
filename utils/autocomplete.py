@@ -10,6 +10,10 @@ async def get_server_bug_identifiers(ctx: discord.AutocompleteContext):
     return await get_identifiers(ctx, GG.BUGS)
 
 
+async def get_server_support_identifiers(ctx: discord.AutocompleteContext):
+    return await get_identifiers(ctx, GG.SUPPORTS)
+
+
 async def get_server_identifiers(ctx: discord.AutocompleteContext):
     return await get_identifiers(ctx, GG.IDENTIFIERS)
 

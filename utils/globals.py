@@ -33,34 +33,33 @@ cachedTrackerChannels = []
 FEATURES = []
 BUGS = []
 IDENTIFIERS = []
+SUPPORTS = []
 
 
 async def getIdentifiers():
     global FEATURES
     global BUGS
     global IDENTIFIERS
+    global SUPPORTS
     FEATURES = []
     BUGS = []
     IDENTIFIERS = []
+    SUPPORTS = []
     servers = await MDB.Github.find({}).to_list(length=None)
     for server in servers:
         for identifier in server['listen']:
+            iden = {
+                "server": server['server'],
+                "identifier": identifier['identifier'],
+                "alias": identifier.get("alias", ""),
+            }
+            IDENTIFIERS.append(iden)
             if identifier['type'] == "feature":
-                iden = {
-                    "server": server['server'],
-                    "identifier": identifier['identifier'],
-                    "alias": identifier.get("alias", ""),
-                }
                 FEATURES.append(iden)
-                IDENTIFIERS.append(iden)
             if identifier['type'] == "bug":
-                iden = {
-                    "server": server['server'],
-                    "identifier": identifier['identifier'],
-                    "alias": identifier.get("alias", ""),
-                }
                 BUGS.append(iden)
-                IDENTIFIERS.append(iden)
+            if identifier['type'] == "support":
+                SUPPORTS.append(iden)
 
 
 REPO_ID_MAP = {

@@ -2,7 +2,7 @@ import discord
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 
 from discord.ext import commands
-from models.milestone import Milestone, STATUS, MilestoneException
+from noLongerSupported.models.milestone import Milestone, STATUS, MilestoneException
 from utils.checks import isManager
 from utils import globals as GG
 log = GG.log

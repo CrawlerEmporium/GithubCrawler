@@ -92,7 +92,7 @@ class Report:
 
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, shrugs: int = 0, github_issue: int = None,
-                 github_repo: str = None, subscribers: list = None, is_bug: bool = True, jumpUrl: str = None,
+                 github_repo: str = None, subscribers: list = None, is_bug: bool = True, is_support: bool = False, jumpUrl: str = None,
                  trackerId: int = None, assignee=None, milestone: list = None, opened=None, closed=None, thread=None):
         if subscribers is None:
             subscribers = []
@@ -118,6 +118,7 @@ class Report:
         self.github_issue = int(github_issue)
 
         self.is_bug = is_bug
+        self.is_support = is_support
         self.upvotes = upvotes
         self.downvotes = downvotes
         self.shrugs = shrugs
@@ -134,13 +135,13 @@ class Report:
         self.thread = thread
 
     @classmethod
-    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, repo=None, jumpUrl=None,
+    async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, is_support=False, repo=None, jumpUrl=None,
                   trackerId=None, assignee=None, milestone=None, thread=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
         ts = calendar.timegm(time.gmtime())
-        inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug,
+        inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug, is_support=is_support,
                    github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone, opened=ts, thread=thread)
         return inst
 
@@ -177,7 +178,7 @@ class Report:
             'shrugs': self.shrugs,
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
-            'is_bug': self.is_bug, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee,
+            'is_bug': self.is_bug, 'is_support': self.is_support, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee,
             'milestone': self.milestone, 'opened': self.opened, 'closed': self.closed, 'thread': self.thread
         }
 
@@ -228,6 +229,8 @@ class Report:
                 raise ReportException("Issue is already on GitHub.")
             if self.is_bug:
                 labels = ["bug"]
+            elif self.is_support:
+                labels = ["support"]
             else:
                 labels = ["featurereq"]
             desc = await self.get_github_desc(bot, serverId)
@@ -242,7 +245,15 @@ class Report:
 
     async def setup_message(self, bot, guildID, trackerChannel):
         view = discord.ui.View()
-        if not self.is_bug:
+        if self.is_bug or self.is_support:
+            view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
+            view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
+            view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+            if self.thread is not None:
+                url = (await bot.fetch_channel(self.thread)).jump_url
+                view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
+            view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
+        else:
             view.add_item(Button(label=GG.UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
             view.add_item(Button(label=GG.DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
             view.add_item(Button(label=GG.SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
@@ -253,18 +264,9 @@ class Report:
                 url = (await bot.fetch_channel(self.thread)).jump_url
                 view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=1, url=url))
             view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
-            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
-            view.stop()
-        else:
-            view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
-            view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-            view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
-            if self.thread is not None:
-                url = (await bot.fetch_channel(self.thread)).jump_url
-                view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
-            view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
-            report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
-            view.stop()
+
+        report_message = await bot.get_channel(trackerChannel).send(embed=await self.get_embed(), view=view)
+        view.stop()
 
         self.message = report_message.id
         Report.messageIds[report_message.id] = self.report_id
@@ -283,11 +285,15 @@ class Report:
             embed.add_field(name="Priority", value=PRIORITY.get(self.severity, "Unknown"))
         else:
             embed.add_field(name="Assigned to", value=f"<@{self.assignee}>")
+
         if self.is_bug:
             embed.colour = 0xed4245
-            embed.add_field(name="Verification", value=str(self.verification))
             embed.set_footer(
-                text=f"!report {self.report_id} for details or react with ℹ| Verify with !cr/!cnr {self.report_id} [note]")
+                text=f"/view {self.report_id} for details or click the ℹ button")
+        elif self.is_support:
+            embed.colour = 0x8c8c8c
+            embed.set_footer(
+                text=f"/view {self.report_id} for details or click the ℹ button")
         else:
             embed.colour = 0x3ba55d
             embed.add_field(name="Votes", value="\u2b06 " + str(self.upvotes) + " **|** \u2b07 " + str(
@@ -296,7 +302,7 @@ class Report:
             if self.repo != "NoRepo":
                 if not self.github_issue:
                     vote_msg += f" | {GITHUB_THRESHOLD} upvotes required to track"
-            embed.set_footer(text=f"!report {self.report_id} for details or react with ℹ | {vote_msg}")
+            embed.set_footer(text=f"/view {self.report_id} for details or click the ℹ button | {vote_msg}")
 
         if self.milestone is not None and len(self.milestone) > 0:
             embed.add_field(name="In milestone(s)", value=', '.join(self.milestone))
@@ -375,10 +381,11 @@ class Report:
             else:
                 embed.add_field(name="Assigned to", value=f"<@{self.assignee}>")
             if self.is_bug:
-                embed.colour = 0xff0000
-                embed.add_field(name="Verification", value=str(self.verification))
+                embed.colour = 0xed4245
+            elif self.is_support:
+                embed.colour = 0x8c8c8c
             else:
-                embed.colour = 0x00ff00
+                embed.colour = 0x3ba55d
                 embed.add_field(name="Votes", value="\u2b06" + str(self.upvotes) + " **|** \u2b07" + str(
                     self.downvotes) + " **|** \U0001F937 " + str(self.shrugs))
 
@@ -497,7 +504,7 @@ class Report:
         if [a for a in self.attachments if a.author == author and a.veri == 1]:
             raise ReportException("You have already verified this report.")
         if not self.is_bug:
-            raise ReportException("You cannot CR a feature request.")
+            raise ReportException("You cannot CR a feature request or support ticket.")
         attachment = Attachment.cr(author, msg)
         self.verification += 1
         await self.add_attachment(ctx, serverId, attachment)
@@ -508,7 +515,7 @@ class Report:
         if [a for a in self.attachments if a.author == author and a.veri == -1]:
             raise ReportException("You have already verified this report.")
         if not self.is_bug:
-            raise ReportException("You cannot CNR a feature request.")
+            raise ReportException("You cannot CNR a feature request or support ticket.")
         attachment = Attachment.cnr(author, msg)
         self.verification -= 1
         await self.add_attachment(ctx, serverId, attachment)
@@ -528,6 +535,8 @@ class Report:
 
         if self.is_bug:
             raise ReportException("You cannot upvote a bug report.")
+        if self.is_support:
+            raise ReportException("You cannot upvote a support ticket.")
         attachment = Attachment.upvote(author, msg)
         self.upvotes += 1
         await self.add_attachment(ctx, serverId, attachment)
@@ -559,6 +568,8 @@ class Report:
 
         if self.is_bug:
             raise ReportException("You cannot downvote a bug report.")
+        if self.is_support:
+            raise ReportException("You cannot downvote a support ticket.")
         attachment = Attachment.downvote(author, msg)
         self.downvotes += 1
         await self.add_attachment(ctx, serverId, attachment)
@@ -581,6 +592,8 @@ class Report:
 
         if self.is_bug:
             raise ReportException("You cannot be indifferent about a bug report.")
+        if self.is_support:
+            raise ReportException("You cannot be indifferent about a support ticket.")
         attachment = Attachment.indifferent(author, msg)
         self.shrugs += 1
         await self.add_attachment(ctx, serverId, attachment)
@@ -666,7 +679,15 @@ class Report:
         elif self.is_open():
             await msg.clear_reactions()
             view = discord.ui.View()
-            if not self.is_bug:
+            if self.is_bug or self.is_support:
+                view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
+                view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
+                view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
+                if self.thread is not None:
+                    url = (await ctx.bot.fetch_channel(self.thread)).jump_url
+                    view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
+                view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
+            else:
                 view.add_item(Button(label=GG.UPVOTE, style=ButtonStyle.success, emoji="⬆️", row=0))
                 view.add_item(Button(label=GG.DOWNVOTE, style=ButtonStyle.danger, emoji="⬇️", row=0))
                 view.add_item(Button(label=GG.SHRUG, style=ButtonStyle.secondary, emoji="🤷", row=0))
@@ -677,18 +698,9 @@ class Report:
                     url = (await ctx.bot.fetch_channel(self.thread)).jump_url
                     view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=1, url=url))
                 view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=2))
-                await msg.edit(embed=await self.get_embed(), view=view)
-                view.stop()
-            else:
-                view.add_item(Button(label=GG.SUBSCRIBE, style=ButtonStyle.primary, emoji="📢", row=0))
-                view.add_item(Button(label=GG.INFORMATION, style=ButtonStyle.primary, emoji="ℹ️", row=0))
-                view.add_item(Button(label=GG.NOTE, style=ButtonStyle.primary, emoji="📝", row=0))
-                if self.thread is not None:
-                    url = (await ctx.bot.fetch_channel(self.thread)).jump_url
-                    view.add_item(Button(label=GG.THREAD, style=ButtonStyle.primary, emoji="🧵", row=0, url=url))
-                view.add_item(Button(label=GG.RESOLVE, style=ButtonStyle.success, emoji="✔️", row=1))
-                await msg.edit(embed=await self.get_embed(), view=view)
-                view.stop()
+
+            await msg.edit(embed=await self.get_embed(), view=view)
+            view.stop()
 
     async def resolve(self, ctx, serverId, msg='', close_github_issue=True, pend=False, ignore_closed=False):
         if self.severity == -1 and not ignore_closed:
@@ -762,6 +774,8 @@ class Report:
         labels = [PRIORITY_LABELS.get(self.severity)]
         if self.is_bug:
             labels.append("bug")
+        elif self.is_support:
+            labels.append("support")
         else:
             labels.append("featurereq")
             if self.upvotes - self.downvotes > 14:

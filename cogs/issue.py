@@ -18,7 +18,7 @@ from crawler_utilities.utils.confirmation import BotConfirmation
 
 log = GG.log
 
-TYPES = ['bug', 'feature']
+TYPES = ['bug', 'feature', 'support']
 
 
 async def findInReports(db, identifier, searchTerm):
@@ -66,13 +66,13 @@ class Issue(commands.Cog):
     async def new(self,
                   ctx,
                   type: Option(str, description="What type of listener do you want?", choices=TYPES, required=True),
-                  identifier: Option(str, description="Which identifier would you it to have?", min_length=3,
+                  identifier: Option(str, description="Which identifier would you like it to have?", min_length=3,
                                      max_length=6, required=True),
                   tracker: Option(GuildChannel,
                                   description="The channel you want your voting/overview to be posted in",
                                   required=False, default=None),
                   channel: Option(GuildChannel,
-                                  description="The channel you want your bugs/features to be posted in", required=False,
+                                  description="The channel you want your reports to be posted in", required=False,
                                   default=None)):
         """
         Adds a new listener/tracker to the bot.
@@ -112,7 +112,7 @@ class Issue(commands.Cog):
 
         await ctx.respond(
             f"Created (or added) {channel.mention} as Posting Channel\nCreated (or added) {tracker.mention} as Tracking Channel.\n"
-            f"It is using {identifier} as it's Identifier.")
+            f"It is using {identifier} as it's Identifier.\nIt is of the {type.capitalize()} type")
 
     @issue.command(name='trackers')
     async def trackers(self, ctx):
@@ -125,15 +125,15 @@ class Issue(commands.Cog):
         for listen in server.listen:
             channels += f"Listening to: {self.bot.get_channel(listen.channel).mention}\n" \
                         f"Posting to: {self.bot.get_channel(listen.tracker).mention}\n" \
-                        f"Using Identifier: ``{listen.identifier}``\n\n"
+                        f"Using Identifier: ``{listen.identifier}``\n" \
+                        f"Type: ``{listen.type}``\n\n"
         await ctx.respond(channels)
 
     @issue.command(name='remove')
     @discord.default_permissions(
         administrator=True,
     )
-    async def remove(self, ctx, identifier: Option(str, "Which identifier would you like to delete?",
-                                                   autocomplete=get_server_identifiers)):
+    async def remove(self, ctx, identifier: Option(str, "Which identifier would you like to delete?", autocomplete=get_server_identifiers)):
         """Deletes an identifier"""
         await ctx.defer()
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
@@ -244,7 +244,7 @@ class Issue(commands.Cog):
                 f = io.StringIO()
 
                 csv.writer(f).writerow(
-                    ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug",
+                    ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug", "is_support",
                      "assigned"])
                 for row in reports:
                     assigned = row.get('assignee', False)
@@ -253,7 +253,7 @@ class Issue(commands.Cog):
                     csv.writer(f).writerow(
                         [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"),
                          row["verification"],
-                         row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"], assigned])
+                         row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"], row["is_support"], assigned])
                 f.seek(0)
 
                 buffer = io.BytesIO()
