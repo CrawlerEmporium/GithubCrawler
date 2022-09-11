@@ -57,7 +57,7 @@ async def isManager(ctx, report=None):
             return True
         return False
     else:
-        if manager['identifier'] is None:
+        if manager.get('identifier', None) is None:
             return True
         else:
             if report is not None and manager['identifier'] in report.report_id:
@@ -101,7 +101,7 @@ async def isManagerAssigneeOrReporterButton(userId, guildId, report, bot):
         else:
             return False
     else:
-        if manager['identifier'] is None:
+        if manager.get('identifier', None) is None:
             return True
         else:
             if manager['identifier'] in report.report_id:
