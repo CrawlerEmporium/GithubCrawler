@@ -72,7 +72,7 @@ async def cache_server_channels():
         trackerChannels = []
         for channel in server['listen']:
             trackerChannels.append(channel['tracker'])
-        reports = await GG.MDB.Reports.find({"trackerId": {"$in": trackerChannels}}, {"report_id": 1, "title": 1, "_id": 0}).to_list(length=None)
+        reports = await MDB.Reports.find({"trackerId": {"$in": trackerChannels}}, {"report_id": 1, "title": 1, "_id": 0}).to_list(length=None)
         TRACKING_CHANNELS.append({"guild_id": ctx.interaction.guild_id, "channels": trackerChannels, "reports": reports})
 
 
