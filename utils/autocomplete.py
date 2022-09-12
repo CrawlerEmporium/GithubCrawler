@@ -31,7 +31,10 @@ async def get_identifiers(ctx, lookup):
 
 async def get_server_reports(ctx: discord.AutocompleteContext):
     autoList = []
-    reports = list(filter(lambda item: item['guild_id'] == ctx.interaction.guild_id, GG.TRACKING_CHANNELS))
+    reports = []
+    servers = list(filter(lambda item: item['guild_id'] == ctx.interaction.guild_id, GG.TRACKING_CHANNELS))
+    for server in servers:
+        reports += server['reports']
     for report in reports:
         if ctx.value.upper() in report['report_id']:
             autoList.append(f"{report['report_id']} | {report['title'][:85] + '...' if len(report['title']) >= 85 else report['title']}")
