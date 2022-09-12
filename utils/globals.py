@@ -29,22 +29,24 @@ GITHUBSERVERS = []
 BUG_LISTEN_CHANS = []
 ADMINS = []
 SERVERS = []
-cachedTrackerChannels = []
-FEATURES = []
-BUGS = []
-IDENTIFIERS = []
-SUPPORTS = []
+
+TRACKING_CHANNELS = []
+
+FEATURE_IDENTIFIERS = []
+BUG_IDENTIFIERS = []
+ALL_IDENTIFIERS = []
+SUPPORT_IDENTIFIERS = []
 
 
-async def getIdentifiers():
-    global FEATURES
-    global BUGS
-    global IDENTIFIERS
-    global SUPPORTS
-    FEATURES = []
-    BUGS = []
-    IDENTIFIERS = []
-    SUPPORTS = []
+async def cache_identifiers():
+    global FEATURE_IDENTIFIERS
+    global BUG_IDENTIFIERS
+    global ALL_IDENTIFIERS
+    global SUPPORT_IDENTIFIERS
+    FEATURE_IDENTIFIERS = []
+    BUG_IDENTIFIERS = []
+    ALL_IDENTIFIERS = []
+    SUPPORT_IDENTIFIERS = []
     servers = await MDB.Github.find({}).to_list(length=None)
     for server in servers:
         for identifier in server['listen']:
@@ -53,13 +55,25 @@ async def getIdentifiers():
                 "identifier": identifier['identifier'],
                 "alias": identifier.get("alias", ""),
             }
-            IDENTIFIERS.append(iden)
+            ALL_IDENTIFIERS.append(iden)
             if identifier['type'] == "feature":
-                FEATURES.append(iden)
+                FEATURE_IDENTIFIERS.append(iden)
             if identifier['type'] == "bug":
-                BUGS.append(iden)
+                BUG_IDENTIFIERS.append(iden)
             if identifier['type'] == "support":
-                SUPPORTS.append(iden)
+                SUPPORT_IDENTIFIERS.append(iden)
+
+
+async def cache_server_channels():
+    global TRACKING_CHANNELS
+    TRACKING_CHANNELS = []
+    servers = await MDB.Github.find({}).to_list(length=None)
+    for server in servers:
+        trackerChannels = []
+        for channel in server['listen']:
+            trackerChannels.append(channel['tracker'])
+        reports = await GG.MDB.Reports.find({"trackerId": {"$in": trackerChannels}}, {"report_id": 1, "title": 1, "_id": 0}).to_list(length=None)
+        TRACKING_CHANNELS.append({"guild_id": ctx.interaction.guild_id, "channels": trackerChannels, "reports": reports})
 
 
 REPO_ID_MAP = {

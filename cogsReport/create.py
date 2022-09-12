@@ -25,7 +25,8 @@ class CreateReport(commands.Cog):
     async def get_identifiers(self):
         await self.bot.wait_until_ready()
         log.info("[IN-MEMORY] Reloading Identifiers")
-        await GG.getIdentifiers()
+        await GG.cache_identifiers()
+        await GG.cache_server_channels()
         log.info("[IN-MEMORY] Done Reloading Identifiers")
 
     @slash_command(name="questionnaire")

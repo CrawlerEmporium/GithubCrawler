@@ -98,7 +98,9 @@ async def on_ready():
 
 @bot.event
 async def on_connect():
-    await bot.sync_commands()
+    await GG.cache_identifiers()
+    await GG.cache_server_channels()
+    await bot.sync_commands(force=True)
     bot.owner = await bot.fetch_user(GG.OWNER)
     print(f"OWNER: {bot.owner.name}")
 
