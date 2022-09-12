@@ -36,7 +36,10 @@ async def get_server_reports(ctx: discord.AutocompleteContext):
     for server in servers:
         reports += server['reports']
     for report in reports:
-        if report is not None:
-            if ctx.value.upper() in report['report_id']:
-                autoList.append(f"{report['report_id']} | {report['title'][:85] + '...' if len(report['title']) >= 85 else report['title']}")
+        if len(autoList) < 25:
+            if report is not None:
+                if ctx.value.upper() in report['report_id']:
+                    autoList.append(f"{report['report_id']} | {report['title'][:85] + '...' if len(report['title']) >= 85 else report['title']}")
+        else:
+            return autoList
     return autoList
