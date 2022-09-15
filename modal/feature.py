@@ -108,7 +108,7 @@ class Feature(Modal):
         report = await Report.new(self.author.id, self.report_id,
                                   title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=False,
-                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None)
+                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None, server_id=interaction.guild_id)
 
         reportMessage = await report.setup_message(self.bot, self.interaction.guild_id, report.trackerId)
 

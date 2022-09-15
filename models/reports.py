@@ -93,7 +93,7 @@ class Report:
     def __init__(self, reporter, report_id: str, title: str, severity: int, verification: int, attachments: list,
                  message, upvotes: int = 0, downvotes: int = 0, shrugs: int = 0, github_issue: int = None,
                  github_repo: str = None, subscribers: list = None, is_bug: bool = True, is_support: bool = False, jumpUrl: str = None,
-                 trackerId: int = None, assignee=None, milestone: list = None, opened=None, closed=None, thread=None):
+                 trackerId: int = None, assignee=None, milestone: list = None, opened=None, closed=None, thread=None, server_id=None):
         if subscribers is None:
             subscribers = []
         if milestone is None:
@@ -133,16 +133,17 @@ class Report:
         self.closed = closed
 
         self.thread = thread
+        self.server_id = server_id
 
     @classmethod
     async def new(cls, reporter, report_id: str, title: str, attachments: list, is_bug=True, is_support=False, repo=None, jumpUrl=None,
-                  trackerId=None, assignee=None, milestone=None, thread=None):
+                  trackerId=None, assignee=None, milestone=None, thread=None, server_id=None):
         subscribers = None
         if isinstance(reporter, int):
             subscribers = [reporter]
         ts = calendar.timegm(time.gmtime())
         inst = cls(reporter, report_id, title, 6, 0, attachments, None, subscribers=subscribers, is_bug=is_bug, is_support=is_support,
-                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone, opened=ts, thread=thread)
+                   github_repo=repo, jumpUrl=jumpUrl, trackerId=trackerId, assignee=assignee, milestone=milestone, opened=ts, thread=thread, server_id=server_id)
         return inst
 
     @classmethod
@@ -179,7 +180,7 @@ class Report:
             'attachments': [a.to_dict() for a in self.attachments], 'message': self.message,
             'github_issue': self.github_issue, 'github_repo': self.repo, 'subscribers': self.subscribers,
             'is_bug': self.is_bug, 'is_support': self.is_support, 'jumpUrl': self.jumpUrl, 'trackerId': self.trackerId, 'assignee': self.assignee,
-            'milestone': self.milestone, 'opened': self.opened, 'closed': self.closed, 'thread': self.thread
+            'milestone': self.milestone, 'opened': self.opened, 'closed': self.closed, 'thread': self.thread, 'server_id': self.server_id
         }
 
     @classmethod
@@ -196,7 +197,15 @@ class Report:
             except KeyError:
                 raise ReportException(f"{report_id} Report not found.")
         else:
-            raise ReportException(f"{report_id} Report not found.")
+            try:
+                report = await cls.collection.find_one({"report_id": report_id.upper(), "server_id": guild_id})
+                del report['_id']
+                try:
+                    return cls.from_dict(report)
+                except KeyError:
+                    raise ReportException(f"{report_id} Report not found.")
+            except:
+                raise ReportException(f"{report_id} Report not found.")
 
     @classmethod
     async def from_message_id(cls, message_id):

@@ -90,7 +90,7 @@ class Bug(Modal):
 
         report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=True,
-                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None)
+                                  repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None, server_id=interaction.guild_id)
 
         if interaction.guild_id in GG.SERVERS:
             if self.repo is not None:

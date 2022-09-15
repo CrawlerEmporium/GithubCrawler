@@ -93,7 +93,9 @@ class Support(Modal):
             thread = await requestChannel.create_thread(name=f"{self.report_id} - {threadTitle}", embed=embed, content=f"<@{self.author.id}>")
             jumpUrl = thread.jump_url
 
-        report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value, [Attachment(self.author.id, request)], is_bug=False, is_support=True, repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None)
+        report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
+                                  [Attachment(self.author.id, request)], is_bug=False,
+                                  is_support=True, repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None, server_id=interaction.guild_id)
 
         if interaction.guild_id in GG.SERVERS:
             if self.repo is not None:
