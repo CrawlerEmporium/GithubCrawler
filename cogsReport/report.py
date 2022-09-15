@@ -94,7 +94,7 @@ class ReportCommands(commands.Cog):
     @permissions.guild_only()
     async def subscriptions(self, ctx):
         """Gets a list of all tickets you are subscribed to."""
-        reports = GG.MDB['Reports'].find({}).to_list(length=None)
+        reports = await GG.MDB['Reports'].find({}).to_list(length=None)
 
         user = ctx.interaction.user
         subscribedReports = []
