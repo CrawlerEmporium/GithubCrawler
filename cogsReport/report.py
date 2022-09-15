@@ -94,7 +94,7 @@ class ReportCommands(commands.Cog):
     @permissions.guild_only()
     async def subscriptions(self, ctx):
         """Gets a list of all tickets you are subscribed to."""
-        reports = await GG.MDB['Reports'].find({}).to_list(length=None)
+        reports = await GG.MDB['Reports'].find({"severity": {"$ne": -1}}).to_list(length=None)
 
         user = ctx.interaction.user
         subscribedReports = []
@@ -120,7 +120,19 @@ class ReportCommands(commands.Cog):
             if len(embed_queue[-1].fields) == 25 or len(embed_queue[-1]) > 5000:
                 embed_queue.append(discord.Embed(colour=embed_queue[-1].colour, title=embed_queue[-1].title))
             embed_queue[-1].add_field(name=f"{report['report_id']}", value=f"{report['title']} - {msg_url}", inline=False)
-        await ctx.respond(embeds=embed_queue, ephemeral=True)
+        for embed in embed_queue:
+            if ctx.interaction.user.dm_channel is not None:
+                DM = ctx.interaction.user.dm_channel
+            else:
+                DM = await ctx.interaction.user.create_dm()
+            try:
+                await DM.send(embed=embed)
+            except discord.Forbidden:
+                pass
+        await ctx.respond(
+                f"Please check your DM's for your subscriptions.\n"
+                f"If no DM was received, you probably have it turned off.",
+                ephemeral=True)
 
     @slash_command(name="unsuball")
     @permissions.guild_only()
