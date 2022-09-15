@@ -1,8 +1,10 @@
+import discord
 from discord import slash_command, Option, permissions
 from discord.ext import commands
 
 from cogsReport.handle import HandleReport
 from crawler_utilities.cogs.stats import track_google_analytics_event
+from crawler_utilities.utils.embeds import EmbedWithAuthor
 from utils.autocomplete import get_server_reports, get_server_feature_identifiers
 from utils.reportglobals import ReportFromId, getAllReports
 
@@ -87,6 +89,40 @@ class ReportCommands(commands.Cog):
             await ctx.respond(f"Subscribed to `{report.report_id}` - {report.title}.", ephemeral=True)
             track_google_analytics_event("Subscribe", f"{report.report_id}", f"{user.id}")
         await report.commit()
+
+    @slash_command(name="subscriptions")
+    @permissions.guild_only()
+    async def subscriptions(self, ctx):
+        """Gets a list of all tickets you are subscribed to."""
+        reports = getAllReports()
+        collection = GG.MDB['Reports']
+
+        user = ctx.interaction.user
+        subscribedReports = []
+
+        for report in reports:
+            if user.id in report.get('subscribers', []):
+                subscribedReport = await collection.find_one({"report_id": report['report_id']})
+                rep = {
+                    "report_id": subscribedReport['report_id'],
+                    "title": subscribedReport['title'],
+                    "jumpUrl": subscribedReport.get('jumpUrl', "NoLink")
+                }
+                subscribedReports.append(rep)
+
+        embed_queue = [EmbedWithAuthor(ctx)]
+        embed_queue[-1].title = f"Your subscribed reports."
+
+        for report in subscribedReports:
+            jumpUrl = report.get("jumpUrl", "NoLink")
+            if jumpUrl is not None and jumpUrl != "NoLink":
+                msg_url = f"[Link]({jumpUrl})"
+            else:
+                msg_url = f"NoLink"
+            if len(embed_queue[-1].fields) == 25:
+                embed_queue.append(discord.Embed(colour=embed_queue[-1].colour, title=embed_queue[-1].title))
+            embed_queue[-1].add_field(name=f"{report['report_id']}", value=f"{report['title']} - {msg_url}", inline=False)
+        await ctx.respond(embeds=embed_queue, ephemeral=True)
 
     @slash_command(name="unsuball")
     @permissions.guild_only()
