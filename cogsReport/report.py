@@ -117,7 +117,7 @@ class ReportCommands(commands.Cog):
                 msg_url = f"[Link]({jumpUrl})"
             else:
                 msg_url = f"NoLink"
-            if len(embed_queue[-1].fields) == 25:
+            if len(embed_queue[-1].fields) == 25 or len(embed_queue[-1]) > 5000:
                 embed_queue.append(discord.Embed(colour=embed_queue[-1].colour, title=embed_queue[-1].title))
             embed_queue[-1].add_field(name=f"{report['report_id']}", value=f"{report['title']} - {msg_url}", inline=False)
         await ctx.respond(embeds=embed_queue, ephemeral=True)
