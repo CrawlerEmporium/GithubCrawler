@@ -94,19 +94,17 @@ class ReportCommands(commands.Cog):
     @permissions.guild_only()
     async def subscriptions(self, ctx):
         """Gets a list of all tickets you are subscribed to."""
-        reports = getAllReports()
-        collection = GG.MDB['Reports']
+        reports = GG.MDB['Reports'].find({}).to_list(length=None)
 
         user = ctx.interaction.user
         subscribedReports = []
 
         for report in reports:
             if user.id in report.get('subscribers', []):
-                subscribedReport = await collection.find_one({"report_id": report['report_id']})
                 rep = {
-                    "report_id": subscribedReport['report_id'],
-                    "title": subscribedReport['title'],
-                    "jumpUrl": subscribedReport.get('jumpUrl', "NoLink")
+                    "report_id": report['report_id'],
+                    "title": report['title'],
+                    "jumpUrl": report.get('jumpUrl', "NoLink")
                 }
                 subscribedReports.append(rep)
 
