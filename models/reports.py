@@ -311,11 +311,11 @@ class Report:
         if self.is_bug:
             embed.colour = 0xed4245
             embed.set_footer(
-                text=f"</view:983745369479458826> {self.report_id} for details or click the ℹ button")
+                text=f"/view {self.report_id} for details or click the ℹ button")
         elif self.is_support:
             embed.colour = 0x8c8c8c
             embed.set_footer(
-                text=f"</view:983745369479458826> {self.report_id} for details or click the ℹ button")
+                text=f"/view {self.report_id} for details or click the ℹ button")
         else:
             embed.colour = 0x3ba55d
             embed.add_field(name="Votes", value="\u2b06 " + str(self.upvotes) + " **|** \u2b07 " + str(
@@ -324,7 +324,7 @@ class Report:
             if self.repo != "NoRepo":
                 if not self.github_issue:
                     vote_msg += f" | {GITHUB_THRESHOLD} upvotes required to track"
-            embed.set_footer(text=f"</view:983745369479458826> {self.report_id} for details or click the ℹ button | {vote_msg}")
+            embed.set_footer(text=f"/view {self.report_id} for details or click the ℹ button | {vote_msg}")
 
         if self.milestone is not None and len(self.milestone) > 0:
             embed.add_field(name="In milestone(s)", value=', '.join(self.milestone))

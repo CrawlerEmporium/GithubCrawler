@@ -64,7 +64,7 @@ async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, re
     else:
         track_google_analytics_event("Feature Request", f"{report_id}", f"{author.id}")
         embed.description = f"Your feature request was successfully posted in <#{requestChannel.id}>!"
-    embed.add_field(name="Status Checking", value=f"To check on its status: `</view:983745369479458826> {report_id}`.",
+    embed.add_field(name="Status Checking", value=f"To check on its status: `/view {report_id}`.",
                     inline=False)
     embed.add_field(name="Note Adding",
                     value=f"To add a note: `/note {report_id} <comment>`.",
