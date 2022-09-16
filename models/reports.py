@@ -380,7 +380,7 @@ class Report:
             embed.set_author(name=f"{self.report_id}", icon_url=url)
 
         if self.last_updated is not None:
-            embed.set_footer(text=f"{embed.footer} | Last Updated on ")
+            embed.set_footer(text=f"{embed.footer.text} | Last Updated ")
             embed.timestamp = datetime.datetime.utcfromtimestamp(self.last_updated)
 
         return embed
@@ -452,7 +452,7 @@ class Report:
                 embed.set_author(name=f"{self.report_id}", icon_url=url)
 
             if self.last_updated is not None:
-                embed.set_footer(text=f"{embed.footer} | Last Updated on ")
+                embed.set_footer(text=f"{embed.footer.text} | Last Updated ")
                 embed.timestamp = datetime.datetime.utcfromtimestamp(self.last_updated)
 
             embeds.append(embed)
