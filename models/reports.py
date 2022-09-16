@@ -1,3 +1,4 @@
+import datetime
 import discord
 import re
 from cachetools import LRUCache
@@ -378,6 +379,10 @@ class Report:
         else:
             embed.set_author(name=f"{self.report_id}", icon_url=url)
 
+        if self.last_updated is not None:
+            embed.set_footer(text=f"{embed.footer} | Last Updated on ")
+            embed.timestamp = datetime.datetime.utcfromtimestamp(self.last_updated)
+
         return embed
 
     async def get_reportNotes(self, ctx=None, msgToUse=None):
@@ -445,6 +450,10 @@ class Report:
                 embed.set_author(name=f"{self.report_id}")
             else:
                 embed.set_author(name=f"{self.report_id}", icon_url=url)
+
+            if self.last_updated is not None:
+                embed.set_footer(text=f"{embed.footer} | Last Updated on ")
+                embed.timestamp = datetime.datetime.utcfromtimestamp(self.last_updated)
 
             embeds.append(embed)
 
