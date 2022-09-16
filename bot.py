@@ -121,10 +121,10 @@ def loadCogs():
             log.error(f'Failed to load extension {extension}')
             i += 1
     log.info("-------------------")
-    log.info("Loading Report Cogs...")
-    for extension in [f.replace('.py', '') for f in listdir("cogsReport") if isfile(join("cogsReport", f))]:
+    log.info("Loading Ticket Cogs...")
+    for extension in [f.replace('.py', '') for f in listdir("cogsTicket") if isfile(join("cogsTicket", f))]:
         try:
-            bot.load_extension("cogsReport" + "." + extension)
+            bot.load_extension("cogsTicket" + "." + extension)
         except Exception as e:
             print(e)
             log.error(f'Failed to load extension {extension}')

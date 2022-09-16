@@ -10,10 +10,10 @@ from discord.ext import commands
 import utils.globals as GG
 from models.server import Server, Listen
 from utils.autocomplete import get_server_identifiers
-from utils.checks import isManager
+from utils.checks import is_manager
 from utils.functions import loadGithubServers, get_selection
-from models.reports import Report, PRIORITY
-from utils.reportglobals import IdentifierDoesNotExist
+from models.ticket import Ticket, PRIORITY
+from utils.ticketglobals import identifier_does_not_exist
 from crawler_utilities.utils.confirmation import BotConfirmation
 
 log = GG.log
@@ -21,11 +21,11 @@ log = GG.log
 TYPES = ['bug', 'feature', 'support']
 
 
-async def findInReports(db, identifier, searchTerm):
+async def find_in_tickets(db, identifier, searchTerm):
     results = []
     list = await db.find({"$text": {"$search": f"\"{searchTerm}\"", "$caseSensitive": False}}).to_list(length=None)
     for x in list:
-        if identifier.upper() in x['report_id']:
+        if identifier.upper() in x['ticket_id']:
             results.append(x)
     return results
 
@@ -34,8 +34,7 @@ class Issue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    issue = SlashCommandGroup("issue", "All commands that have effect on the issue tracker",
-                              checks=[commands.guild_only().predicate])
+    issue = SlashCommandGroup("issue", "All commands that have effect on the issue tracker", checks=[commands.guild_only().predicate])
 
     @issue.command(name="enable")
     @discord.default_permissions(
@@ -72,7 +71,7 @@ class Issue(commands.Cog):
                                   description="The channel you want your voting/overview to be posted in",
                                   required=False, default=None),
                   channel: Option(GuildChannel,
-                                  description="The channel you want your reports to be posted in", required=False,
+                                  description="The channel you want your tickets to be posted in", required=False,
                                   default=None)):
         """
         Adds a new listener/tracker to the bot.
@@ -80,7 +79,7 @@ class Issue(commands.Cog):
         await ctx.defer()
         # CHECK IDENTIFIER
         identifier = identifier.upper()
-        exist = await GG.MDB.ReportNums.find_one({"key": identifier, "server": ctx.guild.id})
+        exist = await GG.MDB.TicketNums.find_one({"key": identifier, "server": ctx.guild.id})
         if exist is not None:
             if exist['server'] != ctx.guild.id:
                 return await ctx.respond("This identifier is already in use, please select another one.")
@@ -105,7 +104,7 @@ class Issue(commands.Cog):
             server['listen'] = oldListen
             server['listen'].append(listener)
             await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
-            await GG.MDB.ReportNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
+            await GG.MDB.TicketNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
             await loadGithubServers()
         else:
             return await ctx.respond("The given channel or tracker ID's are invalid.")
@@ -137,7 +136,7 @@ class Issue(commands.Cog):
         """Deletes an identifier"""
         await ctx.defer()
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
-        check = await GG.MDB.ReportNums.find_one({"key": identifier.upper(), "server": ctx.guild.id})
+        check = await GG.MDB.TicketNums.find_one({"key": identifier.upper(), "server": ctx.guild.id})
 
         if check is not None:
             confirmation = BotConfirmation(ctx, 0x012345)
@@ -157,7 +156,7 @@ class Issue(commands.Cog):
                         tr = self.bot.get_channel(x['tracker'])
                 server['listen'] = oldListen
                 await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
-                await GG.MDB.ReportNums.delete_one({"key": identifier.upper(), "server": ctx.guild.id})
+                await GG.MDB.TicketNums.delete_one({"key": identifier.upper(), "server": ctx.guild.id})
                 await confirmation.quit()
                 if ch is not None and tr is not None:
                     return await ctx.respond(
@@ -183,40 +182,41 @@ class Issue(commands.Cog):
     async def search(self, ctx,
                      identifier: Option(str, "In which identifier would you like to search?", autocomplete=get_server_identifiers),
                      keywords: Option(str, "What do you want to search?", autocomplete=get_server_identifiers)):
-        """Searches in all open reports for a specified identifier"""
-        await self.searchInReports(ctx, identifier, keywords)
+        """Searches in all open tickets for a specified identifier"""
+        await self.search_in_tickets(ctx, identifier, keywords)
 
     @issue.command(name='searchall')
     async def searchall(self, ctx,
                         identifier: Option(str, "In which identifier would you like to search?", autocomplete=get_server_identifiers),
                         keywords: Option(str, "What do you want to search?", autocomplete=get_server_identifiers)):
-        """Searches in all reports for a specified identifier"""
-        await self.searchInReports(ctx, identifier, keywords, False)
+        """Searches in all tickets for a specified identifier"""
+        await self.search_in_tickets(ctx, identifier, keywords, False)
 
-    async def searchInReports(self, ctx, identifier, keywords, open=True):
+
+    async def search_in_tickets(self, ctx, identifier, keywords, open=True):
         await ctx.defer(ephemeral=True)
-        allReports = await findInReports(GG.MDB.Reports, identifier, keywords)
+        allTickets = await find_in_tickets(GG.MDB.Tickets, identifier, keywords)
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         trackers = []
         for x in server['listen']:
             trackers.append(x['tracker'])
         results = []
-        for report in allReports:
+        for ticket in allTickets:
             if open:
-                if report['trackerId'] in trackers and report['severity'] != -1:
-                    results.append(report)
+                if ticket['trackerId'] in trackers and ticket['severity'] != -1:
+                    results.append(ticket)
             else:
-                if report['trackerId'] in trackers:
-                    results.append(report)
+                if ticket['trackerId'] in trackers:
+                    results.append(ticket)
         if len(results) > 0:
-            results = [(f"{r['report_id']} - {r['title']}", r) for r in results]
+            results = [(f"{r['ticket_id']} - {r['title']}", r) for r in results]
             selection = await get_selection(ctx, results, force_select=True)
             if selection is not None:
-                report = await Report.from_id(selection['report_id'], ctx.guild.id)
-                if report is not None:
-                    await ctx.respond(embed=await report.get_embed(True, ctx))
+                ticket = await Ticket.from_id(selection['ticket_id'], ctx.guild.id)
+                if ticket is not None:
+                    await ctx.respond(embed=await ticket.get_embed(True, ctx))
                 else:
-                    await ctx.respond("Selected report not found.", ephemeral=True)
+                    await ctx.respond("Selected ticket not found.", ephemeral=True)
             else:
                 await ctx.respond("Selection timed out, please try again.", ephemeral=True)
         else:
@@ -224,34 +224,34 @@ class Issue(commands.Cog):
 
     @issue.command(name='open')
     async def issueOpen(self, ctx, identifier: Option(str, "Which identifier would you like to return?", autocomplete=get_server_identifiers)):
-        """Lists all open reports of a specified identifier and returns a csv file"""
-        if not await isManager(ctx):
+        """Lists all open tickets of a specified identifier and returns a csv file"""
+        if not await is_manager(ctx):
             return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
         else:
             server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
             trackingChannels = []
             for x in server['listen']:
                 trackingChannels.append(x['tracker'])
-            query = {"report_id": {"$regex": f"{identifier}"}, "trackerId": {"$in": trackingChannels},
+            query = {"ticket_id": {"$regex": f"{identifier}"}, "trackerId": {"$in": trackingChannels},
                      "severity": {"$ne": -1}}
-            reports = await GG.MDB.Reports.find(query,
+            tickets = await GG.MDB.Tickets.find(query,
                                                 {"_id": 0, "reporter": 0, "message": 0, "subscribers": 0,
                                                  "jumpUrl": 0,
                                                  "attachments": 0, "github_issue": 0, "github_repo": 0,
                                                  "trackerId": 0,
                                                  "milestone": 0}).to_list(length=None)
-            if len(reports) > 0:
+            if len(tickets) > 0:
                 f = io.StringIO()
 
                 csv.writer(f).writerow(
-                    ["report_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug", "is_support",
+                    ["ticket_id", "title", "severity", "verification", "upvotes", "downvotes", "shrugs", "is_bug", "is_support",
                      "assigned"])
-                for row in reports:
+                for row in tickets:
                     assigned = row.get('assignee', False)
                     if assigned is not False:
                         assigned = True
                     csv.writer(f).writerow(
-                        [row["report_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"),
+                        [row["ticket_id"], row["title"], PRIORITY.get(row["severity"], "Unknown"),
                          row["verification"],
                          row["upvotes"], row["downvotes"], row["shrugs"], row["is_bug"], row["is_support"], assigned])
                 f.seek(0)
@@ -260,10 +260,10 @@ class Issue(commands.Cog):
                 buffer.write(f.getvalue().encode())
                 buffer.seek(0)
 
-                file = discord.File(buffer, filename=f"Open Reports for {identifier}.csv")
+                file = discord.File(buffer, filename=f"Open tickets for {identifier}.csv")
                 await ctx.respond(file=file)
             else:
-                await ctx.respond(f"No (open) reports found with the {identifier} identifier.")
+                await ctx.respond(f"No (open) tickets found with the {identifier} identifier.")
 
     @issue.command(name="alias")
     async def alias(self,
@@ -272,7 +272,7 @@ class Issue(commands.Cog):
                                        autocomplete=get_server_identifiers),
                     alias: Option(str, "What alias do you want to give the identifier?")):
         """Adds an alias for your identifier, for specification what an identifier does."""
-        if not await isManager(ctx):
+        if not await is_manager(ctx):
             return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
         else:
             listen = None
@@ -285,7 +285,7 @@ class Issue(commands.Cog):
                     return await ctx.respond(f"Set alias ``{alias}`` for ``{identifier}``")
 
             if listen is None:
-                return await IdentifierDoesNotExist(ctx, identifier)
+                return await identifier_does_not_exist(ctx, identifier)
 
 
 def setup(bot):

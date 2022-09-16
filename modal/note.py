@@ -2,17 +2,17 @@ from discord import InputTextStyle, Interaction
 from discord.ui import Modal, InputText
 
 from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
-from utils.reportglobals import finishNoteCreation
+from utils.ticketglobals import finish_note_creation
 
 
 class Note(Modal):
-    def __init__(self, ctx, report, author, channel) -> None:
-        super().__init__(title=f"{report.report_id}: New Note")
+    def __init__(self, ctx, ticket, author, channel) -> None:
+        super().__init__(title=f"{ticket.ticket_id}: New Note")
 
         self.ctx = ctx
         self.bot = ctx.bot
         self.interaction = ctx.interaction
-        self.report = report
+        self.ticket = ticket
         self.author = author
         self.channel = channel
 
@@ -25,13 +25,13 @@ class Note(Modal):
         requestChannel = await self.bot.fetch_channel(self.channel)
 
         embed = EmbedWithAuthorWithoutContext(self.author)
-        embed.title = f"New note for: {self.report.report_id} - {self.report.title}"
+        embed.title = f"New note for: {self.ticket.ticket_id} - {self.ticket.title}"
         embed.description = f"{description}** **"
         embed.set_footer(text=f"Added by {self.author.name}")
 
         if requestChannel is not None:
             await requestChannel.send(embed=embed)
 
-        await self.report.addnote(self.author.id, description, self.ctx, self.interaction.guild_id)
+        await self.ticket.addnote(self.author.id, description, self.ctx, self.interaction.guild_id)
 
-        await finishNoteCreation(self, interaction, embed)
+        await finish_note_creation(self, interaction, embed)

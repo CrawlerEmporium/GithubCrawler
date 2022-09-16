@@ -5,9 +5,9 @@ from discord.ui import Modal, InputText
 from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
 from models.attachment import Attachment
 from models.questions import Questionaire
-from models.reports import Report, get_next_report_num, ReportException
+from models.ticket import Ticket, get_next_ticket_num, TicketException
 import utils.globals as GG
-from utils.reportglobals import finishReportCreation
+from utils.ticketglobals import finish_ticket_creation
 
 reportTitle = "What are you requesting support for?"
 troubleshootingSteps = "What (if applicable) troubleshooting steps did you perform?"
@@ -27,7 +27,7 @@ class Support(Modal):
         self.channel = channel
         self.custom_questions = custom_questions
         self.identifier = identifier
-        self.report_id = None
+        self.ticket_id = None
 
         if custom_questions is not None:
             for question in custom_questions.questions:
@@ -74,36 +74,36 @@ class Support(Modal):
 
         if self.identifier is not None:
             try:
-                report_num = await get_next_report_num(self.identifier, interaction.guild_id)
-                self.report_id = f"{self.identifier}-{report_num}"
-            except ReportException as e:
+                ticket_num = await get_next_ticket_num(self.identifier, interaction.guild_id)
+                self.ticket_id = f"{self.identifier}-{ticket_num}"
+            except TicketException as e:
                 return await interaction.response.send_message(e, ephemeral=True)
 
         if requestChannel.type != ChannelType.forum:
             message = await requestChannel.send(embed=embed)
             jumpUrl = message.jump_url
         else:
-            extra = len(f"{self.report_id} - ")
+            extra = len(f"{self.ticket_id} - ")
             extra += len(f"[Resolved] ")
             maxThreadTitleLength = 97 - extra
             if len(self.children[0].value) > maxThreadTitleLength:
                 threadTitle = title if title is not None else f"{self.children[0].value[:maxThreadTitleLength]}..."
             else:
                 threadTitle = title if title is not None else self.children[0].value
-            thread = await requestChannel.create_thread(name=f"{self.report_id} - {threadTitle}", embed=embed, content=f"<@{self.author.id}>")
+            thread = await requestChannel.create_thread(name=f"{self.ticket_id} - {threadTitle}", embed=embed, content=f"<@{self.author.id}>")
             jumpUrl = thread.jump_url
 
-        report = await Report.new(self.author.id, self.report_id, title if title is not None else self.children[0].value,
+        ticket = await Ticket.new(self.author.id, self.ticket_id, title if title is not None else self.children[0].value,
                                   [Attachment(self.author.id, request)], is_bug=False,
                                   is_support=True, repo=self.repo, jumpUrl=jumpUrl, trackerId=self.tracker, thread=thread.id if thread is not None else None, server_id=interaction.guild_id)
 
         if interaction.guild_id in GG.SERVERS:
             if self.repo is not None:
-                await report.setup_github(self.bot, self.interaction.guild_id)
+                await ticket.setup_github(self.bot, self.interaction.guild_id)
 
-        reportMessage = await report.setup_message(self.bot, self.interaction.guild_id, report.trackerId)
+        ticketMessage = await ticket.setup_message(self.bot, self.interaction.guild_id, ticket.trackerId)
 
         if thread is not None:
-            await finishReportCreation(self, interaction, report, reportMessage, requestChannel, True, jumpUrl)
+            await finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, False, True, jumpUrl)
         else:
-            await finishReportCreation(self, interaction, report, reportMessage, requestChannel, True)
+            await finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, False, True)

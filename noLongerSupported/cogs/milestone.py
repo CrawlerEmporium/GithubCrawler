@@ -3,7 +3,7 @@ from crawler_utilities.utils.pagination import BotEmbedPaginator
 
 from discord.ext import commands
 from noLongerSupported.models.milestone import Milestone, STATUS, MilestoneException
-from utils.checks import isManager
+from utils.checks import is_manager
 from utils import globals as GG
 log = GG.log
 
@@ -86,7 +86,7 @@ class Milestones(commands.Cog):
     @milestone.command(name='create')
     @commands.guild_only()
     async def milestoneCreate(self, ctx, *, title):
-        if await isManager(ctx):
+        if await is_manager(ctx):
             milestone_id = await get_next_milestone_id(ctx.guild.id)
             milestone = await Milestone.new(ctx.message.author.id, ctx.guild.id, milestone_id, title)
             await milestone.commit(ctx.guild.id)
@@ -95,7 +95,7 @@ class Milestones(commands.Cog):
     @milestone.command(name='title')
     @commands.guild_only()
     async def milestoneTitle(self, ctx, _id, *, title):
-        if await isManager(ctx):
+        if await is_manager(ctx):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 milestone.title = title
@@ -107,7 +107,7 @@ class Milestones(commands.Cog):
     @milestone.command(name='description')
     @commands.guild_only()
     async def milestoneDescription(self, ctx, _id, *, description):
-        if await isManager(ctx):
+        if await is_manager(ctx):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 milestone.description = description
@@ -119,30 +119,30 @@ class Milestones(commands.Cog):
 
     @milestone.command(name='add')
     @commands.guild_only()
-    async def milestoneAdd(self, ctx, _id, report_id):
-        if await isManager(ctx):
+    async def milestoneAdd(self, ctx, _id, ticket_id):
+        if await is_manager(ctx):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
-                await ctx.send(await milestone.add_report(report_id, ctx.guild.id))
-                await milestone.notify_subscribers(self.bot, f"A new ticket was added to milestone `{_id}`.\nTicket: `{report_id}`")
+                await ctx.send(await milestone.add_report(ticket_id, ctx.guild.id))
+                await milestone.notify_subscribers(self.bot, f"A new ticket was added to milestone `{_id}`.\nTicket: `{ticket_id}`")
             except MilestoneException as e:
                 await ctx.send(e)
 
     @milestone.command(name='remove')
     @commands.guild_only()
-    async def milestoneRemove(self, ctx, _id, report_id):
-        if await isManager(ctx):
+    async def milestoneRemove(self, ctx, _id, ticket_id):
+        if await is_manager(ctx):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
-                await ctx.send(await milestone.remove_report(report_id, ctx.guild.id))
-                await milestone.notify_subscribers(self.bot, f"A ticket was removed from milestone `{_id}`.\nTicket: `{report_id}`")
+                await ctx.send(await milestone.remove_report(ticket_id, ctx.guild.id))
+                await milestone.notify_subscribers(self.bot, f"A ticket was removed from milestone `{_id}`.\nTicket: `{ticket_id}`")
             except MilestoneException as e:
                 await ctx.send(e)
 
     @milestone.command(name='status')
     @commands.guild_only()
     async def milestoneStatus(self, ctx, _id=None, status: int = 0):
-        if await isManager(ctx):
+        if await is_manager(ctx):
             if _id is not None and status in STATUS:
                 try:
                     milestone = await Milestone.from_id(_id, ctx.guild.id)
@@ -162,7 +162,7 @@ class Milestones(commands.Cog):
     @milestone.command(name='close')
     @commands.guild_only()
     async def milestoneClose(self, ctx, _id, msg=None):
-        if await isManager(ctx):
+        if await is_manager(ctx):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 milestone.status = 1
@@ -180,7 +180,7 @@ class Milestones(commands.Cog):
     @milestone.command(name='resolve')
     @commands.guild_only()
     async def milestoneResolve(self, ctx, _id):
-        if await isManager(ctx):
+        if await is_manager(ctx):
             try:
                 milestone = await Milestone.from_id(_id, ctx.guild.id)
                 milestone.status = 2
@@ -193,13 +193,13 @@ class Milestones(commands.Cog):
     @milestone.command(name='merge')
     @commands.guild_only()
     async def milestoneMerge(self, ctx, duplicate, mergeTo):
-        if await isManager(ctx):
+        if await is_manager(ctx):
             dupe = await Milestone.from_id(duplicate)
             merge = await Milestone.from_id(mergeTo)
 
             if dupe is not None and merge is not None:
-                for x in dupe.reports:
-                    if x not in merge.reports:
+                for x in dupe.tickets:
+                    if x not in merge.tickets:
                         await merge.add_report(x, ctx.guild.id)
 
                 dupe.status = 1

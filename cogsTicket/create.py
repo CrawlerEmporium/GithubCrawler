@@ -8,14 +8,14 @@ from modal.bug import Bug
 from modal.feature import Feature
 from models.questions import Question, Questionaire
 from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers
-from utils.checks import isManager
-from utils.reportglobals import IdentifierDoesNotExist
+from utils.checks import is_manager
+from utils.ticketglobals import identifier_does_not_exist
 from utils import globals as GG
 
 log = GG.log
 
 
-class CreateReport(commands.Cog):
+class CreateTicket(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.get_identifiers.start()
@@ -39,8 +39,8 @@ class CreateReport(commands.Cog):
                                   label: Option(str, "What's the question?"),
                                   placeholder: Option(str, "Optional text inside the input box. (Max 100 characters.)", default="")
                                   ):
-        """Create questions for feature requests and bug reports."""
-        if not await isManager(ctx):
+        """Create questions for feature requests, bugs, and support tickets."""
+        if not await is_manager(ctx):
             return await ctx.respond("You do not have the required permissions to use this command.", ephemeral=True)
 
         exists = False
@@ -52,7 +52,7 @@ class CreateReport(commands.Cog):
                 exists = True
 
         if not exists:
-            return await IdentifierDoesNotExist(ctx, identifier)
+            return await identifier_does_not_exist(ctx, identifier)
 
         if style == "Singleline":
             style = 1
@@ -102,7 +102,7 @@ class CreateReport(commands.Cog):
                     exists = True
 
         if not exists:
-            return await IdentifierDoesNotExist(ctx, identifier)
+            return await identifier_does_not_exist(ctx, identifier)
 
         questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
         modal = Feature(identifier, self.bot, ctx.interaction, ctx.interaction.user, repo, tracker, channel, questionaire)
@@ -110,8 +110,8 @@ class CreateReport(commands.Cog):
 
     @slash_command(name="bugreport")
     @permissions.guild_only()
-    async def slash_bug(self, ctx, identifier: Option(str, "For what identifier do you want to make a bug report?", autocomplete=get_server_bug_identifiers)):
-        """Opens a modal to post a bug report."""
+    async def slash_bug(self, ctx, identifier: Option(str, "For what identifier do you want to make a bug ticket?", autocomplete=get_server_bug_identifiers)):
+        """Opens a modal to post a bug."""
         exists = False
 
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
@@ -125,7 +125,7 @@ class CreateReport(commands.Cog):
                     exists = True
 
         if not exists:
-            return await IdentifierDoesNotExist(ctx, identifier)
+            return await identifier_does_not_exist(ctx, identifier)
 
         questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
         modal = Bug(identifier, self.bot, ctx.interaction, ctx.interaction.user, repo, tracker, channel, questionaire)
@@ -134,7 +134,7 @@ class CreateReport(commands.Cog):
     @slash_command(name="supportrequest")
     @permissions.guild_only()
     async def slash_support(self, ctx, identifier: Option(str, "For what identifier do you want to make a support request?", autocomplete=get_server_bug_identifiers)):
-        """Opens a modal to post a bug report."""
+        """Opens a modal to post a support request."""
         exists = False
 
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
@@ -148,7 +148,7 @@ class CreateReport(commands.Cog):
                     exists = True
 
         if not exists:
-            return await IdentifierDoesNotExist(ctx, identifier)
+            return await identifier_does_not_exist(ctx, identifier)
 
         questionaire = await Questionaire.from_id(identifier, ctx.interaction.guild_id)
         modal = Bug(identifier, self.bot, ctx.interaction, ctx.interaction.user, repo, tracker, channel, questionaire)
@@ -156,5 +156,5 @@ class CreateReport(commands.Cog):
 
 
 def setup(bot):
-    log.info("[Report] CreateReport...")
-    bot.add_cog(CreateReport(bot))
+    log.info("[Ticket] CreateTicket...")
+    bot.add_cog(CreateTicket(bot))

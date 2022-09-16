@@ -49,7 +49,7 @@ def admin_or_permissions(**perms):
     return commands.check(predicate)
 
 
-async def isManager(ctx, report=None):
+async def is_manager(ctx, ticket=None):
     manager = await GG.MDB.Managers.find_one({"user": ctx.interaction.user.id, "server": ctx.guild.id})
     if manager is None:
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
@@ -60,20 +60,20 @@ async def isManager(ctx, report=None):
         if manager.get('identifier', None) is None:
             return True
         else:
-            if report is not None and manager['identifier'] in report.report_id:
+            if ticket is not None and manager['identifier'] in ticket.ticket_id:
                 return True
             return False
 
 
-def isAssignee(ctx, report):
-    if ctx.interaction.user.id == report.assignee:
+def is_assignee(ctx, ticket):
+    if ctx.interaction.user.id == ticket.assignee:
         return True
     else:
         return False
 
 
-async def isReporter(ctx, report):
-    if ctx.interaction.user.id == report.reporter:
+async def is_creator(ctx, ticket):
+    if ctx.interaction.user.id == ticket.reporter:
         guild_settings = await get_settings(ctx.bot, ctx.interaction.guild_id)
         allow_selfClose = guild_settings.get("allow_selfClose", False)
         if allow_selfClose:
@@ -84,15 +84,15 @@ async def isReporter(ctx, report):
         return False
 
 
-async def isManagerAssigneeOrReporterButton(userId, guildId, report, bot):
+async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
     manager = await GG.MDB.Managers.find_one({"user": userId, "server": guildId})
     if manager is None:
         server = await GG.MDB.Github.find_one({"server": guildId})
         if userId == server['admin']:
             return True
-        elif userId == report.assignee:
+        elif userId == ticket.assignee:
             return True
-        elif userId == report.reporter:
+        elif userId == ticket.reporter:
             guild_settings = await get_settings(bot, guildId)
             allow_selfClose = guild_settings.get("allow_selfClose", False)
             if allow_selfClose:
@@ -104,6 +104,6 @@ async def isManagerAssigneeOrReporterButton(userId, guildId, report, bot):
         if manager.get('identifier', None) is None:
             return True
         else:
-            if manager['identifier'] in report.report_id:
+            if manager['identifier'] in ticket.ticket_id:
                 return True
             return False

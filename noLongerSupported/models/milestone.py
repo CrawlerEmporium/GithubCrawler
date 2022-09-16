@@ -2,7 +2,7 @@ import discord
 
 from crawler_utilities.handlers.errors import CrawlerException
 from crawler_utilities.utils.functions import splitDiscordEmbedField
-from models.reports import Report
+from models.ticket import Ticket
 import utils.globals as GG
 
 STATUS = {
@@ -14,10 +14,10 @@ class Milestone:
     collection = GG.MDB['Milestone']
 
     def __init__(self, owner: int, server: int, milestone_id: str, status: int = 0, title: str = '', description: str = '',
-                 reports: list = None,
+                 tickets: list = None,
                  subscribers: list = None):
-        if reports is None:
-            reports = []
+        if tickets is None:
+            tickets = []
         if subscribers is None:
             subscribers = []
         self.owner = owner
@@ -25,13 +25,13 @@ class Milestone:
         self.milestone_id = milestone_id
         self.title = title
         self.description = description
-        self.reports = reports
+        self.tickets = tickets
         self.subscribers = subscribers
         self.status = status
 
     @classmethod
     async def new(cls, owner, server, milestone_id, title):
-        inst = cls(owner, server, milestone_id, 0, title, description='', reports=None, subscribers=None)
+        inst = cls(owner, server, milestone_id, 0, title, description='', tickets=None, subscribers=None)
         return inst
 
     @classmethod
@@ -40,7 +40,7 @@ class Milestone:
 
     def to_dict(self):
         return {"owner": self.owner, "server": self.server, "milestone_id": self.milestone_id, "status": self.status, "title": self.title,
-                "description": self.description, "reports": self.reports, "subscribers": self.subscribers}
+                "description": self.description, "tickets": self.tickets, "subscribers": self.subscribers}
 
     @classmethod
     async def from_id(cls, milestone_id, server):
@@ -56,36 +56,36 @@ class Milestone:
             raise MilestoneException(f"Milestone `{id}` not found.")
 
     async def add_report(self, _id, guild_id):
-        if _id in self.reports:
-            return f"Report `{_id}` is already linked to milestone `{self.milestone_id}`."
+        if _id in self.tickets:
+            return f"Ticket `{_id}` is already linked to milestone `{self.milestone_id}`."
         else:
-            self.reports.append(_id)
-            report = await Report.from_id(_id, guild_id)
-            if self.milestone_id not in report.milestone:
-                report.milestone.append(self.milestone_id)
-                await report.commit()
+            self.tickets.append(_id)
+            ticket = await Ticket.from_id(_id, guild_id)
+            if self.milestone_id not in ticket.milestone:
+                ticket.milestone.append(self.milestone_id)
+                await ticket.commit()
             await self.commit(guild_id)
-            return f"Added report `{_id}` to milestone `{self.milestone_id}`."
+            return f"Added ticket `{_id}` to milestone `{self.milestone_id}`."
 
     async def remove_report(self, _id, guild_id):
-        if _id in self.reports:
-            self.reports.remove(_id)
-            report = await Report.from_id(_id, guild_id)
-            if self.milestone_id in report.milestone:
-                report.milestone.remove(self.milestone_id)
-                await report.commit()
+        if _id in self.tickets:
+            self.tickets.remove(_id)
+            ticket = await Ticket.from_id(_id, guild_id)
+            if self.milestone_id in ticket.milestone:
+                ticket.milestone.remove(self.milestone_id)
+                await ticket.commit()
             await self.commit(guild_id)
-            return f"Removed report `{_id}` from milestone `{self.milestone_id}`."
+            return f"Removed ticket `{_id}` from milestone `{self.milestone_id}`."
         else:
-            return f"Report `{_id}` was not found in the linked reports for milestone `{self.milestone_id}`."
+            return f"Ticket `{_id}` was not found in the linked tickets for milestone `{self.milestone_id}`."
 
     def subscribe(self, userId):
-        """Ensures a user is subscribed to this report."""
+        """Ensures a user is subscribed to this ticket."""
         if userId not in self.subscribers:
             self.subscribers.append(userId)
 
     def unsubscribe(self, userId):
-        """Ensures a user is not subscribed to this report."""
+        """Ensures a user is not subscribed to this ticket."""
         if userId in self.subscribers:
             self.subscribers.remove(userId)
 
@@ -112,24 +112,24 @@ class Milestone:
             embed.description = f"{self.description}"
 
         open = 0
-        openReports = "**Open: **"
+        openTickets = "**Open: **"
         resolved = 0
-        resolvedReports = "**Resolved: **"
-        reports = len(self.reports)
+        resolvedTickets = "**Resolved: **"
+        tickets = len(self.tickets)
 
         embed.add_field(name="Status", value=f"{STATUS.get(self.status)}", inline=False)
 
-        embed.add_field(name="Total Tickets", value=f"{reports}")
-        for report in self.reports:
-            report = await Report.from_id(report, self.server)
-            if report.severity == 6:
+        embed.add_field(name="Total Tickets", value=f"{tickets}")
+        for ticket in self.tickets:
+            ticket = await Ticket.from_id(ticket, self.server)
+            if ticket.severity == 6:
                 open += 1
-                openReports += f"`{report.report_id}`: {report.title}\n"
-            if report.severity == -1:
+                openTickets += f"`{ticket.ticket_id}`: {ticket.title}\n"
+            if ticket.severity == -1:
                 resolved += 1
-                resolvedReports += f"`{report.report_id}`: {report.title}\n"
+                resolvedTickets += f"`{ticket.ticket_id}`: {ticket.title}\n"
 
-        reportString = f"{openReports} {open}\n\n{resolvedReports} {resolved}"
+        reportString = f"{openTickets} {open}\n\n{resolvedTickets} {resolved}"
 
         embed.add_field(name="Open Tickets", value=f"{open}")
         embed.add_field(name="Resolved Tickets", value=f"{resolved}")

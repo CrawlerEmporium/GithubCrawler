@@ -4,7 +4,7 @@ from aiohttp import web
 from discord.ext import commands
 
 from models.githubClient import GitHubClient
-from models.reports import Report, ReportException
+from models.ticket import Ticket, TicketException
 
 from utils import globals as GG
 log = GG.log
@@ -48,54 +48,54 @@ class Web(commands.Cog):
 
         # we only really care about opened or closed
         if action == "closed":
-            await self.report_closed(data)
+            await self.ticket_closed(data)
         elif action in ("opened", "reopened"):
-            await self.report_opened(data)
+            await self.ticket_opened(data)
         elif action in ("labeled", "unlabeled"):
-            await self.report_labeled(data)
+            await self.ticket_labeled(data)
 
-    async def report_closed(self, data):
+    async def ticket_closed(self, data):
         issue = data['issue']
         issue_num = issue['number']
         repo_name = data['repository']['full_name']
         try:
-            report = Report.from_github(repo_name, issue_num)
-        except ReportException:  # report not found
+            ticket = Ticket.from_github(repo_name, issue_num)
+        except TicketException:  # ticket not found
             return  # oh well
 
         pend = data['sender']['login'] == "lorddusk"
 
-        await report.resolve(GG.ContextProxy(self.bot), report.repo, close_github_issue=False, pend=pend)
-        await report.commit()
+        await ticket.resolve(GG.ContextProxy(self.bot), ticket.repo, close_github_issue=False, pend=pend)
+        await ticket.commit()
 
-    async def report_opened(self, data):
+    async def ticket_opened(self, data):
         issue = data['issue']
         issue_num = issue['number']
         repo_name = data['repository']['full_name']
         # is the issue new?
         try:
-            report = Report.from_github(repo_name, issue_num)
-        except ReportException:  # report not found
+            ticket = Ticket.from_github(repo_name, issue_num)
+        except TicketException:  # ticket not found
             issue_labels = [lab['name'] for lab in issue['labels']]
             if EXEMPT_LABEL in issue_labels:
                 return None
 
-            report = await Report.new_from_issue(repo_name, issue)
-            if not issue['title'].startswith(report.report_id):
-                formatted_title = f"{report.report_id} {report.title}"
+            ticket = await Ticket.new_from_issue(repo_name, issue)
+            if not issue['title'].startswith(ticket.ticket_id):
+                formatted_title = f"{ticket.ticket_id} {ticket.title}"
                 await GitHubClient.get_instance().rename_issue(repo_name, issue['number'], formatted_title)
 
-            # await GitHubClient.get_instance().add_issue_to_project(report.github_issue, report.is_bug)
+            # await GitHubClient.get_instance().add_issue_to_project(ticket.github_issue, ticket.is_bug)
             await GitHubClient.get_instance().add_issue_comment(repo_name, issue['number'],
-                                                                f"Tracked as `{report.report_id}`.")
-            await report.update_labels()
+                                                                f"Tracked as `{ticket.ticket_id}`.")
+            await ticket.update_labels()
 
-        await report.unresolve(GG.ContextProxy(self.bot), report.repo, open_github_issue=False)
-        await report.commit()
+        await ticket.unresolve(GG.ContextProxy(self.bot), ticket.repo, open_github_issue=False)
+        await ticket.commit()
 
-        return report
+        return ticket
 
-    async def report_labeled(self, data):
+    async def ticket_labeled(self, data):
         issue = data['issue']
         issue_num = issue['number']
         repo_name = data['repository']['full_name']
@@ -107,28 +107,28 @@ class Web(commands.Cog):
             return  # multiple type labels
 
         try:
-            report = Report.from_github(repo_name, issue_num)
-        except ReportException:  # report not found
-            report = await self.report_opened(data)
+            ticket = Ticket.from_github(repo_name, issue_num)
+        except TicketException:  # ticket not found
+            ticket = await self.ticket_opened(data)
 
-        if report is None:  # this only happens if we try to create a report off an enhancement label
+        if ticket is None:  # this only happens if we try to create a ticket off an enhancement label
             return  # we don't want to track it anyway
 
         ctx = GG.ContextProxy(self.bot)
 
         if EXEMPT_LABEL in label_names:  # issue changed from bug/fr to enhancement
-            await report.untrack(ctx, report.repo)
+            await ticket.untrack(ctx, ticket.repo)
         else:
-            priority = report.severity
+            priority = ticket.severity
             for i, pri in enumerate(PRI_LABEL_NAMES):
                 if any(pri in n for n in label_names):
                     priority = i
                     break
-            report.severity = priority
-            report.is_bug = BUG_LABEL in label_names
-            report.is_support = SUPPORT_LABEL in label_names
-            await report.commit()
-            await report.update(ctx, report.repo)
+            ticket.severity = priority
+            ticket.is_bug = BUG_LABEL in label_names
+            ticket.is_support = SUPPORT_LABEL in label_names
+            await ticket.commit()
+            await ticket.update(ctx, ticket.repo)
 
         # ===== github: issue_comment event =====
 
@@ -145,13 +145,13 @@ class Web(commands.Cog):
         # only care about create
         if action == "created":
             try:
-                report = Report.from_github(repo_name, issue_num)
-            except ReportException:
+                ticket = Ticket.from_github(repo_name, issue_num)
+            except TicketException:
                 return  # oh well
 
-            await report.addnote(f"GitHub - {username}", comment['body'], GG.ContextProxy(self.bot), report.repo, add_to_github=False)
-            await report.commit()
-            await report.update(GG.ContextProxy(self.bot))
+            await ticket.addnote(f"GitHub - {username}", comment['body'], GG.ContextProxy(self.bot), ticket.repo, add_to_github=False)
+            await ticket.commit()
+            await ticket.update(GG.ContextProxy(self.bot))
 
     def run_app(self, app, *, host='0.0.0.0', port=None, ssl_context=None, backlog=128):
         """Run an app"""

@@ -48,7 +48,7 @@ class Info(commands.Cog):
         em = EmbedWithAuthor(ctx)
         em.title = 'Support Server'
         em.description = "For technical support for IssueCrawler, join the Crawler Emporium discord [here](https://discord.gg/HEY6BWj)!\n" \
-                         "There you can ask questions about the bot, make feature requests, report issues and/or bugs (please include any error messages), learn about my other Crawler bots, and share with other crawler bot users!\n\n" \
+                         "There you can ask questions about the bot, make feature requests, ticket issues and/or bugs (please include any error messages), learn about my other Crawler bots, and share with other crawler bot users!\n\n" \
                          "[Check the Website](https://crawleremporium.com) for even more information.\n\n" \
                          "To add premium features to the bot, [<:Patreon:855754853153505280> Join the Patreon](https://www.patreon.com/LordDusk), or if you'd rather show just appreciation [tip the Developer a <:Kofi:855758703772958751> here](https://ko-fi.com/5ecrawler)."
         serverEmoji = self.bot.get_emoji(int("<:5e:603932658820448267>".split(":")[2].replace(">", "")))

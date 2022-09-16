@@ -29,17 +29,17 @@ async def get_identifiers(ctx, lookup):
     return autoList
 
 
-async def get_server_reports(ctx: discord.AutocompleteContext):
+async def get_server_tickets(ctx: discord.AutocompleteContext):
     autoList = []
-    reports = []
+    tickets = []
     servers = list(filter(lambda item: item['guild_id'] == ctx.interaction.guild_id, GG.TRACKING_CHANNELS))
     for server in servers:
-        reports += server['reports']
-    for report in reports:
+        tickets += server['tickets']
+    for ticket in tickets:
         if len(autoList) < 25:
-            if report is not None:
-                if ctx.value.upper() in report['report_id']:
-                    autoList.append(f"{report['report_id']} | {report['title'][:85] + '...' if len(report['title']) >= 85 else report['title']}")
+            if ticket is not None:
+                if ctx.value.upper() in ticket['ticket_id']:
+                    autoList.append(f"{ticket['ticket_id']} | {ticket['title'][:85] + '...' if len(ticket['title']) >= 85 else ticket['title']}")
         else:
             return autoList
     return autoList

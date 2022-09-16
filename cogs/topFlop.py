@@ -17,24 +17,24 @@ async def round_down(value, decimals):
         return round(d, decimals)
 
 
-async def tools_specific_topflop(ctx, reports, top, flop=False):
+async def tools_specific_topflop(ctx, tickets, top, flop=False):
     async with ctx.channel.typing():
         BOOSTERMEMBERS = [x.id for x in ctx.interaction.guild.get_role(585540203704483860).members]
         T2MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989073453678602).members]
         T3MEMBERS = [x.id for x in ctx.interaction.guild.get_role(606989264051503124).members]
-        serverReports = []
-        toolsReports = []
-        for report in reports:
-            repo = report.get('github_repo', None)
+        serverTickets = []
+        toolsTickets = []
+        for ticket in tickets:
+            repo = ticket.get('github_repo', None)
             if repo == "5etools/tracker":
-                toolsReports.append(report)
+                toolsTickets.append(ticket)
         if flop:
-            await ctx.respond(f"Checking {len(toolsReports)} suggestions for their downvotes...", delete_after=5)
+            await ctx.respond(f"Checking {len(toolsTickets)} suggestions for their downvotes...", delete_after=5)
         else:
-            await ctx.respond(f"Checking {len(toolsReports)} suggestions for their upvotes...", delete_after=5)
-        for report in toolsReports:
-            if report['severity'] != -1:
-                attachments = report['attachments']
+            await ctx.respond(f"Checking {len(toolsTickets)} suggestions for their upvotes...", delete_after=5)
+        for ticket in toolsTickets:
+            if ticket['severity'] != -1:
+                attachments = ticket['attachments']
                 upvotes = 0
                 downvotes = 0
                 for attachment in attachments:
@@ -57,36 +57,36 @@ async def tools_specific_topflop(ctx, reports, top, flop=False):
                         except NotFound:
                             upvotes += 1
                 rep = {
-                    "report_id": report['report_id'],
-                    "title": report['title'],
+                    "ticket_id": ticket['ticket_id'],
+                    "title": ticket['title'],
                     "upvotes": upvotes,
                     "downvotes": downvotes,
-                    "message": report['message'],
+                    "message": ticket['message'],
                     "rating": (0 - downvotes) + upvotes,
                     "total": downvotes + upvotes
                 }
-                serverReports.append(rep)
+                serverTickets.append(rep)
         embed = EmbedWithAuthor(ctx)
         if flop:
-            sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=False)
+            sortedList = sorted(serverTickets, key=lambda k: k['rating'], reverse=False)
             embed.title = f"Top {top} most downvoted suggestions."
         else:
-            sortedList = sorted(serverReports, key=lambda k: k['rating'], reverse=True)
+            sortedList = sorted(serverTickets, key=lambda k: k['rating'], reverse=True)
             embed.title = f"Top {top} most upvoted suggestions."
         i = 1
         channel = await ctx.bot.fetch_channel(593769144969723914)
-        for report in sortedList[:top]:
+        for ticket in sortedList[:top]:
             try:
-                message = await channel.fetch_message(report['message'])
+                message = await channel.fetch_message(ticket['message'])
                 msg_url = f"[Link]({message.jump_url})"
             except:
                 msg_url = f"No Link"
 
-            perc = 100 * float(report['upvotes']) / float(report['total'])
+            perc = 100 * float(ticket['upvotes']) / float(ticket['total'])
             percRounded = await round_down(perc, 2)
 
-            embed.add_field(name=f"**[#{i}] {report['rating']}** points ({str(percRounded)}% upvotes)",
-                            value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
+            embed.add_field(name=f"**[#{i}] {ticket['rating']}** points ({str(percRounded)}% upvotes)",
+                            value=f"{ticket['ticket_id']}: {ticket['title']} - {msg_url}", inline=False)
             i += 1
         return await ctx.respond(embed=embed)
 
@@ -101,10 +101,10 @@ class TopFlop(commands.Cog):
     async def top(self, ctx, identifier: Option(str, "From which identifier would you like a top X?", autocomplete=get_server_feature_identifiers, default=None, required=False), top: Option(int, "The top of how many?", max_value=25, min_value=10, default=10, required=False)):
         """Gets top x or top 10"""
         await ctx.defer()
-        reports, results = await self.getResults(ctx, identifier)
+        tickets, results = await self.getResults(ctx, identifier)
 
         if ctx.interaction.guild_id == 363680385336606740 and identifier is None:
-            return await tools_specific_topflop(ctx, reports, top)
+            return await tools_specific_topflop(ctx, tickets, top)
 
         try:
             guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.interaction.guild_id)
@@ -113,19 +113,19 @@ class TopFlop(commands.Cog):
             return await ctx.respond("Your server isn't registered or doesn't have any channels set up yet.")
 
         if identifier is None:
-            embed, sortedList, top = await self.getCount(ctx, guild, reports, server, top, "upvote")
+            embed, sortedList, top = await self.getCount(ctx, guild, tickets, server, top, "upvote")
         else:
             embed, sortedList, top = await self.getCount(ctx, guild, results, server, top, "upvote")
 
         i = 1
-        for report in sortedList[:top]:
-            jumpUrl = report.get("jumpUrl", "NoLink")
+        for ticket in sortedList[:top]:
+            jumpUrl = ticket.get("jumpUrl", "NoLink")
             if jumpUrl is not None and jumpUrl != "NoLink":
                 msg_url = f"[Link]({jumpUrl})"
             else:
                 msg_url = f"NoLink"
-            embed.add_field(name=f"**[#{i}] {report['upvotes']}** upvotes",
-                            value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
+            embed.add_field(name=f"**[#{i}] {ticket['upvotes']}** upvotes",
+                            value=f"{ticket['ticket_id']}: {ticket['title']} - {msg_url}", inline=False)
             i += 1
         await ctx.respond(embed=embed)
 
@@ -135,10 +135,10 @@ class TopFlop(commands.Cog):
         """Gets top x or top 10"""
         # -2 in attachment
         await ctx.defer()
-        reports, results = await self.getResults(ctx, identifier)
+        tickets, results = await self.getResults(ctx, identifier)
 
         if ctx.interaction.guild_id == 363680385336606740 and identifier is None:
-            return await tools_specific_topflop(ctx, reports, top, flop=True)
+            return await tools_specific_topflop(ctx, tickets, top, flop=True)
 
         try:
             guild = next(item for item in GG.GITHUBSERVERS if item.server == ctx.interaction.guild_id)
@@ -147,25 +147,25 @@ class TopFlop(commands.Cog):
             return await ctx.respond("Your server isn't registered or doesn't have any channels set up yet.")
 
         if identifier is None:
-            embed, sortedList, top = await self.getCount(ctx, guild, reports, server, top, "downvote")
+            embed, sortedList, top = await self.getCount(ctx, guild, tickets, server, top, "downvote")
         else:
             embed, sortedList, top = await self.getCount(ctx, guild, results, server, top, "downvote")
 
         i = 1
-        for report in sortedList[:top]:
-            jumpUrl = report.get("jumpUrl", "NoLink")
+        for ticket in sortedList[:top]:
+            jumpUrl = ticket.get("jumpUrl", "NoLink")
             if jumpUrl is not None and jumpUrl != "NoLink":
                 msg_url = f"[Link]({jumpUrl})"
             else:
                 msg_url = f"NoLink"
 
-            embed.add_field(name=f"**[#{i}] {report['downvotes']}** downvotes",
-                            value=f"{report['report_id']}: {report['title']} - {msg_url}", inline=False)
+            embed.add_field(name=f"**[#{i}] {ticket['downvotes']}** downvotes",
+                            value=f"{ticket['ticket_id']}: {ticket['title']} - {msg_url}", inline=False)
             i += 1
         await ctx.respond(embed=embed)
 
     async def getResults(self, ctx, identifier):
-        reports = await GG.MDB.Reports.find({}).to_list(length=None)
+        tickets = await GG.MDB.Tickets.find({}).to_list(length=None)
         results = []
         if identifier is not None:
             server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
@@ -173,43 +173,43 @@ class TopFlop(commands.Cog):
                 if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
                     identifier = iden['identifier']
 
-            for x in reports:
-                if identifier.upper() in x['report_id']:
+            for x in tickets:
+                if identifier.upper() in x['ticket_id']:
                     results.append(x)
-            reports = results
-        return reports, results
+            tickets = results
+        return tickets, results
 
-    async def getCount(self, ctx, guild, reports, server, top, type):
-        serverReports = []
+    async def getCount(self, ctx, guild, tickets, server, top, type):
+        serverTickets = []
         if server is not None:
-            for report in reports:
-                repo = report.get('github_repo', None)
+            for ticket in tickets:
+                repo = ticket.get('github_repo', None)
                 if server == repo or server == "5etools/tracker":
-                    if report['severity'] != -1:
+                    if ticket['severity'] != -1:
                         rep = {
-                            "report_id": report['report_id'],
-                            "title": report['title'],
-                            f"{type}s": report[f'{type}s'],
-                            "jumpUrl": report.get('jumpUrl', "NoLink")
+                            "ticket_id": ticket['ticket_id'],
+                            "title": ticket['title'],
+                            f"{type}s": ticket[f'{type}s'],
+                            "jumpUrl": ticket.get('jumpUrl', "NoLink")
                         }
-                        serverReports.append(rep)
+                        serverTickets.append(rep)
         else:
             trackerChannels = []
             for x in guild.listen:
                 trackerChannels.append(x.tracker)
-            for report in reports:
-                tracker = report.get('trackerId', None)
+            for ticket in tickets:
+                tracker = ticket.get('trackerId', None)
                 if tracker in trackerChannels:
-                    if report['severity'] != -1:
+                    if ticket['severity'] != -1:
                         rep = {
-                            "report_id": report['report_id'],
-                            "title": report['title'],
-                            f"{type}s": report[f'{type}s'],
-                            "jumpUrl": report.get('jumpUrl', "NoLink")
+                            "ticket_id": ticket['ticket_id'],
+                            "title": ticket['title'],
+                            f"{type}s": ticket[f'{type}s'],
+                            "jumpUrl": ticket.get('jumpUrl', "NoLink")
                         }
-                        serverReports.append(rep)
+                        serverTickets.append(rep)
 
-        sortedList = sorted(serverReports, key=lambda k: k[f'{type}s'], reverse=True)
+        sortedList = sorted(serverTickets, key=lambda k: k[f'{type}s'], reverse=True)
         embed = EmbedWithAuthor(ctx)
         embed.title = f"Top {top} most {type}d suggestions."
         return embed, sortedList, top

@@ -72,8 +72,8 @@ async def cache_server_channels():
         trackerChannels = []
         for channel in server['listen']:
             trackerChannels.append(channel['tracker'])
-        reports = await MDB.Reports.find({"trackerId": {"$in": trackerChannels}}, {"report_id": 1, "title": 1, "_id": 0}).to_list(length=None)
-        TRACKING_CHANNELS.append({"guild_id": server['server'], "channels": trackerChannels, "reports": reports})
+        tickets = await MDB.Tickets.find({"trackerId": {"$in": trackerChannels}}, {"ticket_id": 1, "title": 1, "_id": 0}).to_list(length=None)
+        TRACKING_CHANNELS.append({"guild_id": server['server'], "channels": trackerChannels, "tickets": tickets})
 
 
 REPO_ID_MAP = {

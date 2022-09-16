@@ -2,30 +2,29 @@ import discord
 from crawler_utilities.cogs.stats import track_google_analytics_event
 
 import utils.globals as GG
-from models.reports import Report
+from models.ticket import Ticket
 
-REPORTS = []
+TICKETS = []
 
 
 def loop(result, error):
     if error:
         raise error
     elif result:
-        REPORTS.append(result)
+        TICKETS.append(result)
 
 
-def getAllReports():
-    collection = GG.MDB['Reports']
+def get_all_tickets():
+    collection = GG.MDB['Tickets']
     cursor = collection.find()
-    REPORTS.clear()
+    TICKETS.clear()
     cursor.each(callback=loop)
-    return REPORTS
+    return TICKETS
 
 
-async def finishReportCreation(self, interaction, report, reportMessage, requestChannel, bug=False, forumPost=None):
-    await report.commit()
-    embed = await getAdmissionSuccessfulEmbed(self.report_id, self.author, bug, requestChannel, reportMessage,
-                                              forumPost)
+async def finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, bug=False, support=False, forumPost=None):
+    await ticket.commit()
+    embed = await admission_successful_embed(self.ticket_id, self.author, bug, support, requestChannel, ticketMessage, forumPost)
     if self.author.dm_channel is not None:
         DM = self.author.dm_channel
     else:
@@ -35,12 +34,12 @@ async def finishReportCreation(self, interaction, report, reportMessage, request
     except discord.Forbidden:
         pass
     await interaction.followup.send(
-        f"Your submission ``{report.report_id}`` was accepted, please check your DM's for more information.\n"
+        f"Your submission ``{ticket.ticket_id}`` was accepted, please check your DM's for more information.\n"
         f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.",
         ephemeral=True)
 
 
-async def finishNoteCreation(self, interaction, embed):
+async def finish_note_creation(self, interaction, embed):
     if self.author.dm_channel is not None:
         DM = self.author.dm_channel
     else:
@@ -50,31 +49,34 @@ async def finishNoteCreation(self, interaction, embed):
     except discord.Forbidden:
         pass
     await interaction.followup.send(
-        f"Your note for ``{self.report.report_id}`` was added, please check your DM's for more information.\n"
+        f"Your note for ``{self.ticket.ticket_id}`` was added, please check your DM's for more information.\n"
         f"If no DM was received, you probably have it turned off, and you should check the tracker channel of the server the request was made in.",
         ephemeral=True)
 
 
-async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, reportMessage, forumPost=None):
+async def admission_successful_embed(ticket_id, author, bug, support, requestChannel, ticketMessage, forumPost=None):
     embed = discord.Embed()
-    embed.title = f"Your submission ``{report_id}`` was accepted."
+    embed.title = f"Your submission ``{ticket_id}`` was accepted."
     if bug:
-        track_google_analytics_event("Bug Report", f"{report_id}", f"{author.id}")
-        embed.description = f"Your bug report was successfully posted in <#{requestChannel.id}>!"
+        track_google_analytics_event("Bug report", f"{ticket_id}", f"{author.id}")
+        embed.description = f"Your bug was successfully posted in <#{requestChannel.id}>!"
+    elif support:
+        track_google_analytics_event("Support Ticket", f"{ticket_id}", f"{author.id}")
+        embed.description = f"Your support ticket was successfully posted in <#{requestChannel.id}>!"
     else:
-        track_google_analytics_event("Feature Request", f"{report_id}", f"{author.id}")
+        track_google_analytics_event("Feature Request", f"{ticket_id}", f"{author.id}")
         embed.description = f"Your feature request was successfully posted in <#{requestChannel.id}>!"
-    embed.add_field(name="Status Checking", value=f"To check on its status: `/view {report_id}`.",
+    embed.add_field(name="Status Checking", value=f"To check on its status: `/view {ticket_id}`.",
                     inline=False)
     embed.add_field(name="Note Adding",
-                    value=f"To add a note: `/note {report_id} <comment>`.",
+                    value=f"To add a note: `/note {ticket_id} <comment>`.",
                     inline=False)
     embed.add_field(name="Subscribing",
-                    value=f"To subscribe: `/subscribe {report_id}`. (This is only for others, the submitter is automatically subscribed).",
+                    value=f"To subscribe: `/subscribe {ticket_id}`. (This is only for others, the submitter is automatically subscribed).",
                     inline=False)
     if not bug:
         embed.add_field(name="Voting",
-                        value=f"You can find the report here: [Click me]({reportMessage.jump_url})",
+                        value=f"You can find the ticket here: [Click me]({ticketMessage.jump_url})",
                         inline=False)
     if forumPost is not None:
         embed.add_field(name="Discussion Post",
@@ -83,15 +85,15 @@ async def getAdmissionSuccessfulEmbed(report_id, author, bug, requestChannel, re
     return embed
 
 
-async def IdentifierDoesNotExist(ctx, identifier):
+async def identifier_does_not_exist(ctx, identifier):
     return await ctx.respond(f"The identifier ``{identifier}`` could not be found.\n"
                              f"If the identifier was shown in the option box, please contact the developer of the bot through the ``support`` command.\n\n"
                              f"Otherwise this command can only be used on servers that have the feature request functionality of the bot enabled.",
                              ephemeral=True)
 
 
-async def ReportFromId(_id, ctx):
-    report_id = _id.split(" | ")[0]
+async def ticket_from_id(_id, ctx):
+    ticket_id = _id.split(" | ")[0]
     guild_id = ctx.interaction.guild_id
-    report = await Report.from_id(report_id, guild_id)
-    return report
+    ticket = await Ticket.from_id(ticket_id, guild_id)
+    return ticket
