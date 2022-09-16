@@ -189,23 +189,32 @@ class Report:
         trackerChannels = []
         for channel in guild['listen']:
             trackerChannels.append(channel['tracker'])
-        report = await cls.collection.find_one({"report_id": report_id.upper(), "trackerId": {"$in": trackerChannels}})
-        if report is not None:
-            del report['_id']
+        dbReport = await cls.collection.find_one({"report_id": report_id.upper(), "trackerId": {"$in": trackerChannels}})
+        if dbReport is not None:
+            del dbReport['_id']
             try:
-                return cls.from_dict(report)
+                report = cls.from_dict(dbReport)
+                return await cls.add_server_id_backwards(report, guild_id)
             except KeyError:
                 raise ReportException(f"{report_id} Report not found.")
         else:
             try:
-                report = await cls.collection.find_one({"report_id": report_id.upper(), "server_id": guild_id})
-                del report['_id']
+                dbReport = await cls.collection.find_one({"report_id": report_id.upper(), "server_id": guild_id})
+                del dbReport['_id']
                 try:
-                    return cls.from_dict(report)
+                    report = cls.from_dict(dbReport)
+                    return await cls.add_server_id_backwards(report, guild_id)
                 except KeyError:
                     raise ReportException(f"{report_id} Report not found.")
             except:
                 raise ReportException(f"{report_id} Report not found.")
+
+    @classmethod
+    async def add_server_id_backwards(cls, report, guild_id):
+        if report.server_id is None:
+            report.server_id = guild_id
+            await report.commit()
+        return report
 
     @classmethod
     async def from_message_id(cls, message_id):
