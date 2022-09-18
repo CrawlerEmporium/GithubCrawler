@@ -122,8 +122,8 @@ class Issue(commands.Cog):
         server = Server.from_data(server)
         channels = "This server has the following channels setup:\n\n"
         for listen in server.listen:
-            channels += f"Listening to: {self.bot.get_channel(listen.channel).mention}\n" \
-                        f"Posting to: {self.bot.get_channel(listen.tracker).mention}\n" \
+            channels += f"Ticketing Channel: {self.bot.get_channel(listen.channel).mention}\n" \
+                        f"Voting/Overview Channel: {self.bot.get_channel(listen.tracker).mention}\n" \
                         f"Using Identifier: ``{listen.identifier}``\n" \
                         f"Type: ``{listen.type}``\n\n"
         await ctx.respond(channels)
