@@ -157,6 +157,7 @@ class Issue(commands.Cog):
                 server['listen'] = oldListen
                 await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
                 await GG.MDB.TicketNums.delete_one({"key": identifier.upper(), "server": ctx.guild.id})
+                await loadGithubServers()
                 await confirmation.quit()
                 if ch is not None and tr is not None:
                     return await ctx.respond(
