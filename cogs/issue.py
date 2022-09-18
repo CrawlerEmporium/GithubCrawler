@@ -9,7 +9,7 @@ from discord.ext import commands
 
 import utils.globals as GG
 from models.server import Server, Listen
-from utils.autocomplete import get_server_identifiers
+from utils.autocomplete import get_server_identifiers, get_server_identifiers_no_alias
 from utils.checks import is_manager
 from utils.functions import loadGithubServers, get_selection
 from models.ticket import Ticket, PRIORITY
@@ -132,7 +132,7 @@ class Issue(commands.Cog):
     @discord.default_permissions(
         administrator=True,
     )
-    async def remove(self, ctx, identifier: Option(str, "Which identifier would you like to delete?", autocomplete=get_server_identifiers)):
+    async def remove(self, ctx, identifier: Option(str, "Which identifier would you like to delete?", autocomplete=get_server_identifiers_no_alias)):
         """Deletes an identifier"""
         await ctx.defer()
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})

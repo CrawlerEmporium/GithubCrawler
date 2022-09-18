@@ -18,12 +18,19 @@ async def get_server_identifiers(ctx: discord.AutocompleteContext):
     return await get_identifiers(ctx, GG.ALL_IDENTIFIERS)
 
 
-async def get_identifiers(ctx, lookup):
+async def get_server_identifiers_no_alias(ctx: discord.AutocompleteContext):
+    return await get_identifiers(ctx, GG.ALL_IDENTIFIERS, False)
+
+
+async def get_identifiers(ctx, lookup, alias=True):
     identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, lookup))
     autoList = []
     for identifier in identifiers:
-        if identifier["alias"] is not None and identifier["alias"] != "":
-            autoList.append(identifier['alias'])
+        if alias:
+            if identifier["alias"] is not None and identifier["alias"] != "":
+                autoList.append(identifier['alias'])
+            else:
+                autoList.append(identifier['identifier'])
         else:
             autoList.append(identifier['identifier'])
     return autoList
