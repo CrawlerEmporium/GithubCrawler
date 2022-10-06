@@ -63,15 +63,14 @@ class Manager(commands.Cog):
         else:
             channels = "This server has the following managers:\n\n" \
                        "```md\n"\
-                       "|User|Identifier|\n" \
-                       "|----|----------|\n"
+                       "| User | Identifier |\n"
             for x in server:
                 user = await ctx.guild.fetch_member(x['user'])
                 identifier = x.get("identifier", "All")
                 if user is None:
-                    channels += f"|{x['user']}|{identifier}|\n"
+                    channels += f"| {x['user']} | {identifier} |\n"
                 else:
-                    channels += f"|{user.nick}|{identifier}|\n"
+                    channels += f"| {user.name} | {identifier} |\n"
             channels += "```"
             await ctx.respond(channels, allowed_mentions=AllowedMentions().none())
 
