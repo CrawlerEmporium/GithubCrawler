@@ -68,7 +68,7 @@ class Manager(commands.Cog):
                     channels += f"{x['user']}\n"
                 else:
                     channels += f"{user.mention}\n"
-            await ctx.respond(channels, allowed_mention=AllowedMentions().none())
+            await ctx.respond(channels, allowed_mentions=AllowedMentions().none())
 
 
 def setup(bot):
