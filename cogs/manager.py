@@ -71,7 +71,7 @@ class Manager(commands.Cog):
                 if user is None:
                     channels += f"|{x['user']}|{identifier}|\n"
                 else:
-                    channels += f"|{user.mention}|{identifier}|\n"
+                    channels += f"|{user.nick}|{identifier}|\n"
             channels += "```"
             await ctx.respond(channels, allowed_mentions=AllowedMentions().none())
 
