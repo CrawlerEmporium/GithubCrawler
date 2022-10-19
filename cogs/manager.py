@@ -61,14 +61,18 @@ class Manager(commands.Cog):
         if server is None or len(server) <= 0:
             await ctx.respond("This server has no managers (Except the Server Owner).")
         else:
-            channels = "This server has the following managers:\n\n"
+            channels = "This server has the following managers:\n\n" \
+                       "```md\n"\
+                       "| User | Identifier |\n"
             for x in server:
                 user = await ctx.guild.fetch_member(x['user'])
+                identifier = x.get("identifier", "All")
                 if user is None:
-                    channels += f"{x['user']}\n"
+                    channels += f"| {x['user']} | {identifier} |\n"
                 else:
-                    channels += f"{user.mention}\n"
-            await ctx.respond(channels, allowed_mention=AllowedMentions().none())
+                    channels += f"| {user.name} | {identifier} |\n"
+            channels += "```"
+            await ctx.respond(channels, allowed_mentions=AllowedMentions().none())
 
 
 def setup(bot):
