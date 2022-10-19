@@ -106,6 +106,8 @@ class Issue(commands.Cog):
             await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
             await GG.MDB.TicketNums.insert_one({"key": identifier, "server": ctx.guild.id, "amount": 0})
             await loadGithubServers()
+            await GG.cache_identifiers()
+            await GG.cache_server_channels()
         else:
             return await ctx.respond("The given channel or tracker ID's are invalid.")
 
@@ -158,6 +160,8 @@ class Issue(commands.Cog):
                 await GG.MDB.Github.replace_one({"server": ctx.guild.id}, server)
                 await GG.MDB.TicketNums.delete_one({"key": identifier.upper(), "server": ctx.guild.id})
                 await loadGithubServers()
+                await GG.cache_identifiers()
+                await GG.cache_server_channels()
                 await confirmation.quit()
                 if ch is not None and tr is not None:
                     return await ctx.respond(

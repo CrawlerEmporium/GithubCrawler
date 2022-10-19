@@ -60,7 +60,7 @@ async def is_manager(ctx, ticket=None):
         if manager.get('identifier', None) is None:
             return True
         else:
-            if ticket is not None and manager['identifier'] in ticket.ticket_id:
+            if ticket is not None and manager['identifier'].lower() in ticket.ticket_id.lower():
                 return True
             return False
 
@@ -104,6 +104,6 @@ async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
         if manager.get('identifier', None) is None:
             return True
         else:
-            if manager['identifier'] in ticket.ticket_id:
+            if manager['identifier'].lower() in ticket.ticket_id.lower():
                 return True
             return False
