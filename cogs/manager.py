@@ -5,7 +5,7 @@ from discord import SlashCommandGroup, Option, AllowedMentions
 from discord.ext import commands
 
 from utils import globals as GG
-from utils.autocomplete import get_server_identifiers
+from utils.autocomplete import get_server_identifiers, get_server_identifiers_no_alias
 
 log = GG.log
 
@@ -21,7 +21,7 @@ class Manager(commands.Cog):
     @discord.default_permissions(
         administrator=True,
     )
-    async def managerAdd(self, ctx, member: Option(discord.Member, description="Who do you want to add as a manager?"), identifier: Option(str, "For which identifier? Leave empty for server wide.", default=None, autocomplete=get_server_identifiers, required=False)):
+    async def managerAdd(self, ctx, member: Option(discord.Member, description="Who do you want to add as a manager?"), identifier: Option(str, "For which identifier? Leave empty for server wide.", default=None, autocomplete=get_server_identifiers_no_alias, required=False)):
         if identifier is None:
             manager = await GG.MDB.Managers.find_one({"user": member.id, "server": ctx.guild.id})
             if manager is not None:
@@ -39,7 +39,7 @@ class Manager(commands.Cog):
     @discord.default_permissions(
         administrator=True,
     )
-    async def managerRemove(self, ctx, member: Option(discord.Member, description="Who do you want to remove as a manager?"), identifier: Option(str, "For which identifier? Leave empty for server wide.", default=None, autocomplete=get_server_identifiers, required=False)):
+    async def managerRemove(self, ctx, member: Option(discord.Member, description="Who do you want to remove as a manager?"), identifier: Option(str, "For which identifier? Leave empty for server wide.", default=None, autocomplete=get_server_identifiers_no_alias, required=False)):
         if identifier is None:
             manager = await GG.MDB.Managers.find_one({"user": member.id, "server": ctx.guild.id})
             if manager is None:

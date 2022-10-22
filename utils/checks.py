@@ -50,19 +50,20 @@ def admin_or_permissions(**perms):
 
 
 async def is_manager(ctx, ticket=None):
-    manager = await GG.MDB.Managers.find_one({"user": ctx.interaction.user.id, "server": ctx.guild.id})
+    manager = await GG.MDB.Managers.find({"user": ctx.interaction.user.id, "server": ctx.guild.id}).to_list(length=None)
     if manager is None:
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         if ctx.interaction.user.id == server['admin']:
             return True
         return False
     else:
-        if manager.get('identifier', None) is None:
-            return True
-        else:
-            if ticket is not None and manager['identifier'].lower() in ticket.ticket_id.lower():
+        for man in manager:
+            identifier = man.get('identifier', None)
+            if ticket is not None and identifier in ticket.ticket_id.lower():
                 return True
-            return False
+            if identifier is None:
+                return True
+        return False
 
 
 def is_assignee(ctx, ticket):
@@ -85,7 +86,7 @@ async def is_creator(ctx, ticket):
 
 
 async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
-    manager = await GG.MDB.Managers.find_one({"user": userId, "server": guildId})
+    manager = await GG.MDB.Managers.find_one({"user": userId, "server": guildId}).to_list(length=None)
     if manager is None:
         server = await GG.MDB.Github.find_one({"server": guildId})
         if userId == server['admin']:
@@ -101,9 +102,10 @@ async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
         else:
             return False
     else:
-        if manager.get('identifier', None) is None:
-            return True
-        else:
-            if manager['identifier'].lower() in ticket.ticket_id.lower():
+        for man in manager:
+            identifier = man.get('identifier', None)
+            if ticket is not None and identifier in ticket.ticket_id.lower():
                 return True
-            return False
+            if identifier is None:
+                return True
+        return False

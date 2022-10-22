@@ -8,7 +8,7 @@ from crawler_utilities.cogs.stats import track_google_analytics_event
 from crawler_utilities.utils.pagination import BotEmbedPaginator
 from models.ticket import Ticket, get_next_ticket_num
 from utils.autocomplete import get_server_tickets, get_server_identifiers
-from utils.checks import is_manager, is_assignee, is_creator
+from utils.checks import is_manager, is_manager_assignee_or_creator
 from utils.ticketglobals import ticket_from_id, identifier_does_not_exist
 
 from utils import globals as GG
@@ -26,7 +26,7 @@ class ManagerCommands(commands.Cog):
         """Server Managers and Identifier Managers only - Resolves a ticket."""
         await ctx.defer()
         ticket = await ticket_from_id(_id, ctx)
-        if await is_manager(ctx, ticket) or is_assignee(ctx, ticket) or await is_creator(ctx, ticket):
+        if await is_manager_assignee_or_creator(ctx.interaction.user.id, ctx.guild.id, ticket, ctx.bot):
             await ticket.resolve(ctx, ctx.guild.id, msg)
             await ticket.commit()
             await ctx.respond(f"Resolved `{ticket.ticket_id}`: {ticket.title}.")
