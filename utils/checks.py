@@ -86,7 +86,7 @@ async def is_creator(ctx, ticket):
 
 
 async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
-    manager = await GG.MDB.Managers.find_one({"user": userId, "server": guildId}).to_list(length=None)
+    manager = await GG.MDB.Managers.find({"user": userId, "server": guildId}).to_list(length=None)
     if manager is None:
         server = await GG.MDB.Github.find_one({"server": guildId})
         if userId == server['admin']:
