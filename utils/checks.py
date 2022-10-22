@@ -51,7 +51,7 @@ def admin_or_permissions(**perms):
 
 async def is_manager(ctx, ticket=None):
     manager = await GG.MDB.Managers.find({"user": ctx.interaction.user.id, "server": ctx.guild.id}).to_list(length=None)
-    if manager is None:
+    if len(manager) == 0:
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
         if ctx.interaction.user.id == server['admin']:
             return True
@@ -88,7 +88,7 @@ async def is_creator(ctx, ticket):
 async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
     manager = await GG.MDB.Managers.find({"user": userId, "server": guildId}).to_list(length=None)
     print(manager)
-    if manager is None:
+    if len(manager) == 0:
         print("manager is none")
         server = await GG.MDB.Github.find_one({"server": guildId})
         print(server)
