@@ -764,7 +764,13 @@ class Ticket:
         if self.thread is not None:
             channel = await ctx.bot.fetch_channel(self.thread)
             name = channel.name
-            await channel.edit(name=f"[Resolved] - {name}", auto_archive_duration=1440)
+            extra = len(f"{self.ticket_id} - ")
+            extra += len(f"[Resolved] ")
+            maxThreadTitleLength = 97 - extra
+            if len(name) > maxThreadTitleLength:
+                await channel.edit(name=f"[Resolved] - {name[:maxThreadTitleLength]}...", auto_archive_duration=1440)
+            else:
+                await channel.edit(name=f"[Resolved] - {name}", auto_archive_duration=1440)
             await channel.send(f"{msg}\n\nThis thread will now automatically archive itself in 1 day.")
 
         if pend:
