@@ -112,8 +112,11 @@ async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
             identifier = man.get('identifier', None)
             print(identifier)
             print("ticket_id: ", ticket.ticket_id.lower())
-            if ticket is not None and identifier in ticket.ticket_id.lower():
-                return True
             if identifier is None:
                 return True
+            else:
+                if ticket is not None and identifier in ticket.ticket_id.lower():
+                    return True
+                else:
+                    return False
         return False
