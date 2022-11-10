@@ -59,10 +59,13 @@ async def is_manager(ctx, ticket=None):
     else:
         for man in manager:
             identifier = man.get('identifier', None)
-            if ticket is not None and identifier in ticket.ticket_id.lower():
-                return True
             if identifier is None:
                 return True
+            else:
+                if ticket is not None and identifier in ticket.ticket_id.lower():
+                    return True
+                else:
+                    return False
         return False
 
 
