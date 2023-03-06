@@ -31,7 +31,7 @@ class TicketCommands(commands.Cog):
 
     @slash_command(name="upvote")
     @permissions.guild_only()
-    async def upvote(self, ctx, _id: Option(str, "Which ticket do you want to upvote?", autocomplete=get_server_feature_identifiers), msg: Option(str, "Do you have any added comment for this upvote?", default="")):
+    async def upvote(self, ctx, _id: Option(str, "Which ticket do you want to upvote?", autocomplete=get_server_tickets), msg: Option(str, "Do you have any added comment for this upvote?", default="")):
         """Adds an upvote to the selected ticket."""
         ticket = await ticket_from_id(_id, ctx)
         user = ctx.interaction.user
@@ -44,7 +44,7 @@ class TicketCommands(commands.Cog):
 
     @slash_command(name="downvote")
     @permissions.guild_only()
-    async def downvote(self, ctx, _id: Option(str, "Which ticket do you want to downvote?", autocomplete=get_server_feature_identifiers), msg: Option(str, "Do you have any added comment for this downvote?", default="")):
+    async def downvote(self, ctx, _id: Option(str, "Which ticket do you want to downvote?", autocomplete=get_server_tickets), msg: Option(str, "Do you have any added comment for this downvote?", default="")):
         """Adds a downvote to the selected ticket."""
         ticket = await ticket_from_id(_id, ctx)
         user = ctx.interaction.user
@@ -57,7 +57,7 @@ class TicketCommands(commands.Cog):
 
     @slash_command(name="indifferent")
     @permissions.guild_only()
-    async def indifferent(self, ctx, _id: Option(str, "Which ticket do you want to be indifferent about?", autocomplete=get_server_feature_identifiers), msg: Option(str, "Do you have any added comment for the indifference?", default="")):
+    async def indifferent(self, ctx, _id: Option(str, "Which ticket do you want to be indifferent about?", autocomplete=get_server_tickets), msg: Option(str, "Do you have any added comment for the indifference?", default="")):
         """Adds an indifference to the selected ticket."""
         ticket = await ticket_from_id(_id, ctx)
         user = ctx.interaction.user
