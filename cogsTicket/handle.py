@@ -62,61 +62,54 @@ class HandleTicket(commands.Cog):
 
     @staticmethod
     async def handle_feature_user(bot, interaction, label, member, message, ticket, server):
-        try:
-            if label == GG.UPVOTE:
-                print(f"Upvote: {member} - {ticket.ticket_id}")
-                await ticket.upvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
-                await interaction.response.send_message(content=f"You have upvoted {ticket.ticket_id}", ephemeral=True)
-            elif label == GG.INFORMATION:
-                print(f"Information: {member} - {ticket.ticket_id}")
-                em = await ticket.get_embed(True)
-                await interaction.response.send_message(embed=em, ephemeral=True)
-            elif label == GG.SHRUG:
-                print(f"Shrugged: {member} - {ticket.ticket_id}")
-                await ticket.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
-                await interaction.response.send_message(content=f"You have shown indifference for {ticket.ticket_id}", ephemeral=True)
-            elif label == GG.SUBSCRIBE:
-                await HandleTicket.subscribe(interaction, member, ticket)
-            elif label == GG.RESOLVE:
-                await HandleTicket.resolve(bot, interaction, member, ticket, server)
-            elif label == GG.NOTE:
-                await HandleTicket.note(bot, interaction, ticket)
-            else:
-                print(f"Downvote: {member} - {ticket.ticket_id}")
-                await ticket.downvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
-                await interaction.response.send_message(content=f"You have downvoted {ticket.ticket_id}", ephemeral=True)
-        except TicketException as e:
-            if interaction.channel == message.channel:
-                await interaction.response.send_message(content=str(e), ephemeral=True)
-            else:
-                await member.send(str(e))
-                await interaction.response.defer()
+        if label == GG.UPVOTE:
+            print(f"Upvote: {member} - {ticket.ticket_id}")
+            await ticket.upvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
+            await HandleTicket.send_message(member, interaction, f"You have upvoted {ticket.ticket_id}")
+        elif label == GG.INFORMATION:
+            print(f"Information: {member} - {ticket.ticket_id}")
+            em = await ticket.get_embed(True)
+            await HandleTicket.send_message(member, interaction, "", em)
+        elif label == GG.SHRUG:
+            print(f"Shrugged: {member} - {ticket.ticket_id}")
+            await ticket.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
+            await HandleTicket.send_message(member, interaction, f"You have shown indifference for {ticket.ticket_id}")
+        elif label == GG.SUBSCRIBE:
+            await HandleTicket.subscribe(interaction, member, ticket)
+        elif label == GG.RESOLVE:
+            await HandleTicket.resolve(bot, interaction, member, ticket, server)
+        elif label == GG.NOTE:
+            await HandleTicket.note(bot, interaction, ticket)
+        else:
+            print(f"Downvote: {member} - {ticket.ticket_id}")
+            await ticket.downvote(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
+            await HandleTicket.send_message(member, interaction, f"You have downvoted {ticket.ticket_id}")
 
     @staticmethod
     async def handle_feature_server_owner(bot, interaction, label, member, ticket, server):
         if label == GG.UPVOTE:
             print(f"Upvote: {member} - {ticket.ticket_id}")
             await ticket.force_accept(GG.ContextProxy(bot, interaction=interaction), server.id)
-            await interaction.response.send_message(content=f"You have accepted {ticket.ticket_id}", ephemeral=True)
+            await HandleTicket.send_message(member, interaction, f"You have accepted {ticket.ticket_id}")
         elif label == GG.INFORMATION:
             print(f"Information: {member} - {ticket.ticket_id}")
             em = await ticket.get_embed(True)
-            await interaction.response.send_message(embed=em, ephemeral=True)
+            await HandleTicket.send_message(member, interaction, "", embed=em)
         elif label == GG.SHRUG:
             print(f"Shrugged: {member} - {ticket.ticket_id}")
             await ticket.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
-            await interaction.response.send_message(content=f"You have shown indifference for {ticket.ticket_id}", ephemeral=True)
+            await HandleTicket.send_message(member, interaction, f"You have shown indifference for {ticket.ticket_id}")
         elif label == GG.SUBSCRIBE:
             await HandleTicket.subscribe(interaction, member, ticket)
         elif label == GG.RESOLVE:
             await ticket.resolve(GG.ContextProxy(bot, interaction=interaction, message=GG.FakeAuthor(member)), server.id, "Ticket closed.")
-            await interaction.response.send_message(content=f"You have resolved {ticket.ticket_id}", ephemeral=True)
+            await HandleTicket.send_message(member, interaction, f"You have resolved {ticket.ticket_id}")
             await ticket.commit()
         elif label == GG.NOTE:
             await HandleTicket.note(bot, interaction, ticket)
         else:
             await ticket.force_deny(GG.ContextProxy(bot, interaction=interaction), server.id)
-            await interaction.response.send_message(content=f"You have denied {ticket.ticket_id}", ephemeral=True)
+            await HandleTicket.send_message(member, interaction, f"You have denied {ticket.ticket_id}")
             await ticket.commit()
 
     @staticmethod
@@ -124,7 +117,7 @@ class HandleTicket(commands.Cog):
         if label == GG.INFORMATION:
             print(f"Information: {member} - {ticket.ticket_id}")
             em = await ticket.get_embed(True)
-            await interaction.response.send_message(embed=em, ephemeral=True)
+            await HandleTicket.send_message(member, interaction, "", embed=em)
         elif label == GG.SUBSCRIBE:
             await HandleTicket.subscribe(interaction, member, ticket)
         elif label == GG.RESOLVE:
@@ -138,16 +131,16 @@ class HandleTicket(commands.Cog):
             await ticket.resolve(GG.ContextProxy(bot, interaction=interaction, message=GG.FakeAuthor(member)), server.id, "Ticket closed.")
             await ticket.commit()
         else:
-            await interaction.response.send_message(content=f"You do not have permissions to resolve/close this.", ephemeral=True)
+            await HandleTicket.send_message(member, interaction, f"You do not have permissions to resolve/close this.")
 
     @staticmethod
     async def subscribe(interaction, member, ticket):
         if member.id in ticket.subscribers:
             ticket.unsubscribe(member.id)
-            await interaction.response.send_message(content=f"You have unsubscribed from {ticket.ticket_id}", ephemeral=True)
+            await HandleTicket.send_message(member, interaction, f"You have unsubscribed from {ticket.ticket_id}")
         else:
             ticket.subscribe(member.id)
-            await interaction.response.send_message(content=f"You have subscribed to {ticket.ticket_id}", ephemeral=True)
+            await HandleTicket.send_message(member, interaction, f"You have subscribed to {ticket.ticket_id}")
 
     @staticmethod
     async def note(bot, interaction, ticket):
@@ -156,6 +149,15 @@ class HandleTicket(commands.Cog):
         author = interaction.user
         modal = Note(GG.ContextProxy(bot, interaction=interaction), ticket, author, channel)
         await interaction.response.send_modal(modal)
+
+    @staticmethod
+    async def send_message(member, interaction, content, embed=None):
+        try:
+            await interaction.response.send_message(content=content, embed=embed, ephemeral=True)
+        except:
+            await member.send(str(content))
+            await interaction.response.defer()
+
 
 
 def setup(bot):
