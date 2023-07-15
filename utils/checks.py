@@ -62,10 +62,8 @@ async def is_manager(ctx, ticket=None):
             if identifier is None:
                 return True
             else:
-                if ticket is not None and identifier in ticket.ticket_id.lower():
+                if ticket is not None and identifier.lower() in ticket.ticket_id.lower():
                     return True
-                else:
-                    return False
         return False
 
 
@@ -90,19 +88,13 @@ async def is_creator(ctx, ticket):
 
 async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
     manager = await GG.MDB.Managers.find({"user": userId, "server": guildId}).to_list(length=None)
-    print(manager)
     if len(manager) == 0:
-        print("manager is none")
         server = await GG.MDB.Github.find_one({"server": guildId})
-        print(server)
         if userId == server['admin']:
-            print("user is admin")
             return True
         elif userId == ticket.assignee:
-            print("user is assignee")
             return True
         elif userId == ticket.reporter:
-            print("user is reporter")
             guild_settings = await get_settings(bot, guildId)
             allow_selfClose = guild_settings.get("allow_selfClose", False)
             if allow_selfClose:
@@ -113,13 +105,9 @@ async def is_manager_assignee_or_creator(userId, guildId, ticket, bot):
     else:
         for man in manager:
             identifier = man.get('identifier', None)
-            print(identifier)
-            print("ticket_id: ", ticket.ticket_id.lower())
             if identifier is None:
                 return True
             else:
-                if ticket is not None and identifier in ticket.ticket_id.lower():
+                if ticket is not None and identifier.lower() in ticket.ticket_id.lower():
                     return True
-                else:
-                    return False
         return False
