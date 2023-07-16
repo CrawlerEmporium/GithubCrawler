@@ -1,4 +1,4 @@
-from discord import InputTextStyle, Interaction
+from discord import InputTextStyle, Interaction, DiscordException
 from discord.ui import Modal, InputText
 
 from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
@@ -29,9 +29,12 @@ class Note(Modal):
         embed.description = f"{description}** **"
         embed.set_footer(text=f"Added by {self.author.name}")
 
-        if requestChannel is not None:
-            await requestChannel.send(embed=embed)
-
         await self.ticket.addnote(self.author.id, description, self.ctx, self.interaction.guild_id)
 
         await finish_note_creation(self, interaction, embed)
+
+        try:
+            if requestChannel is not None:
+                await requestChannel.send(embed=embed)
+        except DiscordException:
+            pass
