@@ -1,7 +1,7 @@
 from discord import InputTextStyle, Interaction, DiscordException
 from discord.ui import Modal, InputText
 
-from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
+from crawler_utilities.utils.embeds import EmbedWithRandomColor
 from utils.ticketglobals import finish_note_creation
 
 
@@ -24,7 +24,7 @@ class Note(Modal):
 
         requestChannel = await self.bot.fetch_channel(self.channel)
 
-        embed = EmbedWithAuthorWithoutContext(self.author)
+        embed = EmbedWithRandomColor()
         embed.title = f"New note for: {self.ticket.ticket_id} - {self.ticket.title}"
         embed.description = f"{description}** **"
         embed.set_footer(text=f"Added by {self.author.name}")

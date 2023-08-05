@@ -1,7 +1,7 @@
 import decimal
 import time
 
-from crawler_utilities.utils.embeds import EmbedWithAuthor
+from crawler_utilities.utils.embeds import EmbedWithRandomColor
 from discord.ext import commands
 from discord import NotFound, slash_command, Option
 from utils import globals as GG
@@ -66,7 +66,7 @@ async def tools_specific_topflop(ctx, tickets, top, flop=False):
                     "total": downvotes + upvotes
                 }
                 serverTickets.append(rep)
-        embed = EmbedWithAuthor(ctx)
+        embed = EmbedWithRandomColor()
         if flop:
             sortedList = sorted(serverTickets, key=lambda k: k['rating'], reverse=False)
             embed.title = f"Top {top} most downvoted suggestions."
@@ -210,7 +210,7 @@ class TopFlop(commands.Cog):
                         serverTickets.append(rep)
 
         sortedList = sorted(serverTickets, key=lambda k: k[f'{type}s'], reverse=True)
-        embed = EmbedWithAuthor(ctx)
+        embed = EmbedWithRandomColor()
         embed.title = f"Top {top} most {type}d suggestions."
         return embed, sortedList, top
 

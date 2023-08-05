@@ -4,7 +4,7 @@ from discord.ext import commands
 
 from cogsTicket.handle import HandleTicket
 from crawler_utilities.cogs.stats import track_google_analytics_event
-from crawler_utilities.utils.embeds import EmbedWithAuthor
+from crawler_utilities.utils.embeds import EmbedWithRandomColor
 from utils.autocomplete import get_server_tickets, get_server_feature_identifiers
 from utils.ticketglobals import ticket_from_id, get_all_tickets
 
@@ -109,7 +109,7 @@ class TicketCommands(commands.Cog):
                 }
                 subscribed_tickets.append(rep)
 
-        embed_queue = [EmbedWithAuthor(ctx)]
+        embed_queue = [EmbedWithRandomColor()]
         embed_queue[-1].title = f"Your subscribed tickets."
 
         for ticket in subscribed_tickets:

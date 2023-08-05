@@ -8,7 +8,7 @@ from discord.ext.commands import BucketType
 from discord import ButtonStyle, slash_command
 from discord.ui import Button
 
-from crawler_utilities.utils.embeds import EmbedWithAuthor
+from crawler_utilities.utils.embeds import EmbedWithRandomColor
 from utils import globals as GG
 log = GG.log
 
@@ -45,7 +45,7 @@ class Info(commands.Cog):
 
     @slash_command(name="support")
     async def support(self, ctx):
-        em = EmbedWithAuthor(ctx)
+        em = EmbedWithRandomColor()
         em.title = 'Support Server'
         em.description = "For technical support for IssueCrawler, join the Crawler Emporium discord [here](https://discord.gg/HEY6BWj)!\n" \
                          "There you can ask questions about the bot, make feature requests, ticket issues and/or bugs (please include any error messages), learn about my other Crawler bots, and share with other crawler bot users!\n\n" \

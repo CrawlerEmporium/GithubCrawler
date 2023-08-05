@@ -3,7 +3,7 @@ from discord import InputTextStyle, Interaction, ChannelType
 from discord.ui import Modal, InputText
 
 from crawler_utilities.cogs.stats import track_google_analytics_event
-from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
+from crawler_utilities.utils.embeds import EmbedWithRandomColor
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.attachment import Attachment
 from models.questions import Questionaire
@@ -53,7 +53,7 @@ class Feature(Modal):
         request = ""
 
         requestChannel = self.bot.get_channel(self.channel)
-        embed = EmbedWithAuthorWithoutContext(self.author)
+        embed = EmbedWithRandomColor()
         embed.set_footer(text=f"Added by {self.author.name}")
         embed.title = title if title is not None else self.children[0].value
         if self.custom_questions is None:

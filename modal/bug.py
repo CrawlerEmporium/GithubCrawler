@@ -2,7 +2,7 @@ import discord
 from discord import InputTextStyle, Interaction, ChannelType
 from discord.ui import Modal, InputText
 
-from crawler_utilities.utils.embeds import EmbedWithAuthorWithoutContext
+from crawler_utilities.utils.embeds import EmbedWithRandomColor
 from models.attachment import Attachment
 from models.questions import Questionaire
 from models.ticket import Ticket, get_next_ticket_num, TicketException
@@ -43,7 +43,7 @@ class Bug(Modal):
         request = ""
 
         requestChannel = self.bot.get_channel(self.channel)
-        embed = EmbedWithAuthorWithoutContext(self.author)
+        embed = EmbedWithRandomColor()
         embed.set_footer(text=f"Added by {self.author.name}")
         embed.title = title if title is not None else self.children[0].value
         if self.custom_questions is None:
