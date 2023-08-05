@@ -105,5 +105,6 @@ class Support(Modal):
 
         if thread is not None:
             await finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, False, True, jumpUrl)
+            await thread.send(f"The ticket for this support request can be found here: {ticketMessage.jump_url}")
         else:
             await finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, False, True)

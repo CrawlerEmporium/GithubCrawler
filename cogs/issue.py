@@ -19,6 +19,8 @@ from crawler_utilities.utils.confirmation import BotConfirmation
 log = GG.log
 
 TYPES = ['bug', 'feature', 'support']
+RESOLVED = '\u2705'
+OPEN = '\U0001F4EC'
 
 
 async def find_in_tickets(db, identifier, searchTerm):
@@ -108,6 +110,7 @@ class Issue(commands.Cog):
             await loadGithubServers()
             await GG.cache_identifiers()
             await GG.cache_server_channels()
+
         else:
             return await ctx.respond("The given channel or tracker ID's are invalid.")
 

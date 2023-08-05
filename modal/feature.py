@@ -114,5 +114,6 @@ class Feature(Modal):
 
         if thread is not None:
             await finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, False, False, thread)
+            await thread.send(f"The ticket for this feature request can be found here: {ticketMessage.jump_url}")
         else:
             await finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, False, False)
