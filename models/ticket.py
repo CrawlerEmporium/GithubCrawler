@@ -192,8 +192,8 @@ class Ticket:
             trackerChannels.append(channel['tracker'])
         dbTicket = await cls.collection.find_one({"ticket_id": ticket_id.upper(), "trackerId": {"$in": trackerChannels}})
         if dbTicket is not None:
-            del dbTicket['_id']
             try:
+                del dbTicket['_id']
                 ticket = cls.from_dict(dbTicket)
                 return await cls.add_server_id_backwards(ticket, guild_id)
             except KeyError:
@@ -201,8 +201,8 @@ class Ticket:
         else:
             try:
                 dbTicket = await cls.collection.find_one({"ticket_id": ticket_id.upper(), "server_id": guild_id})
-                del dbTicket['_id']
                 try:
+                    del dbTicket['_id']
                     ticket = cls.from_dict(dbTicket)
                     return await cls.add_server_id_backwards(ticket, guild_id)
                 except KeyError:

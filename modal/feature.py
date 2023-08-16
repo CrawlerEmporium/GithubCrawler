@@ -97,7 +97,7 @@ class Feature(Modal):
         else:
             extra = len(f"{self.ticket_id} - ")
             extra += len(f"[Resolved] ")
-            maxThreadTitleLength = 97 - extra
+            maxThreadTitleLength = 90 - extra
             if len(self.children[0].value) > maxThreadTitleLength:
                 threadTitle = title if title is not None else f"{self.children[0].value[:maxThreadTitleLength]}..."
             else:

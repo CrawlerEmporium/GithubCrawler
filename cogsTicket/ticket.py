@@ -25,7 +25,7 @@ class TicketCommands(commands.Cog):
         user = ctx.interaction.user
         track_google_analytics_event("Information", f"{ticket.ticket_id}", f"{user.id}")
         interaction = await ctx.respond(f"Loading ticket... Please hold...")
-        message_id = (await interaction.original_message()).id
+        message_id = (await interaction.original_response()).id
         message = await interaction.channel.fetch_message(message_id)
         await ticket.get_ticket_notes(ctx, message)
 
