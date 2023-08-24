@@ -167,7 +167,7 @@ class HandleTicket(commands.Cog):
             else:
                 dm_channel = member.dm_channel
             await dm_channel.send(content=content, embed=embed)
-            await interaction.response.send_message(content="A DM with the information has been send")
+            await interaction.followup.send(content="A DM with the information has been send", ephemeral=True)
         except:
             await member.send(str(content))
 
