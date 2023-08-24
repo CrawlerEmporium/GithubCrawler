@@ -69,7 +69,7 @@ class HandleTicket(commands.Cog):
         elif label == GG.INFORMATION:
             print(f"Information: {member} - {ticket.ticket_id}")
             em = await ticket.get_embed(True)
-            await HandleTicket.send_message(member, interaction, "", em)
+            await HandleTicket.send_dm(member, interaction, "", em)
         elif label == GG.SHRUG:
             print(f"Shrugged: {member} - {ticket.ticket_id}")
             await ticket.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
@@ -94,7 +94,7 @@ class HandleTicket(commands.Cog):
         elif label == GG.INFORMATION:
             print(f"Information: {member} - {ticket.ticket_id}")
             em = await ticket.get_embed(True)
-            await HandleTicket.send_message(member, interaction, "", embed=em)
+            await HandleTicket.send_dm(member, interaction, "", embed=em)
         elif label == GG.SHRUG:
             print(f"Shrugged: {member} - {ticket.ticket_id}")
             await ticket.indifferent(member.id, '', GG.ContextProxy(bot, interaction=interaction), server.id)
@@ -117,7 +117,7 @@ class HandleTicket(commands.Cog):
         if label == GG.INFORMATION:
             print(f"Information: {member} - {ticket.ticket_id}")
             em = await ticket.get_embed(True)
-            await HandleTicket.send_message(member, interaction, "", embed=em)
+            await HandleTicket.send_dm(member, interaction, "", embed=em)
         elif label == GG.SUBSCRIBE:
             await HandleTicket.subscribe(interaction, member, ticket)
         elif label == GG.RESOLVE:
@@ -157,6 +157,19 @@ class HandleTicket(commands.Cog):
         except:
             await member.send(str(content))
             await interaction.response.defer()
+
+    @staticmethod
+    async def send_dm(member, interaction, content, embed=None):
+        await interaction.response.defer()
+        try:
+            if member.dm_channel is None:
+                dm_channel = await member.create_dm()
+            else:
+                dm_channel = member.dm_channel
+            await dm_channel.send(content=content, embed=embed)
+            await interaction.response.send_message(content="A DM with the information has been send")
+        except:
+            await member.send(str(content))
 
 
 
