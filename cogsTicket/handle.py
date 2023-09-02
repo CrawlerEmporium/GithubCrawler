@@ -144,8 +144,12 @@ class HandleTicket(commands.Cog):
 
     @staticmethod
     async def note(bot, interaction, ticket):
-        jumpUrl = ticket.jumpUrl.replace('https://discord.com/channels/','').split('/')
-        channel = jumpUrl[1]
+        channel = None
+        try:
+            jumpUrl = ticket.jumpUrl.replace('https://discord.com/channels/','').split('/')
+            channel = jumpUrl[1]
+        except:
+            pass
         author = interaction.user
         modal = Note(GG.ContextProxy(bot, interaction=interaction), ticket, author, channel)
         await interaction.response.send_modal(modal)

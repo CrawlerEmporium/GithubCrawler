@@ -22,7 +22,9 @@ class Note(Modal):
         await interaction.response.defer(ephemeral=True)
         description = self.children[0].value if self.children[0].value is not None else ""
 
-        requestChannel = await self.bot.fetch_channel(self.channel)
+        requestChannel = None
+        if self.channel is not None:
+            requestChannel = await self.bot.fetch_channel(self.channel)
 
         embed = EmbedWithRandomColor()
         embed.title = f"New note for: {self.ticket.ticket_id} - {self.ticket.title}"
