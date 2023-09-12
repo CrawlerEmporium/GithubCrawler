@@ -17,6 +17,7 @@ class HandleTicket(commands.Cog):
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         if interaction.type == 1:  # application_command (slash/context menus)
             return
 
@@ -137,9 +138,11 @@ class HandleTicket(commands.Cog):
     async def subscribe(interaction, member, ticket):
         if member.id in ticket.subscribers:
             ticket.unsubscribe(member.id)
+            await ticket.commit()
             await HandleTicket.send_message(member, interaction, f"You have unsubscribed from {ticket.ticket_id}")
         else:
             ticket.subscribe(member.id)
+            await ticket.commit()
             await HandleTicket.send_message(member, interaction, f"You have subscribed to {ticket.ticket_id}")
 
     @staticmethod

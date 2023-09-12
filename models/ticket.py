@@ -536,6 +536,7 @@ class Ticket:
         self.verification += 1
         await self.add_attachment(ctx, serverId, attachment)
         await self.notify_subscribers(ctx.bot, f"New CR by <@{author}>: {msg}")
+        await self.commit()
 
     async def cannotrepro(self, author, msg, ctx, serverId):
         track_google_analytics_event("Can't reproduce", f"{self.ticket_id}", f"{author}")
@@ -547,6 +548,7 @@ class Ticket:
         self.verification -= 1
         await self.add_attachment(ctx, serverId, attachment)
         await self.notify_subscribers(ctx.bot, f"New CNR by <@{author}>: {msg}")
+        await self.commit()
 
     async def upvote(self, author, msg, ctx, serverId):
         track_google_analytics_event("Upvote", f"{self.ticket_id}", f"{author}")
@@ -581,6 +583,8 @@ class Ticket:
         if self.upvotes - self.downvotes in (15, 10) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
 
+        await self.commit()
+
     async def downvote(self, author, msg, ctx, serverId):
         track_google_analytics_event("Downvote", f"{self.ticket_id}", f"{author}")
         for attachment in self.attachments:
@@ -605,6 +609,8 @@ class Ticket:
         if self.upvotes - self.downvotes in (14, 9) and self.repo is not None and self.repo != 'NoRepo':
             await self.update_labels()
 
+        await self.commit()
+
     async def indifferent(self, author, msg, ctx, serverId):
         track_google_analytics_event("Indifferent", f"{self.ticket_id}", f"{author}")
         for attachment in self.attachments:
@@ -625,15 +631,21 @@ class Ticket:
         self.shrugs += 1
         await self.add_attachment(ctx, serverId, attachment)
 
+        await self.commit()
+
     async def addnote(self, author, msg, ctx, serverId, add_to_github=True):
         track_google_analytics_event("Note", f"{self.ticket_id}", f"{author}")
         attachment = Attachment(author, msg)
         await self.add_attachment(ctx, serverId, attachment, add_to_github)
         await self.notify_subscribers(ctx.bot, f"New note by <@{author}>: {msg}")
 
+        await self.commit()
+
     async def force_accept(self, ctx, serverId):
         track_google_analytics_event("Force Accept", f"{self.ticket_id}", f"{serverId}")
         await self.setup_github(ctx.bot, serverId)
+
+        await self.commit()
 
     async def force_deny(self, ctx, serverId):
         track_google_analytics_event("Force Deny", f"{self.ticket_id}", f"{serverId}")
@@ -656,6 +668,8 @@ class Ticket:
 
         if self.github_issue:
             await GitHubClient.get_instance().close_issue(self.repo, self.github_issue)
+
+        await self.commit()
 
     def subscribe(self, userId):
         """Ensures a user is subscribed to this ticket."""
@@ -776,6 +790,8 @@ class Ticket:
         if pend:
             await self.pend()
 
+        await self.commit()
+
     async def unresolve(self, ctx, serverId, msg='', open_github_issue=True):
         if not self.severity == -1:
             raise TicketException("This ticket is still open.")
@@ -791,6 +807,8 @@ class Ticket:
 
         if open_github_issue and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
             await GitHubClient.get_instance().open_issue(self.repo, self.github_issue)
+
+        await self.commit()
 
     async def untrack(self, ctx, serverId):
         await self.delete_message(ctx, serverId)
