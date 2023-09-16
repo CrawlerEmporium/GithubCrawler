@@ -39,6 +39,7 @@ class Support(Modal):
             self.add_item(InputText(label=adInfo, placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         title = None
         thread = None
         for child in self.children:

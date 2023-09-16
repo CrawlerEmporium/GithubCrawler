@@ -44,6 +44,7 @@ class Feature(Modal):
                           required=False, style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         title = None
         thread = None
         for child in self.children:

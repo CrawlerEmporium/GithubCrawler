@@ -24,12 +24,13 @@ def get_all_tickets():
 
 async def finish_ticket_creation(self, interaction, ticket, ticketMessage, requestChannel, bug=False, support=False, forumPost=None):
     await ticket.commit()
-    embed = await admission_successful_embed(self.ticket_id, self.author, bug, support, requestChannel, ticketMessage, forumPost)
-    if self.author.dm_channel is not None:
-        DM = self.author.dm_channel
-    else:
-        DM = await self.author.create_dm()
     try:
+        if self.author.dm_channel is not None:
+            DM = self.author.dm_channel
+        else:
+            DM = await self.author.create_dm()
+        embed = await admission_successful_embed(self.ticket_id, self.author, bug, support, requestChannel,
+                                                 ticketMessage, forumPost)
         await DM.send(embed=embed)
     except discord.Forbidden:
         pass
