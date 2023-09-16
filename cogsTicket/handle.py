@@ -17,7 +17,6 @@ class HandleTicket(commands.Cog):
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: Interaction):
-        await interaction.response.defer(ephemeral=True)
         if interaction.type == 1:  # application_command (slash/context menus)
             return
 

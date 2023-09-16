@@ -1,6 +1,6 @@
 import asyncio
 
-from discord import slash_command, Option, permissions, ForumChannel
+from discord import slash_command, Option, permissions, ForumChannel, InteractionResponded
 from discord.ext import commands, tasks
 
 from crawler_utilities.utils.confirmation import BotConfirmation
