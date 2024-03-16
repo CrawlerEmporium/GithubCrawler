@@ -1,23 +1,20 @@
 from discord.ext import commands
-from environs import Env
+import os
 import motor.motor_asyncio
 
 from crawler_utilities.handlers.logger import Logger
 
 log = Logger("logs", "IssueCrawler", "IssueCrawler").logger
 
-env = Env()
-env.read_env()
+PREFIX = os.environ['PREFIX']
+TOKEN = os.environ['TOKEN']
+TEST_TOKEN = os.environ['TEST_TOKEN']
+COGS = os.environ['COGS']
+OWNER = int(os.environ['OWNER'])
 
-PREFIX = env('PREFIX')
-TOKEN = env('TOKEN')
-TEST_TOKEN = env('TEST_TOKEN')
-COGS = env('COGS')
-OWNER = int(env('OWNER'))
-
-GITHUB_TOKEN = env('GITHUB_TOKEN')
-GITHUB_REPO = env('GITHUB_REPO')
-MONGODB = env('MONGODB')
+GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
+GITHUB_REPO = os.environ['GITHUB_REPO']
+MONGODB = os.environ['MONGODB']
 
 BOT = 574554734187380756
 PM_TRUE = True
