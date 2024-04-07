@@ -1,5 +1,5 @@
 import discord
-from crawler_utilities.cogs.stats import track_google_analytics_event
+from crawler_utilities.cogs.stats import track_analytics_event
 
 import utils.globals as GG
 from models.ticket import Ticket
@@ -29,7 +29,7 @@ async def finish_ticket_creation(self, interaction, ticket, ticketMessage, reque
             DM = self.author.dm_channel
         else:
             DM = await self.author.create_dm()
-        embed = await admission_successful_embed(self.ticket_id, self.author, bug, support, requestChannel,
+        embed = await admission_successful_embed(self, self.ticket_id, self.author, bug, support, requestChannel,
                                                  ticketMessage, forumPost)
         await DM.send(embed=embed)
     except discord.Forbidden:
@@ -55,17 +55,17 @@ async def finish_note_creation(self, interaction, embed):
         ephemeral=True)
 
 
-async def admission_successful_embed(ticket_id, author, bug, support, requestChannel, ticketMessage, forumPost=None):
+async def admission_successful_embed(self, ticket_id, author, bug, support, requestChannel, ticketMessage, forumPost=None):
     embed = discord.Embed()
     embed.title = f"Your submission ``{ticket_id}`` was accepted."
     if bug:
-        track_google_analytics_event("Bug report", f"{ticket_id}", f"{author.id}")
+        track_analytics_event(self.bot.user_name, "Bug report", f"{ticket_id}", f"{author.id}")
         embed.description = f"Your bug was successfully posted in <#{requestChannel.id}>!"
     elif support:
-        track_google_analytics_event("Support Ticket", f"{ticket_id}", f"{author.id}")
+        track_analytics_event(self.bot.user_name, "Support Ticket", f"{ticket_id}", f"{author.id}")
         embed.description = f"Your support ticket was successfully posted in <#{requestChannel.id}>!"
     else:
-        track_google_analytics_event("Feature Request", f"{ticket_id}", f"{author.id}")
+        track_analytics_event(self.bot.user_name, "Feature Request", f"{ticket_id}", f"{author.id}")
         embed.description = f"Your feature request was successfully posted in <#{requestChannel.id}>!"
     embed.add_field(name="Status Checking", value=f"To check on its status: `/view {ticket_id}`.",
                     inline=False)

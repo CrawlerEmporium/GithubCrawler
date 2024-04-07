@@ -2,7 +2,7 @@ import discord
 from discord import InputTextStyle, Interaction, ChannelType
 from discord.ui import Modal, InputText
 
-from crawler_utilities.cogs.stats import track_google_analytics_event
+from crawler_utilities.cogs.stats import track_analytics_event
 from crawler_utilities.utils.embeds import EmbedWithRandomColor
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.attachment import Attachment
@@ -103,6 +103,7 @@ class Feature(Modal):
             else:
                 threadTitle = title if title is not None else self.children[0].value
             thread = await requestChannel.create_thread(name=f"{self.ticket_id} - {threadTitle}", embed=embed, content=f"<@{self.author.id}>")
+            thread
             jumpUrl = thread.jump_url
 
         ticket = await Ticket.new(self.author.id, self.ticket_id,

@@ -1,7 +1,7 @@
 from discord import Interaction
 from discord.ext import commands
 
-from crawler_utilities.cogs.stats import track_google_analytics_event
+from crawler_utilities.cogs.stats import track_analytics_event
 from modal.note import Note
 from models.ticket import Ticket, TicketException
 from utils.checks import is_manager_assignee_or_creator
@@ -47,7 +47,7 @@ class HandleTicket(commands.Cog):
             return
 
         if label == GG.INFORMATION:
-            track_google_analytics_event("Information", f"{ticket.ticket_id}", f"{member.id}")
+            track_analytics_event(self.bot.user_name, "Information", f"{ticket.ticket_id}", f"{member.id}")
 
         if ticket.is_bug or ticket.is_support:
             await self.handle_bug_or_support(self.bot, interaction, label, member, ticket, server)
