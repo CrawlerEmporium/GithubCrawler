@@ -527,7 +527,7 @@ class Ticket:
         return msg
 
     async def canrepro(self, author, msg, ctx, serverId):
-        track_analytics_event(ctx.bot.user_name, "Can reproduce", f"{self.ticket_id}", f"{author}")
+        track_analytics_event("IssueCrawler", "Can reproduce", f"{self.ticket_id}", f"{author}")
         if [a for a in self.attachments if a.author == author and a.veri == 1]:
             raise TicketException("You have already verified this ticket.")
         if not self.is_bug:
@@ -539,7 +539,7 @@ class Ticket:
         await self.commit()
 
     async def cannotrepro(self, author, msg, ctx, serverId):
-        track_analytics_event(ctx.bot.user_name, "Can't reproduce", f"{self.ticket_id}", f"{author}")
+        track_analytics_event("IssueCrawler", "Can't reproduce", f"{self.ticket_id}", f"{author}")
         if [a for a in self.attachments if a.author == author and a.veri == -1]:
             raise TicketException("You have already verified this ticket.")
         if not self.is_bug:
@@ -551,7 +551,7 @@ class Ticket:
         await self.commit()
 
     async def upvote(self, author, msg, ctx, serverId):
-        track_analytics_event(ctx.bot.user_name, "Upvote", f"{self.ticket_id}", f"{author}")
+        track_analytics_event("IssueCrawler", "Upvote", f"{self.ticket_id}", f"{author}")
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
                 raise TicketException(f"You have already upvoted {self.ticket_id}.")
@@ -586,7 +586,7 @@ class Ticket:
         await self.commit()
 
     async def downvote(self, author, msg, ctx, serverId):
-        track_analytics_event(ctx.bot.user_name, "Downvote", f"{self.ticket_id}", f"{author}")
+        track_analytics_event("IssueCrawler", "Downvote", f"{self.ticket_id}", f"{author}")
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
                 self.upvotes -= 1
@@ -612,7 +612,7 @@ class Ticket:
         await self.commit()
 
     async def indifferent(self, author, msg, ctx, serverId):
-        track_analytics_event(ctx.bot.user_name, "Indifferent", f"{self.ticket_id}", f"{author}")
+        track_analytics_event("IssueCrawler", "Indifferent", f"{self.ticket_id}", f"{author}")
         for attachment in self.attachments:
             if attachment.author == author and attachment.veri == 2:
                 self.upvotes -= 1
@@ -634,7 +634,7 @@ class Ticket:
         await self.commit()
 
     async def addnote(self, author, msg, ctx, serverId, add_to_github=True):
-        track_analytics_event(ctx.bot.user_name, "Note", f"{self.ticket_id}", f"{author}")
+        track_analytics_event("IssueCrawler", "Note", f"{self.ticket_id}", f"{author}")
         attachment = Attachment(author, msg)
         await self.add_attachment(ctx, serverId, attachment, add_to_github)
         await self.notify_subscribers(ctx.bot, f"New note by <@{author}>: {msg}")
@@ -642,13 +642,13 @@ class Ticket:
         await self.commit()
 
     async def force_accept(self, ctx, serverId):
-        track_analytics_event(ctx.bot.user_name, "Force Accept", f"{self.ticket_id}", f"{serverId}")
+        track_analytics_event("IssueCrawler", "Force Accept", f"{self.ticket_id}", f"{serverId}")
         await self.setup_github(ctx.bot, serverId)
 
         await self.commit()
 
     async def force_deny(self, ctx, serverId):
-        track_analytics_event(ctx.bot.user_name, "Force Deny", f"{self.ticket_id}", f"{serverId}")
+        track_analytics_event("IssueCrawler", "Force Deny", f"{self.ticket_id}", f"{serverId}")
         await self.notify_subscribers(ctx.bot, f"Ticket closed.")
         ts = calendar.timegm(time.gmtime())
         self.closed = ts
@@ -673,13 +673,13 @@ class Ticket:
 
     def subscribe(self, userId):
         """Ensures a user is subscribed to this ticket."""
-        track_analytics_event(ctx.bot.user_name, "Subscribe", f"{self.ticket_id}", f"{userId}")
+        track_analytics_event("IssueCrawler", "Subscribe", f"{self.ticket_id}", f"{userId}")
         if userId not in self.subscribers:
             self.subscribers.append(userId)
 
     def unsubscribe(self, userId):
         """Ensures a user is not subscribed to this ticket."""
-        track_analytics_event(ctx.bot.user_name, "Unsubscribe", f"{self.ticket_id}", f"{userId}")
+        track_analytics_event("IssueCrawler", "Unsubscribe", f"{self.ticket_id}", f"{userId}")
         if userId in self.subscribers:
             self.subscribers.remove(userId)
 
@@ -759,7 +759,7 @@ class Ticket:
         if msg:
             await self.addnote(ctx.interaction.user.id, f"Resolved - {msg}", ctx, serverId)
 
-        track_analytics_event(ctx.bot.user_name, "Resolve", f"{self.ticket_id}", f"{serverId}")
+        track_analytics_event("IssueCrawler", "Resolve", f"{self.ticket_id}", f"{serverId}")
         await self.delete_message(ctx, serverId)
 
         if close_github_issue and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):
@@ -802,7 +802,7 @@ class Ticket:
         if msg:
             await self.addnote(ctx.interaction.user.id, f"Unresolved - {msg}", ctx, serverId)
 
-        track_analytics_event(ctx.bot.user_name, "Unresolve", f"{self.ticket_id}", f"{serverId}")
+        track_analytics_event("IssueCrawler", "Unresolve", f"{self.ticket_id}", f"{serverId}")
         await self.setup_message(ctx.bot, serverId, self.trackerId)
 
         if open_github_issue and self.github_issue and (self.repo is not None or self.repo != 'NoRepo'):

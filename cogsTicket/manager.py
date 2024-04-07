@@ -118,7 +118,7 @@ class ManagerCommands(commands.Cog):
         ticket = await ticket_from_id(_id, ctx)
         if await is_manager(ctx, ticket):
 
-            track_analytics_event(ctx.bot.user_name, "Assign", f"{ticket.ticket_id}", f"{ctx.interaction.user.id}")
+            track_analytics_event("IssueCrawler", "Assign", f"{ticket.ticket_id}", f"{ctx.interaction.user.id}")
 
             ticket.assignee = member.id
 
@@ -188,7 +188,7 @@ class ManagerCommands(commands.Cog):
         await ctx.defer()
         ticket = await ticket_from_id(_id, ctx)
         if await is_manager(ctx, ticket):
-            track_analytics_event(ctx.bot.user_name, "Unassign", f"{ticket.ticket_id}", f"{ctx.interaction.user.id}")
+            track_analytics_event("IssueCrawler", "Unassign", f"{ticket.ticket_id}", f"{ctx.interaction.user.id}")
 
             ticket.assignee = None
 
@@ -207,8 +207,8 @@ class ManagerCommands(commands.Cog):
         if await is_manager(ctx):
             dupe = await ticket_from_id(duplicate, ctx)
             merge = await ticket_from_id(merger, ctx)
-            track_analytics_event(ctx.bot.user_name, "Duplicate", f"{dupe.ticket_id}", f"{ctx.author.id}")
-            track_analytics_event(ctx.bot.user_name, "Merge", f"{merge.ticket_id}", f"{ctx.author.id}")
+            track_analytics_event("IssueCrawler", "Duplicate", f"{dupe.ticket_id}", f"{ctx.author.id}")
+            track_analytics_event("IssueCrawler", "Merge", f"{merge.ticket_id}", f"{ctx.author.id}")
 
             if dupe is not None and merge is not None:
                 for x in dupe.attachments:
