@@ -47,7 +47,7 @@ class HandleTicket(commands.Cog):
             return
 
         if label == GG.INFORMATION:
-            track_analytics_event(self.bot.user_name, "Information", f"{ticket.ticket_id}", f"{member.id}")
+            await track_analytics_event("IssueCrawler", "Information", f"{ticket.ticket_id}", f"{member.id}")
 
         if ticket.is_bug or ticket.is_support:
             await self.handle_bug_or_support(self.bot, interaction, label, member, ticket, server)

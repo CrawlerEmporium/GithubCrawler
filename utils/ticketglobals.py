@@ -59,13 +59,13 @@ async def admission_successful_embed(self, ticket_id, author, bug, support, requ
     embed = discord.Embed()
     embed.title = f"Your submission ``{ticket_id}`` was accepted."
     if bug:
-        track_analytics_event("IssueCrawler", "Bug report", f"{ticket_id}", f"{author.id}")
+        await track_analytics_event("IssueCrawler", "Bug report", f"{ticket_id}", f"{author.id}")
         embed.description = f"Your bug was successfully posted in <#{requestChannel.id}>!"
     elif support:
-        track_analytics_event("IssueCrawler", "Support Ticket", f"{ticket_id}", f"{author.id}")
+        await track_analytics_event("IssueCrawler", "Support Ticket", f"{ticket_id}", f"{author.id}")
         embed.description = f"Your support ticket was successfully posted in <#{requestChannel.id}>!"
     else:
-        track_analytics_event("IssueCrawler", "Feature Request", f"{ticket_id}", f"{author.id}")
+        await track_analytics_event("IssueCrawler", "Feature Request", f"{ticket_id}", f"{author.id}")
         embed.description = f"Your feature request was successfully posted in <#{requestChannel.id}>!"
     embed.add_field(name="Status Checking", value=f"To check on its status: `/view {ticket_id}`.",
                     inline=False)

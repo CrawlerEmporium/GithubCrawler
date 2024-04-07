@@ -23,7 +23,7 @@ class TicketCommands(commands.Cog):
         """Shows basic overview of requested ticket."""
         ticket = await ticket_from_id(_id, ctx)
         user = ctx.interaction.user
-        track_analytics_event("IssueCrawler", "Information", f"{ticket.ticket_id}", f"{user.id}")
+        await track_analytics_event("IssueCrawler", "Information", f"{ticket.ticket_id}", f"{user.id}")
         interaction = await ctx.respond(f"Loading ticket... Please hold...")
         message_id = (await interaction.original_response()).id
         message = await interaction.channel.fetch_message(message_id)
@@ -39,7 +39,7 @@ class TicketCommands(commands.Cog):
         await ticket.upvote(user.id, msg, ctx, guild_id)
         await ticket.commit()
         await ctx.respond(f"Added your upvote to `{ticket.ticket_id}` - {ticket.title}.", ephemeral=True)
-        track_analytics_event("IssueCrawler", "Upvote", f"{ticket.ticket_id}", f"{user.id}")
+        await track_analytics_event("IssueCrawler", "Upvote", f"{ticket.ticket_id}", f"{user.id}")
         await ticket.update(ctx, guild_id)
 
     @slash_command(name="downvote")
@@ -52,7 +52,7 @@ class TicketCommands(commands.Cog):
         await ticket.downvote(user.id, msg, ctx, guild_id)
         await ticket.commit()
         await ctx.respond(f"Added your downvote to `{ticket.ticket_id}` - {ticket.title}.", ephemeral=True)
-        track_analytics_event("IssueCrawler", "Downvote", f"{ticket.ticket_id}", f"{user.id}")
+        await track_analytics_event("IssueCrawler", "Downvote", f"{ticket.ticket_id}", f"{user.id}")
         await ticket.update(ctx, guild_id)
 
     @slash_command(name="indifferent")
@@ -65,7 +65,7 @@ class TicketCommands(commands.Cog):
         await ticket.indifferent(user.id, msg, ctx, guild_id)
         await ticket.commit()
         await ctx.respond(f"Added your indifference to `{ticket.ticket_id}` - {ticket.title}.", ephemeral=True)
-        track_analytics_event("IssueCrawler", "Indifference", f"{ticket.ticket_id}", f"{user.id}")
+        await track_analytics_event("IssueCrawler", "Indifference", f"{ticket.ticket_id}", f"{user.id}")
         await ticket.update(ctx, guild_id)
 
     @slash_command(name="note")
@@ -84,11 +84,11 @@ class TicketCommands(commands.Cog):
         if user.id in ticket.subscribers:
             ticket.unsubscribe(user.id)
             await ctx.respond(f"Unsubscribed from `{ticket.ticket_id}` - {ticket.title}.", ephemeral=True)
-            track_analytics_event("IssueCrawler", "Unsubscribe", f"{ticket.ticket_id}", f"{user.id}")
+            await track_analytics_event("IssueCrawler", "Unsubscribe", f"{ticket.ticket_id}", f"{user.id}")
         else:
             ticket.subscribe(user.id)
             await ctx.respond(f"Subscribed to `{ticket.ticket_id}` - {ticket.title}.", ephemeral=True)
-            track_analytics_event("IssueCrawler", "Subscribe", f"{ticket.ticket_id}", f"{user.id}")
+            await track_analytics_event("IssueCrawler", "Subscribe", f"{ticket.ticket_id}", f"{user.id}")
         await ticket.commit()
 
     @slash_command(name="subscriptions")
