@@ -136,11 +136,11 @@ class HandleTicket(commands.Cog):
     @staticmethod
     async def subscribe(interaction, member, ticket):
         if member.id in ticket.subscribers:
-            ticket.unsubscribe(member.id)
+            await ticket.unsubscribe(member.id)
             await ticket.commit()
             await HandleTicket.send_message(member, interaction, f"You have unsubscribed from {ticket.ticket_id}")
         else:
-            ticket.subscribe(member.id)
+            await ticket.subscribe(member.id)
             await ticket.commit()
             await HandleTicket.send_message(member, interaction, f"You have subscribed to {ticket.ticket_id}")
 

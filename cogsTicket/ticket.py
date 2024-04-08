@@ -82,11 +82,11 @@ class TicketCommands(commands.Cog):
         ticket = await ticket_from_id(_id, ctx)
         user = ctx.interaction.user
         if user.id in ticket.subscribers:
-            ticket.unsubscribe(user.id)
+            await ticket.unsubscribe(user.id)
             await ctx.respond(f"Unsubscribed from `{ticket.ticket_id}` - {ticket.title}.", ephemeral=True)
             await track_analytics_event("IssueCrawler", "Unsubscribe", f"{ticket.ticket_id}", f"{user.id}")
         else:
-            ticket.subscribe(user.id)
+            await ticket.subscribe(user.id)
             await ctx.respond(f"Subscribed to `{ticket.ticket_id}` - {ticket.title}.", ephemeral=True)
             await track_analytics_event("IssueCrawler", "Subscribe", f"{ticket.ticket_id}", f"{user.id}")
         await ticket.commit()

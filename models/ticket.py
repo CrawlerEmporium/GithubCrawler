@@ -671,13 +671,13 @@ class Ticket:
 
         await self.commit()
 
-    def subscribe(self, userId):
+    async def subscribe(self, userId):
         """Ensures a user is subscribed to this ticket."""
         await track_analytics_event("IssueCrawler", "Subscribe", f"{self.ticket_id}", f"{userId}")
         if userId not in self.subscribers:
             self.subscribers.append(userId)
 
-    def unsubscribe(self, userId):
+    async def unsubscribe(self, userId):
         """Ensures a user is not subscribed to this ticket."""
         await track_analytics_event("IssueCrawler", "Unsubscribe", f"{self.ticket_id}", f"{userId}")
         if userId in self.subscribers:
