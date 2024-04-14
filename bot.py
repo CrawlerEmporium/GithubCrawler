@@ -86,13 +86,13 @@ class Crawler(commands.AutoShardedBot):
 
 bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
-              activity=discord.Game(f"{GG.PREFIX}help | Initializing..."))
+              activity=discord.Game(f"Initializing..."))
 
 
 @bot.event
 async def on_ready():
     await loadGithubServers()
-    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | {bot.defaultPrefix}help | v{version}"))
+    await bot.change_presence(activity=discord.Game(f"with {len(bot.guilds)} servers | v{version}"))
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 

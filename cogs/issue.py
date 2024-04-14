@@ -11,10 +11,11 @@ import utils.globals as GG
 from models.server import Server, Listen
 from utils.autocomplete import get_server_identifiers, get_server_identifiers_no_alias
 from utils.checks import is_manager
-from utils.functions import loadGithubServers, get_selection
+from utils.functions import loadGithubServers
 from models.ticket import Ticket, PRIORITY
 from utils.ticketglobals import identifier_does_not_exist
 from crawler_utilities.utils.confirmation import BotConfirmation
+from crawler_utilities.utils.pagination import createPaginator
 
 log = GG.log
 
@@ -189,14 +190,14 @@ class Issue(commands.Cog):
     @issue.command(name='search')
     async def search(self, ctx,
                      identifier: Option(str, "In which identifier would you like to search?", autocomplete=get_server_identifiers),
-                     keywords: Option(str, "What do you want to search?", autocomplete=get_server_identifiers)):
+                     keywords: Option(str, "What do you want to search?")):
         """Searches in all open tickets for a specified identifier"""
         await self.search_in_tickets(ctx, identifier, keywords)
 
     @issue.command(name='searchall')
     async def searchall(self, ctx,
                         identifier: Option(str, "In which identifier would you like to search?", autocomplete=get_server_identifiers),
-                        keywords: Option(str, "What do you want to search?", autocomplete=get_server_identifiers)):
+                        keywords: Option(str, "What do you want to search?")):
         """Searches in all tickets for a specified identifier"""
         await self.search_in_tickets(ctx, identifier, keywords, False)
 
@@ -218,15 +219,9 @@ class Issue(commands.Cog):
                     results.append(ticket)
         if len(results) > 0:
             results = [(f"{r['ticket_id']} - {r['title']}", r) for r in results]
-            selection = await get_selection(ctx, results, force_select=True)
-            if selection is not None:
-                ticket = await Ticket.from_id(selection['ticket_id'], ctx.guild.id)
-                if ticket is not None:
-                    await ctx.respond(embed=await ticket.get_embed(True, ctx))
-                else:
-                    await ctx.respond("Selected ticket not found.", ephemeral=True)
-            else:
-                await ctx.respond("Selection timed out, please try again.", ephemeral=True)
+            paginator = await createPaginator(ctx, results, title=f"Delete Commands for {ctx.interaction.guild}",
+                                              author=True)
+            await paginator.respond(ctx.interaction, delete_after=61)
         else:
             await ctx.respond("No results found, please try with a different keyword.", ephemeral=True)
 
