@@ -5,11 +5,11 @@ from discord import slash_command, Option, permissions, ChannelType
 from discord.ext import commands
 
 from crawler_utilities.cogs.stats import track_analytics_event
-from crawler_utilities.utils.pagination import BotEmbedPaginator
 from models.ticket import Ticket, get_next_ticket_num
 from utils.autocomplete import get_server_tickets, get_server_identifiers
 from utils.checks import is_manager, is_manager_assignee_or_creator
 from utils.ticketglobals import ticket_from_id, identifier_does_not_exist
+from crawler_utilities.utils.pagination import createPaginatorWithEmbeds
 
 from utils import globals as GG
 log = GG.log
@@ -176,8 +176,8 @@ class ManagerCommands(commands.Cog):
                 embed.set_author(name=f'Assigned open tickets for {member.nick if member.nick is not None else member.name}', icon_url=member.display_avatar.url)
                 embedList.append(embed)
 
-            paginator = BotEmbedPaginator(ctx, embedList)
-            await paginator.run()
+            paginator = createPaginatorWithEmbeds(embedList)
+            await paginator.respond(ctx.interaction, delete_after=61)
         else:
             return await ctx.respond(f"{member.mention} doesn't have any assigned tickets on this server.")
 

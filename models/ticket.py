@@ -7,7 +7,7 @@ from discord.ui import Button
 
 from crawler_utilities.cogs.stats import track_analytics_event
 from crawler_utilities.handlers.errors import CrawlerException
-from crawler_utilities.utils.pagination import BotEmbedPaginator
+from crawler_utilities.utils.pagination import createPaginatorWithEmbeds
 
 import utils.globals as GG
 from models.attachment import Attachment
@@ -454,8 +454,8 @@ class Ticket:
 
             embeds.append(embed)
 
-        paginator = BotEmbedPaginator(ctx, pages=embeds, message=msgToUse)
-        await paginator.run()
+        paginator = createPaginatorWithEmbeds(embeds)
+        await paginator.respond(ctx.interaction, delete_after=61)
 
     async def get_github_desc(self, bot, serverId):
         msg = self.title
