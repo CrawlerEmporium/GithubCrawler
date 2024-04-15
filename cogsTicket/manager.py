@@ -177,7 +177,7 @@ class ManagerCommands(commands.Cog):
                 embedList.append(embed)
 
             paginator = createPaginatorWithEmbeds(embedList)
-            await paginator.respond(ctx.interaction, delete_after=61)
+            await paginator.respond(ctx.interaction)
         else:
             return await ctx.respond(f"{member.mention} doesn't have any assigned tickets on this server.")
 
