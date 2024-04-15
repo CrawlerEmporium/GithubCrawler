@@ -1,9 +1,3 @@
-import random
-from itertools import zip_longest
-
-import discord
-
-from crawler_utilities.handlers.errors import NoSelectionElements
 from models.server import Server
 from models.githubClient import GitHubClient
 

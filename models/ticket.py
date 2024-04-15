@@ -7,11 +7,10 @@ from discord.ui import Button
 
 from crawler_utilities.cogs.stats import track_analytics_event
 from crawler_utilities.handlers.errors import CrawlerException
-from crawler_utilities.utils.pagination import createPaginatorWithEmbeds
+from crawler_utilities.utils.pagination import createPaginatorWithEmbeds, paginate
 
 import utils.globals as GG
 from models.attachment import Attachment
-from utils.functions import paginate
 from crawler_utilities.utils.functions import splitDiscordEmbedField
 from models.githubClient import GitHubClient
 import calendar
