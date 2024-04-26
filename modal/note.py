@@ -16,7 +16,9 @@ class Note(Modal):
         self.author = author
         self.channel = channel
 
-        self.add_item(InputText(label="The note you want to add.", placeholder="What's the note you want to add?", required=True, style=InputTextStyle.long))
+        self.add_item(
+            InputText(label="The note you want to add.", placeholder="What's the note you want to add?", required=True,
+                      style=InputTextStyle.long))
 
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -24,6 +26,12 @@ class Note(Modal):
 
         requestChannel = None
         if self.channel is not None:
+            # Custom code for Tools server, can be deleted if you don't need it.
+            if (self.channel == 470673367628906496 or
+                    self.channel == 647162018956181519 or
+                    self.channel == 586998165962490023 or
+                    self.channel == 607182631381237771):
+                self.channel = 1007247989003272253
             requestChannel = await self.bot.fetch_channel(self.channel)
 
         embed = EmbedWithRandomColor()
