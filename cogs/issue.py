@@ -3,7 +3,7 @@ import io
 from typing import Union
 
 import discord
-from discord import Option, SlashCommandGroup, SlashCommandOptionType
+from discord import Option, SlashCommandGroup
 from discord.abc import GuildChannel
 from discord.ext import commands
 
@@ -12,7 +12,7 @@ from models.server import Server, Listen
 from utils.autocomplete import get_server_identifiers, get_server_identifiers_no_alias
 from utils.checks import is_manager
 from utils.functions import loadGithubServers
-from models.ticket import Ticket, PRIORITY
+from models.ticket import PRIORITY
 from utils.ticketglobals import identifier_does_not_exist
 from crawler_utilities.utils.confirmation import BotConfirmation
 from crawler_utilities.utils.pagination import createPaginator
@@ -201,8 +201,8 @@ class Issue(commands.Cog):
         """Searches in all tickets for a specified identifier"""
         await self.search_in_tickets(ctx, identifier, keywords, False)
 
-
-    async def search_in_tickets(self, ctx, identifier, keywords, open=True):
+    @staticmethod
+    async def search_in_tickets(ctx, identifier, keywords, open=True):
         await ctx.defer(ephemeral=True)
         allTickets = await find_in_tickets(GG.MDB.Tickets, identifier, keywords)
         server = await GG.MDB.Github.find_one({"server": ctx.guild.id})
@@ -219,8 +219,7 @@ class Issue(commands.Cog):
                     results.append(ticket)
         if len(results) > 0:
             results = [(f"{r['ticket_id']} - {r['title']}", r) for r in results]
-            paginator = await createPaginator(ctx, results, title=f"Delete Commands for {ctx.interaction.guild}",
-                                              author=True)
+            paginator = createPaginator(ctx, results, title=f"Delete Commands for {ctx.interaction.guild}", author=True)
             await paginator.respond(ctx.interaction)
         else:
             await ctx.respond("No results found, please try with a different keyword.", ephemeral=True)

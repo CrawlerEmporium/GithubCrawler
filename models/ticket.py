@@ -451,7 +451,7 @@ class Ticket:
                 if embed.footer is not None:
                     embed.set_footer(text=f"{embed.footer.text} | Last Updated ")
                 else:
-                    embed.set_footer(text=f" | Last Updated ")
+                    embed.set_footer(text=f"Last Updated ")
                 embed.timestamp = datetime.datetime.utcfromtimestamp(self.last_updated)
 
             embeds.append(embed)
