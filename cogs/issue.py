@@ -220,7 +220,7 @@ class Issue(commands.Cog):
         if len(results) > 0:
             results = [(f"{r['ticket_id']} - {r['title']}", r) for r in results]
             paginator = createPaginator(ctx, results, title=f"Delete Commands for {ctx.interaction.guild}", author=True)
-            await paginator.respond(ctx.interaction)
+            paginator.respond(ctx.interaction)
         else:
             await ctx.respond("No results found, please try with a different keyword.", ephemeral=True)
 
