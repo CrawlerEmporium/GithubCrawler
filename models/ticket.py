@@ -457,7 +457,7 @@ class Ticket:
             embeds.append(embed)
 
         paginator = createPaginatorWithEmbeds(embeds)
-        paginator.respond(ctx.interaction)
+        await paginator.respond(ctx.interaction)
 
     async def get_github_desc(self, bot, serverId):
         msg = self.title
