@@ -125,7 +125,7 @@ class ManagerCommands(commands.Cog):
             await ticket.addnote(ctx.interaction.user.id, f"Assigned {ticket.ticket_id} to {member.mention}", ctx, ctx.interaction.guild_id)
             await ticket.commit()
             await ticket.update(ctx, ctx.interaction.guild_id)
-            await ctx.respond(f"Assigned {ticket.ticket_id} to {member.mention}")
+            await ctx.respond(f"Assigned {ticket.ticket_id}: {ticket.title} to {member.mention}")
         else:
             await ctx.respond("You do not have the appropriate permissions to use this command.")
 
