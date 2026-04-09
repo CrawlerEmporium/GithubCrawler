@@ -18,7 +18,7 @@ class Note(Modal):
 
         self.add_item(
             InputText(label="The note you want to add.", placeholder="What's the note you want to add?", required=True,
-                      style=InputTextStyle.long))
+                      style=InputTextStyle.long, max_length=1024))
 
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)

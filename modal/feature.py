@@ -33,15 +33,15 @@ class Feature(Modal):
                                         row=question['position']))
         else:
             self.add_item(
-                InputText(label="Title of the request", placeholder="Be as precise as possible.", required=True))
+                InputText(label="Title of the request", placeholder="Be as precise as possible.", required=True, max_length=1024))
             self.add_item(
                 InputText(label="Information", placeholder="Expand on your request, and be as detailed as possible.",
-                          required=True, style=InputTextStyle.long))
-            self.add_item(InputText(label="Who would use it?", required=False, style=InputTextStyle.long))
-            self.add_item(InputText(label="How would it work?", required=False, style=InputTextStyle.long))
+                          required=True, style=InputTextStyle.long, max_length=1024))
+            self.add_item(InputText(label="Who would use it?", required=False, style=InputTextStyle.long, max_length=1024))
+            self.add_item(InputText(label="How would it work?", required=False, style=InputTextStyle.long, max_length=1024))
             self.add_item(
                 InputText(label="Why should this be added?", placeholder="Justify why you think it'd help others.",
-                          required=False, style=InputTextStyle.long))
+                          required=False, style=InputTextStyle.long, max_length=1024))
 
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)

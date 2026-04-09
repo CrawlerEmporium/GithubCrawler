@@ -31,12 +31,12 @@ class Support(Modal):
 
         if custom_questions is not None:
             for question in custom_questions.questions:
-                self.add_item(InputText(label=question['text'], placeholder=question['placeholder'], style=InputTextStyle(question['style']), required=question['required'], row=question['position']))
+                self.add_item(InputText(label=question['text'], placeholder=question['placeholder'], style=InputTextStyle(question['style']), required=question['required'], row=question['position'], max_length=1024))
         else:
-            self.add_item(InputText(label=reportTitle, placeholder="A quick description of the support request.", required=True))
-            self.add_item(InputText(label=troubleshootingSteps, placeholder="What (if applicable) troubleshooting steps did you perform?", required=True))
-            self.add_item(InputText(label=whySupport, placeholder="Be as precise as possible.", required=True, style=InputTextStyle.long))
-            self.add_item(InputText(label=adInfo, placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long))
+            self.add_item(InputText(label=reportTitle, placeholder="A quick description of the support request.", required=True, max_length=1024))
+            self.add_item(InputText(label=troubleshootingSteps, placeholder="What (if applicable) troubleshooting steps did you perform?", required=True, max_length=1024))
+            self.add_item(InputText(label=whySupport, placeholder="Be as precise as possible.", required=True, style=InputTextStyle.long, max_length=1024))
+            self.add_item(InputText(label=adInfo, placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long, max_length=1024))
 
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)

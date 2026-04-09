@@ -28,10 +28,10 @@ class Bug(Modal):
             for question in custom_questions.questions:
                 self.add_item(InputText(label=question['text'], placeholder=question['placeholder'], style=InputTextStyle(question['style']), required=question['required'], row=question['position']))
         else:
-            self.add_item(InputText(label="What is the bug?", placeholder="A quick description of the bug.", required=True))
-            self.add_item(InputText(label="Steps to reproduce", placeholder="How the bug occured, and how to reproduce it.", required=True, style=InputTextStyle.long))
-            self.add_item(InputText(label="Severity", placeholder="Trivial / Low / Medium / High / Critical", required=True, style=InputTextStyle.long))
-            self.add_item(InputText(label="Additional information", placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long))
+            self.add_item(InputText(label="What is the bug?", placeholder="A quick description of the bug.", required=True, max_length=1024))
+            self.add_item(InputText(label="Steps to reproduce", placeholder="How the bug occured, and how to reproduce it.", required=True, style=InputTextStyle.long, max_length=1024))
+            self.add_item(InputText(label="Severity", placeholder="Trivial / Low / Medium / High / Critical", required=True, style=InputTextStyle.long, max_length=1024))
+            self.add_item(InputText(label="Additional information", placeholder="Any additional information you want to give.", required=False, style=InputTextStyle.long, max_length=1024))
 
     async def callback(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
