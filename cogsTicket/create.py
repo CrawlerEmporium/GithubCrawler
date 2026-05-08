@@ -8,7 +8,7 @@ from modal.bug import Bug
 from modal.feature import Feature
 from modal.support import Support
 from models.questions import Question, Questionaire
-from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers
+from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers, get_server_support_identifiers
 from utils.checks import is_manager
 from utils.ticketglobals import identifier_does_not_exist
 from utils import globals as GG
@@ -134,7 +134,7 @@ class CreateTicket(commands.Cog):
 
     @slash_command(name="supportrequest")
     @permissions.guild_only()
-    async def slash_support(self, ctx, identifier: Option(str, "For what identifier do you want to make a support request?", autocomplete=get_server_bug_identifiers)):
+    async def slash_support(self, ctx, identifier: Option(str, "For what identifier do you want to make a support request?", autocomplete=get_server_support_identifiers)):
         """Opens a modal to post a support request."""
         exists = False
 
