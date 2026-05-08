@@ -6,7 +6,7 @@ from discord.ext import commands, tasks
 from crawler_utilities.utils.confirmation import BotConfirmation
 from modal.bug import Bug
 from modal.feature import Feature
-from modal.feature import Support
+from modal.support import Support
 from models.questions import Question, Questionaire
 from utils.autocomplete import get_server_feature_identifiers, get_server_identifiers, get_server_bug_identifiers
 from utils.checks import is_manager
