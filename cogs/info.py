@@ -1,10 +1,8 @@
-import asyncio
 import datetime
 import discord
 import time
 
 from discord.ext import commands
-from discord.ext.commands import BucketType
 from discord import ButtonStyle, slash_command
 from discord.ui import Button
 
@@ -25,9 +23,8 @@ class Info(commands.Cog):
         em.title = 'Bot Info'
         em.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.display_avatar.url)
         em.add_field(name="Servers", value=str(len(ctx.bot.guilds)))
-        total_members = sum(len(s.members) for s in self.bot.guilds)
-        unique_members = set(self.bot.get_all_members())
-        members = '%s total\n%s unique' % (total_members, len(unique_members))
+        total_members = sum(guild.member_count or 0 for guild in self.bot.guilds)
+        members = f"{total_members} across servers\nUnique count unavailable without the Members intent"
         em.add_field(name='Uptime', value=str(datetime.timedelta(seconds=round(time.monotonic() - self.start_time))))
         em.add_field(name="** **", value="** **")
         em.add_field(name='Members', value=members)

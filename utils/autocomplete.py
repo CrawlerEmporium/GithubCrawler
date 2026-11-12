@@ -23,9 +23,14 @@ async def get_server_identifiers_no_alias(ctx: discord.AutocompleteContext):
 
 
 async def get_identifiers(ctx, lookup, alias=True):
-    identifiers = list(filter(lambda item: item["server"] == ctx.interaction.guild_id, lookup))
+    guild_id = ctx.interaction.guild_id
+    print(guild_id)
+    print(lookup)
+    identifiers = [item for item in lookup if str(item.get("server")) == str(guild_id)]
+    print(identifiers)
     autoList = []
     for identifier in identifiers:
+        print(identifier)
         if alias:
             if identifier["alias"] is not None and identifier["alias"] != "":
                 autoList.append(identifier['alias'])
@@ -33,6 +38,7 @@ async def get_identifiers(ctx, lookup, alias=True):
                 autoList.append(identifier['identifier'])
         else:
             autoList.append(identifier['identifier'])
+    print(autoList)
     return autoList
 
 

@@ -116,6 +116,7 @@ class CreateTicket(commands.Cog):
         exists = False
 
         server = await GG.MDB.Github.find_one({"server": ctx.interaction.guild_id})
+        print(server)
         for iden in server['listen']:
             if iden['identifier'] == identifier or iden.get('alias', '') == identifier:
                 identifier = iden['identifier']

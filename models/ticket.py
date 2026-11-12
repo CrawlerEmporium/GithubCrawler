@@ -80,6 +80,25 @@ def getListenerURL(identifier, trackerId):
         return ""
 
 
+async def fetch_member_or_user(bot, user_id, guild=None):
+    if guild is not None:
+        member = guild.get_member(user_id)
+        if member is not None:
+            return member
+        try:
+            return await guild.fetch_member(user_id)
+        except discord.HTTPException:
+            pass
+
+    user = bot.get_user(user_id)
+    if user is not None:
+        return user
+    try:
+        return await bot.fetch_user(user_id)
+    except discord.HTTPException:
+        return None
+
+
 class Ticket:
     message_cache = LRUCache(maxsize=100)
     
@@ -351,7 +370,9 @@ class Ticket:
                             user = attachment.author
                         else:
                             if isinstance(attachment.author, int):
-                                user = ctx.guild.get_member(attachment.author)
+                                user = await fetch_member_or_user(ctx.bot, attachment.author, ctx.guild)
+                                if user is None:
+                                    user = f"<@{attachment.author}>"
                             else:
                                 user = attachment.author
                         if attachment.message is not None:
@@ -429,7 +450,9 @@ class Ticket:
                         user = attachment.author
                     else:
                         if isinstance(attachment.author, int):
-                            user = ctx.guild.get_member(attachment.author)
+                            user = await fetch_member_or_user(ctx.bot, attachment.author, ctx.guild)
+                            if user is None:
+                                user = f"<@{attachment.author}>"
                         else:
                             user = attachment.author
                     if attachment.message is not None:
@@ -464,7 +487,8 @@ class Ticket:
         if self.attachments:
             msg = self.attachments[0].message
 
-        author = next((m for m in bot.get_all_members() if m.id == self.reporter), None)
+        guild = bot.get_guild(int(serverId)) if serverId is not None else None
+        author = await fetch_member_or_user(bot, self.reporter, guild) if isinstance(self.reporter, int) else None
         if author:
             desc = f"{msg}\n\n- {author}"
         else:
@@ -517,7 +541,9 @@ class Ticket:
 
     async def get_attachment_message(self, bot, attachment: Attachment, guild_id):
         if isinstance(attachment.author, int):
-            username = str(next((m for m in bot.get_all_members() if m.id == attachment.author), attachment.author))
+            guild = bot.get_guild(int(guild_id)) if guild_id is not None else None
+            user = await fetch_member_or_user(bot, attachment.author, guild)
+            username = str(user) if user is not None else f"<@{attachment.author}>"
         else:
             username = attachment.author
 
@@ -850,9 +876,11 @@ class Ticket:
         msg = f"`{self.ticket_id}` - {self.title}: {msg}"
         for sub in self.subscribers:
             try:
-                member = next(m for m in bot.get_all_members() if m.id == sub)
+                member = await fetch_member_or_user(bot, sub)
+                if member is None:
+                    continue
                 await member.send(msg)
-            except (StopIteration, discord.HTTPException):
+            except discord.HTTPException:
                 continue
 
 

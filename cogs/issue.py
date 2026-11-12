@@ -12,6 +12,7 @@ from models.server import Server, Listen
 from utils.autocomplete import get_server_identifiers, get_server_identifiers_no_alias
 from utils.checks import is_manager
 from utils.functions import loadGithubServers
+from utils.id_repair import apply_plan, build_plan, describe, fingerprint
 from models.ticket import PRIORITY
 from utils.ticketglobals import identifier_does_not_exist
 from crawler_utilities.utils.confirmation import BotConfirmation
@@ -39,6 +40,48 @@ class Issue(commands.Cog):
 
     issue = SlashCommandGroup("issue", "All commands that have effect on the issue tracker", checks=[commands.guild_only().predicate])
 
+    # @issue.command(name="repair-ids")
+    # async def repair_ids(self, ctx, approval: Option(str, "Preview token to apply the proposed changes", required=False, default=None)):
+    #     """Preview or repair this server's rounded guild and channel IDs."""
+    #     if ctx.author.id not in (ctx.guild.owner_id, GG.OWNER):
+    #         return await ctx.respond("Only the server or bot owner can repair IDs.", ephemeral=True)
+    #     await ctx.defer(ephemeral=True)
+    #     try:
+    #         channels = await ctx.guild.fetch_channels()
+    #         plan, warnings = await build_plan(GG.MDB, ctx.guild, [g.id for g in self.bot.guilds] + [ctx.guild.id], channels)
+    #     except (discord.HTTPException, ValueError) as error:
+    #         return await ctx.respond(f"Could not create a repair plan: {error}", ephemeral=True)
+    #
+    #     token = fingerprint(plan, warnings)
+    #     if approval is None:
+    #         report = describe(plan, warnings)
+    #         file = discord.File(io.BytesIO(report.encode('utf-8')), filename='id-repair-preview.txt')
+    #         return await ctx.respond(
+    #             f"Preview: {len(plan)} documents to change, {len(warnings)} unresolved items. "
+    #             f"Rounded matches are suggestions, not proof: review the file and back up MongoDB first. "
+    #             f"To apply this exact plan, run `/issue repair-ids approval:{token}`.",
+    #             file=file, ephemeral=True)
+    #     if approval != token:
+    #         return await ctx.respond("The approval token does not match the current plan. Preview again; nothing was changed.", ephemeral=True)
+    #     if not plan:
+    #         return await ctx.respond("No changes to apply.", ephemeral=True)
+    #     try:
+    #         count = await apply_plan(GG.MDB, plan)
+    #     except Exception as error:
+    #         log.exception("ID repair failed; some documents may already have been updated")
+    #         outcome = f"Repair stopped: {error}. Some documents may have changed; preview again."
+    #     else:
+    #         outcome = f"Updated {count} documents. {len(warnings)} unresolved items were left unchanged."
+    #     try:
+    #         await loadGithubServers()
+    #         await GG.cache_identifiers()
+    #         await GG.cache_server_channels()
+    #         self.bot.prefixes.clear()
+    #     except Exception:
+    #         log.exception("Could not refresh caches after ID repair")
+    #         outcome += " Cache refresh failed; restart the bot."
+    #     await ctx.respond(outcome, ephemeral=True)
+
     @issue.command(name="enable")
     @discord.default_permissions(
         administrator=True,
@@ -60,6 +103,54 @@ class Issue(commands.Cog):
                 "Server was successfully enabled.\nUse `\\issue new` to add a new listener to your server.")
         else:
             await ctx.respond("Server was already enabled.")
+
+    # @issue.command(name="repair-server-id")
+    # async def repair_server_id(self, ctx, old_server_id: Option(str, "The incorrect server ID currently stored in the database")):
+    #     """Replace an incorrect stored guild ID with this guild's actual ID."""
+    #     # if ctx.author.id != ctx.guild.owner_id:
+    #     #     return await ctx.respond("Only the server owner can run this repair.", ephemeral=True)
+    #
+    #     try:
+    #         old_id = int(old_server_id)
+    #     except (TypeError, ValueError):
+    #         return await ctx.respond("The old server ID must be a numeric Discord ID.", ephemeral=True)
+    #
+    #     new_id = ctx.guild.id
+    #     if old_id == new_id:
+    #         return await ctx.respond("The stored ID already matches this server.", ephemeral=True)
+    #
+    #     id_values = [old_id, str(old_id)]
+    #     source = await GG.MDB.Github.find_one({"server": {"$in": id_values}})
+    #     if source is None:
+    #         return await ctx.respond("No server configuration was found for that old ID; nothing was changed.", ephemeral=True)
+    #
+    #     destination = await GG.MDB.Github.find_one({"server": {"$in": [new_id, str(new_id)]}})
+    #     if destination is not None:
+    #         return await ctx.respond("A server configuration already exists for this guild ID; nothing was changed.", ephemeral=True)
+    #
+    #     # Update dependent records before the primary document so a failed run can be retried.
+    #     updates = (
+    #         (GG.MDB.Managers, "server", new_id),
+    #         (GG.MDB.TicketNums, "server", new_id),
+    #         (GG.MDB.questions, "server", new_id),
+    #         (GG.MDB.Tickets, "server_id", new_id),
+    #         (GG.MDB.prefixes, "guild_id", str(new_id)),
+    #     )
+    #     migrated = {}
+    #     for collection, field, replacement in updates:
+    #         result = await collection.update_many(
+    #             {field: {"$in": id_values}},
+    #             {"$set": {field: replacement}},
+    #         )
+    #         migrated[collection.name] = result.modified_count
+    #
+    #     await GG.MDB.Github.update_one({"_id": source["_id"]}, {"$set": {"server": new_id}})
+    #     await GG.cache_identifiers()
+    #     await GG.cache_server_channels()
+    #     await loadGithubServers()
+    #
+    #     details = ", ".join(f"{name}: {count}" for name, count in migrated.items())
+    #     await ctx.respond(f"Updated the stored server ID to `{new_id}`. Related records updated — {details}.", ephemeral=True)
 
     @issue.command(name='new')
     @discord.default_permissions(

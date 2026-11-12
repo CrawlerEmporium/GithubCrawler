@@ -16,8 +16,6 @@ SHARD_COUNT = 1
 TESTING = False
 defaultPrefix = GG.PREFIX if not TESTING else '*'
 intents = discord.Intents().default()
-intents.members = True
-intents.message_content = True
 
 
 async def get_prefix(bot, message):
@@ -84,7 +82,7 @@ class Crawler(commands.AutoShardedBot):
         await super(Crawler, self).launch_shards()
 
 
-bot = Crawler(prefix=get_prefix, intents=intents, case_insensitive=True, status=discord.Status.idle,
+bot = Crawler(prefix=get_prefix, intents=intents, chunk_guilds_at_startup=False, case_insensitive=True, status=discord.Status.idle,
               description="A bot.", shard_count=SHARD_COUNT, testing=TESTING,
               activity=discord.Game(f"Initializing..."))
 
