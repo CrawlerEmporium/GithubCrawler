@@ -12,7 +12,7 @@ from models.server import Server, Listen
 from utils.autocomplete import get_server_identifiers, get_server_identifiers_no_alias
 from utils.checks import is_manager
 from utils.functions import loadGithubServers
-from utils.id_repair import apply_plan, build_plan, describe, fingerprint
+# from utils.id_repair import apply_plan, build_plan, describe, fingerprint
 from models.ticket import PRIORITY
 from utils.ticketglobals import identifier_does_not_exist
 from crawler_utilities.utils.confirmation import BotConfirmation
